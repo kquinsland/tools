@@ -1,0 +1,69 @@
+{{- /* Shortcode: render tool cards from data/tools.yaml inside a columns shortcode. */ -}}
+{{- $tools := site.Data.tools.tools -}}
+
+{{- if not $tools -}}
+<ul>
+    <li>
+        <div class="book-card">
+            <div class="markdown-inner">
+                <p>No tools available yet.</p>
+            </div>
+        </div>
+    </li>
+</ul>
+{{- else -}}
+<style>
+    .tool-card {
+        position: relative;
+    }
+
+    .tool-card-content {
+        min-width: 0;
+    }
+
+    .tool-card-emoji {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        font-size: 1.1rem;
+        line-height: 1;
+    }
+</style>
+<ul>
+    {{- range $item := $tools -}}
+    {{- range $slug, $tool := $item -}}
+    {{- $page := site.GetPage (printf "/tools/%s" $slug) -}}
+    {{- $href := "" -}}
+    {{- if $page -}}
+    {{- $href = $page.RelPermalink -}}
+    {{- else -}}
+    {{- $href = (printf "/tools/%s/" $slug) | relURL -}}
+    {{- end -}}
+
+    {{- $language := lower (default "" $tool.language) -}}
+    {{- $emoji := "" -}}
+    {{- if eq $language "python" -}}
+    {{- $emoji = "🐍" -}}
+    {{- else if eq $language "html" -}}
+    {{- $emoji = "🌐" -}}
+    {{- end -}}
+
+    <li>
+        <div class="book-card tool-card">
+            <a href="{{ $href }}">
+                {{- if $emoji -}}
+                <span class="tool-card-emoji" aria-hidden="true">{{ $emoji }}</span>
+                {{- end }}
+                <div class="markdown-inner tool-card-content">
+                    <h3>{{ (default $slug $tool.title) | htmlEscape }}</h3>
+                    {{- with $tool.description }}
+                    <p>{{ . | htmlEscape }}</p>
+                    {{- end }}
+                </div>
+            </a>
+        </div>
+    </li>
+    {{- end -}}
+    {{- end -}}
+</ul>
+{{- end -}}

@@ -1,0 +1,24 @@
+---
+version: 1
+tools:
+    - html/hello-world:
+          title: "Hello, World"
+          language: "html"
+          description: "This is the first tool description here."
+          toolbox:
+              file: "tool.html"
+              introduced_commit: "452fa9daab256208fe2894c39c326b8eb38fd0ab"
+              updated_commit: "6f32a2ccd1cfabb0db86158378282c64efafb943"
+          tags:
+              - "demo"
+              - "html"
+              - "basic"
+              - "input"
+    - python/hello-python:
+          title: "Hello, Python"
+          language: "python"
+          description: "This is the first tool description here."
+          toolbox:
+              file: "tool.py"
+              introduced_commit: "452fa9daab256208fe2894c39c326b8eb38fd0ab"
+              updated_commit: "6f32a2ccd1cfabb0db86158378282c64efafb943"

@@ -1,0 +1,29 @@
+{{- /* Partial: renders a link to the tool asset declared in front matter.
+     - Prefers `toolbox.file`, but supports legacy `tool.file`.
+     - If the file is a page bundle resource, links to that resource.
+     - Otherwise, treats the file as a site-root/static path.
+  */ -}}
+
+{{- $params := .Params -}}
+
+{{- $file := "" -}}
+{{- with $params.toolbox }}{{- with .file }}{{- $file = . -}}{{- end -}}{{- end -}}
+{{- if not $file -}}
+  {{- with $params.tool }}{{- with .file }}{{- $file = . -}}{{- end -}}{{- end -}}
+{{- end -}}
+{{- if not $file -}}
+  {{- $file = "tool.html" -}}
+{{- end -}}
+
+{{- $href := "" -}}
+{{- with .Resources.GetMatch $file -}}
+  {{- $href = .RelPermalink -}}
+{{- else -}}
+  {{- if hasPrefix $file "/" -}}
+    {{- $href = $file | relURL -}}
+  {{- else -}}
+    {{- $href = (printf "/%s" $file) | relURL -}}
+  {{- end -}}
+{{- end -}}
+
+<a class="tool-link" href="{{ $href }}">{{ $href }}</a>

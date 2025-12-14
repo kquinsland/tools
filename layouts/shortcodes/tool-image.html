@@ -1,0 +1,14 @@
+{{- /* Shortcode: render an image from page resources by name.
+     Defaults: name="tool-icon", alt="Tool icon"
+     Usage: {{< tool-image >}} or {{< tool-image name="custom" alt="Custom alt" >}}
+  */ -}}
+{{- $name := "tool-icon" -}}
+{{- if .IsNamedParams -}}
+  {{- with .Get "name" }}{{- $name = . -}}{{- end -}}
+{{- else if gt (len .Params) 0 -}}
+  {{- $name = .Get 0 -}}
+{{- end -}}
+
+{{- with .Page.Resources.GetMatch $name -}}
+  <img src="{{ .RelPermalink }}" alt="{{ $.Get "alt" | default "Tool icon" | htmlEscape }}">
+{{- end -}}

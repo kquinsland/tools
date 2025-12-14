@@ -1,0 +1,28 @@
+# Fix any fixable errors
+fix: true
+
+# Ignore files referenced by .gitignore (only valid at root)
+gitignore: true
+
+# Define glob expressions to ignore
+ignores:
+    # Ignore everything in archetypes folder
+    - archetypes/*.md
+    # And the entire PROBLEM.md
+    - PROBLEM.md
+
+# Disable banner message on stdout (only valid at root)
+noBanner: true
+
+# Disable inline config comments
+noInlineConfig: false
+
+# Disable progress on stdout (only valid at root)
+noProgress: true
+
+# Use a specific formatter (only valid at root)
+outputFormatters:
+    - - markdownlint-cli2-formatter-default
+
+# Show found files on stdout (only valid at root)
+showFound: true

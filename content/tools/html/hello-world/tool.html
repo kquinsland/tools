@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello, World Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            max-width: 20rem;
+            padding: 0.5rem;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        #mirror {
+            border: 1px solid #ccc;
+            padding: 1rem;
+            min-height: 2rem;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Hello, World</h1>
+    <p>Type in the box to mirror your text below.</p>
+    <label for="mirror-input">Test Input</label>
+    <input id="mirror-input" type="text" placeholder="TOOL/LOCAL VERSION: Start typing...">
+    <div id="mirror"></div>
+    <script>
+        const input = document.getElementById("mirror-input");
+        const mirror = document.getElementById("mirror");
+        input.addEventListener("input", () => {
+            mirror.textContent = input.value;
+        });
+    </script>
+</body>
+
+</html>

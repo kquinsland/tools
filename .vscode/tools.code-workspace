@@ -1,0 +1,28 @@
+{
+    "folders": [
+        {
+            "path": ".."
+        }
+    ],
+    "settings": {
+        "cSpell.words": [
+            "bookmarkable",
+            "Disqus",
+            "favico",
+            "flexsearch",
+            "frontmatter",
+            "gohugoio",
+            "goldmark",
+            "katex",
+            "pandoc",
+            "peaceiris",
+            "preache",
+            "pygmentscodefences",
+            "pygmentscodefencesguesssyntax",
+            "pygmentsstyle",
+            "pyyaml",
+            "screenshotting",
+            "shpak"
+        ]
+    }
+}

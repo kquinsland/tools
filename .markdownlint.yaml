@@ -1,0 +1,26 @@
+# .markdownlint.yaml
+# See: https://github.com/DavidAnson/markdownlint/blob/main/schema/.markdownlint.yaml
+##
+# Default state for all rules with a few changes below
+default: true
+
+# Path to configuration file to extend
+extends: null
+
+# Fix any fixable errors
+fix: true
+
+# Ignore files referenced by .gitignore (only valid at root)
+gitignore: true
+
+# MD013/line-length - Line length
+# Don't enforce this
+MD013: False
+
+# In line HTML, allow it
+MD033: False
+
+# MD025/single-title/single-h1 : Multiple top-level headings in the same document : https://github.com/DavidAnson/markdownlint/blob/v0.40.0/doc/md025.md
+MD025:
+    # Empty string to disable automatic title detection from the front matter
+    front_matter_title: ""

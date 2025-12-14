@@ -1,0 +1,104 @@
+---
+name: Deploy to GitHub Pages
+
+on:
+    push:
+        # Merge to pages branch triggers deployments
+        branches:
+            - pages
+    # Or allow manual trigger for testing and break-glass
+    workflow_dispatch:
+
+# In the even that I screw something up, kill all but the latest deployment
+concurrency:
+    group: pages
+    cancel-in-progress: true
+
+# Start with no permissions, then allow per job/action
+permissions: {}
+
+# Default to bash
+defaults:
+    run:
+        shell: bash
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pages: write
+            id-token: write
+
+        steps:
+            - name: Checkout
+              id: checkout
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+              with:
+                  persist-credentials: true
+                  fetch-depth: 0
+                  # Fetch Hugo themes
+                  submodules: recursive
+
+            # Pre-requisites: Hugo and Python
+            - name: Setup Hugo
+              id: setup-hugo
+              # See: https://github.com/peaceiris/actions-hugo
+              uses: peaceiris/actions-hugo@75d2e84710de30f6ff7268e08f310b60ef14033f # 3.0.0
+              with:
+                  # See: https://github.com/gohugoio/hugo/releases
+                  ##
+                  # renovate: datasource=github-tags depName=gohugoio/hugo versioning=semver
+                  hugo-version: "0.153.1"
+                  # Most themes require extended version for SCSS/SASS support
+                  extended: true
+
+            - name: Install uv
+              id: setup_uv
+              uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
+              with:
+                  enable-cache: true
+                  ignore-nothing-to-cache: true
+
+            # As long as the page bundle is correct, hugo should just pick up the new tool and the like.
+            # To update the landing page, though, we need to regenerate the data file.
+            - name: Build data/tools.yaml
+              id: build_data_tools_yaml
+              run: |
+                  uv run ci/build_tools_data.py
+
+            - name: Find modified tools entries
+              id: tools_data_changed
+              run: |
+                  if git diff --quiet HEAD -- data/tools.yaml; then
+                    echo "changes=" >> $GITHUB_OUTPUT
+                  else
+                    CHANGES=$(uv run ci/detect_tools_changes.py)
+                    if [ -z "$CHANGES" ]; then
+                      CHANGES="data/tools.yaml updated"
+                    fi
+                    echo "changes=$CHANGES" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Commit and push if tools data changed
+              if: steps.tools_data_changed.outputs.changes != ''
+              env:
+                  CHANGES: ${{ steps.tools_data_changed.outputs.changes }}
+              run: |-
+                  git config user.name "Automated"
+                  git config user.email "actions@users.noreply.github.com"
+                  git add data/tools.yaml
+                  git commit -m "Updated tools.yaml: ${CHANGES}" || exit 0
+                  git push
+
+            - name: Setup Pages
+              uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+
+            - name: Build site
+              run: hugo --minify
+
+            - name: Deploy
+              uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: ./public

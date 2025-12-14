@@ -1,0 +1,37 @@
+{
+    $schema: "https://docs.renovatebot.com/renovate-schema.json",
+    extends: [
+        "config:recommended",
+        ":enablePreCommit"
+    ],
+    configMigration: true,
+    dependencyDashboard: true,
+    // Some drama w/r/t Pre-Commit, see above as well.
+    // See: https://docs.renovatebot.com/modules/manager/pre-commit/
+    "pre-commit": {
+        "enabled": true
+    },
+    // Since themes are sub-modules
+    "git-submodules": {
+        "enabled": true
+    },
+    // Tell Renovate about the Hugo version pin in the GHA workflows
+    // See: https://docs.renovatebot.com/modules/manager/regex/
+    "customManagers": [
+        {
+            "customType": "regex",
+            "managerFilePatterns": [
+                // Should match all yml/yaml files in the .github/workflows folder
+                "/.github/workflows/*.ya?ml$/"
+            ],
+            "matchStrings": [
+                // Tested with: https://regex101.com/r/TtSoxE/1
+                // Capture the datasource, depName, versioning from the comment line
+                // Then capture the currentValue from the yaml on the next line
+                '# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)(?: versioning=(?<versioning>\\S+))?\\s*\\n\\s*hugo-version:\\s*(?<currentValue>[^\\s]+)'
+            ],
+            // The regex above has `versioning` as an optional capture group, so we need to handle that in the template. If set, use the value, otherwise default to 'semver'.
+            versioningTemplate: '{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}',
+        }
+    ]
+}
