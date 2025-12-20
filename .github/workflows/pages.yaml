@@ -3,9 +3,11 @@ name: Deploy to GitHub Pages
 
 on:
     push:
-        # Merge to pages branch triggers deployments
+        # Merge to `gh-pages`` branch triggers deployments
+        # Note that the "environment" for the repo (set below) must match and the
+        # repo settings that protect the branch must also allow GitHub Actions to push.
         branches:
-            - pages
+            - gh-pages
     # Or allow manual trigger for testing and break-glass
     workflow_dispatch:
 
@@ -127,6 +129,8 @@ jobs:
             # to verify the deployment originates from an appropriate source
             id-token: write
 
+        # Not env vars!
+        # See: https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments
         environment:
             name: github-pages
             url: ${{ steps.deployment.outputs.page_url }}
