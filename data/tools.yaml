@@ -14,6 +14,20 @@ tools:
         - "html"
         - "basic"
         - "input"
+  - html/url-inspect-rewrite:
+      title: "URL Inspect & Rewrite"
+      language: "html"
+      description: "Parse a URL, review query parameters, and rebuild a cleaner link."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "html"
+        - "url"
+        - "query"
+        - "privacy"
+        - "cleanup"
   - python/hello-python:
       title: "Hello, Python"
       language: "python"
