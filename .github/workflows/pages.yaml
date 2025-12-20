@@ -26,9 +26,8 @@ jobs:
     build:
         runs-on: ubuntu-latest
         permissions:
+            # If any tool files have changed or are new, there will be an update to the data file and a commit/push
             contents: write
-            pages: write
-            id-token: write
 
         steps:
             - name: Checkout
@@ -37,12 +36,12 @@ jobs:
               with:
                   persist-credentials: true
                   fetch-depth: 0
-                  # Fetch Hugo themes
+                  # Fetch Hugo theme
                   submodules: recursive
 
-            # Pre-requisites: Hugo and Python
+            # Pre-requisites: Hugo binary and Python
             - name: Setup Hugo
-              id: setup-hugo
+              id: setup_hugo
               # See: https://github.com/peaceiris/actions-hugo
               uses: peaceiris/actions-hugo@75d2e84710de30f6ff7268e08f310b60ef14033f # 3.0.0
               with:
@@ -81,6 +80,7 @@ jobs:
                   fi
 
             - name: Commit and push if tools data changed
+              id: commit_tools_data_changes
               if: steps.tools_data_changed.outputs.changes != ''
               env:
                   CHANGES: ${{ steps.tools_data_changed.outputs.changes }}
@@ -91,14 +91,49 @@ jobs:
                   git commit -m "Updated tools.yaml: ${CHANGES}" || exit 0
                   git push
 
-            - name: Setup Pages
-              uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
-
+            # Then use the updated tool data file to render out a new everything
             - name: Build site
+              id: build_site
               run: hugo --minify
 
-            - name: Deploy
-              uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
+            # As far as I can tell, if you don't use the "legacy" pattern of pointing to a particular folder/branch, you must use the "official" actions
+            ##
+            # Unclear is this particular action is needed for hugo, it seems to just have support for nuxt, next, gatsby, and sveltekit built sites
+            # It also attempts to enable pages if it's not already .... which isn't required for me / my use
+            ##
+            # TODO: once things are working, remove this and see if things still work
+            - name: Setup Pages
+              id: setup_pages
+              uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+
+            # Take what hugo built and zip tar it up as an artifact and then consider this job done
+            ##
+            - name: Upload artifact
+              id: upload_pages_artifact
+              uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
               with:
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
-                  publish_dir: ./public
+                  # Hugo puts everything in public by default so that's what we need to bundle up
+                  path: "./public"
+
+    # It's a bit circuitous to have a separate job for this, but this is the "recommended" way per the docs.
+    # A nice byproduct is that the artifact makes it easy to debug / inspect in-between the build and deploy steps should the need arise.
+    deploy:
+        # Add a dependency to the build job
+        needs: build
+
+        permissions:
+            # to deploy to Pages
+            pages: write
+            # to verify the deployment originates from an appropriate source
+            id-token: write
+
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+
+        # One step and it can be done in any order :)
+        runs-on: ubuntu-latest
+        steps:
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
