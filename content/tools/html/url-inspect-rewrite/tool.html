@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>URL Inspect & Rewrite</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f5f0;
+        --panel: #ffffff;
+        --ink: #1d1d1f;
+        --muted: #6b6b6f;
+        --accent: #1f6f5f;
+        --accent-soft: #e6f2ef;
+        --border: #e2dfd8;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Noto Sans", system-ui, sans-serif;
+        color: var(--ink);
+        background: radial-gradient(circle at top, #fefdfb 0%, var(--bg) 60%, #efe9df 100%);
+      }
+
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 64px;
+      }
+
+      header {
+        margin-bottom: 24px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2.1rem;
+        letter-spacing: -0.02em;
+      }
+
+      p.lead {
+        margin: 0;
+        color: var(--muted);
+        max-width: 70ch;
+      }
+
+      section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        margin: 18px 0;
+        box-shadow: var(--shadow);
+      }
+
+      section h2 {
+        margin: 0 0 12px;
+        font-size: 1.2rem;
+      }
+
+      label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      textarea,
+      input[type="text"] {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 0.95rem;
+        font-family: "SF Mono", "Menlo", "Consolas", monospace;
+        background: #fbfaf7;
+      }
+
+      textarea {
+        min-height: 90px;
+        resize: vertical;
+      }
+
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .row > * {
+        flex: 1 1 220px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        border: 1px solid var(--border);
+        background: var(--accent-soft);
+        color: var(--accent);
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(31, 111, 95, 0.18);
+      }
+
+      button.secondary {
+        background: #fff;
+        color: var(--ink);
+      }
+
+      .status {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        font-size: 0.95rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 8px 6px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        background: #f2dfcc;
+        color: #7a4d12;
+      }
+
+      .pill.tracking {
+        background: #fde4e1;
+        color: #a53b2a;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .linkish {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .linkish:hover {
+        text-decoration: underline;
+      }
+
+      .linkish.disabled {
+        color: var(--muted);
+        pointer-events: none;
+        text-decoration: none;
+      }
+
+      .link-note {
+        margin-top: 4px;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .mono {
+        font-family: "SF Mono", "Menlo", "Consolas", monospace;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      pre {
+        background: #f7f3ed;
+        border-radius: 12px;
+        padding: 12px;
+        overflow-x: auto;
+        margin: 12px 0 0;
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 720px) {
+        h1 {
+          font-size: 1.7rem;
+        }
+
+        section {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>URL Inspect & Rewrite</h1>
+        <p class="lead">
+          Paste any text containing a URL, review the query parameters, and rebuild a clean
+          link with tracking parameters removed.
+        </p>
+      </header>
+
+      <section id="section-input">
+        <h2>1. Paste text with a URL</h2>
+        <label for="input-text">Input text</label>
+        <textarea id="input-text" placeholder="Paste a URL or any text containing one..."></textarea>
+        <div class="row" style="margin-top: 12px;">
+          <div>
+            <label for="detected-url">Detected URL</label>
+            <input id="detected-url" type="text" placeholder="https://example.com?query=..." />
+          </div>
+          <div class="actions" style="align-self: flex-end;">
+            <button id="parse-url">Parse URL</button>
+            <button id="clear-all" class="secondary">Clear</button>
+          </div>
+        </div>
+        <div class="actions" style="margin-top: 10px;">
+          <div class="link-block">
+            <a id="open-detected-cyberchef" class="linkish disabled" target="_blank" rel="noopener" aria-disabled="true"
+              >Open detected URL in CyberChef</a
+            >
+            <div
+              id="open-detected-note"
+              class="link-note"
+              data-disabled-text="Paste or parse a URL to enable this link."
+            >
+              Paste or parse a URL to enable this link.
+            </div>
+          </div>
+        </div>
+        <div id="input-status" class="status">Paste text to begin.</div>
+      </section>
+
+      <section id="section-params">
+        <div class="row" style="justify-content: space-between;">
+          <h2 style="margin: 0;">2. Query parameters</h2>
+          <div class="actions">
+            <button id="select-all">Select all</button>
+            <button id="deselect-all" class="secondary">Deselect all</button>
+          </div>
+        </div>
+        <div id="params-empty" class="status">No query parameters detected yet.</div>
+        <table id="params-table" class="hidden">
+          <thead>
+            <tr>
+              <th>Keep</th>
+              <th>Key</th>
+              <th>Value</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="section-fragment">
+        <h2>3. Fragment analysis</h2>
+        <div id="fragment-empty" class="status">No fragment (#...) detected.</div>
+        <div id="fragment-results" class="hidden">
+          <div class="mono" id="fragment-raw"></div>
+          <div id="fragment-decoded-wrapper" class="hidden">
+            <span class="pill">Decoded fragment</span>
+            <pre id="fragment-decoded"></pre>
+          </div>
+          <div id="fragment-link-wrapper" class="hidden" style="margin-top: 10px;">
+            <a id="fragment-cyberchef" class="linkish" target="_blank" rel="noopener">Explore in CyberChef</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-output">
+        <h2>4. Rewritten URL</h2>
+        <label for="output-url">Clean link</label>
+        <textarea id="output-url" readonly></textarea>
+        <div class="row" style="margin-top: 12px;">
+          <div class="actions">
+            <button id="copy-output">Copy to clipboard</button>
+            <a id="open-output" class="linkish" target="_blank" rel="noopener">Open in new tab</a>
+            <div class="link-block">
+              <a id="open-output-cyberchef" class="linkish disabled" target="_blank" rel="noopener" aria-disabled="true"
+                >Open rewritten URL in CyberChef</a
+              >
+              <div
+                id="open-output-note"
+                class="link-note"
+                data-disabled-text="Generate a rewritten URL to enable this link."
+              >
+                Generate a rewritten URL to enable this link.
+              </div>
+            </div>
+          </div>
+          <div class="status" id="output-status"></div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const TRACKING_PARAM_RULES = [
+        { type: "prefix", value: "utm_" },
+        { type: "prefix", value: "ga_" },
+        { type: "prefix", value: "gclid" },
+        { type: "prefix", value: "fbclid" },
+        { type: "prefix", value: "msclkid" },
+        { type: "prefix", value: "igshid" },
+        { type: "prefix", value: "yclid" },
+        { type: "prefix", value: "vero_" },
+        { type: "prefix", value: "trk" },
+        { type: "prefix", value: "mc_" },
+        { type: "exact", value: "dclid" },
+        { type: "exact", value: "gclsrc" },
+        { type: "exact", value: "gbraid" },
+        { type: "exact", value: "wbraid" },
+        { type: "exact", value: "mkt_tok" },
+        { type: "exact", value: "_hsenc" },
+        { type: "exact", value: "_hsmi" },
+        { type: "exact", value: "ref" },
+        { type: "exact", value: "ref_src" },
+        { type: "exact", value: "spm" },
+        { type: "exact", value: "campaign" },
+        { type: "exact", value: "campaign_id" },
+        { type: "exact", value: "rb_clickid" }
+      ];
+
+      const elements = {
+        inputText: document.getElementById("input-text"),
+        detectedUrl: document.getElementById("detected-url"),
+        parseButton: document.getElementById("parse-url"),
+        clearButton: document.getElementById("clear-all"),
+        inputStatus: document.getElementById("input-status"),
+        paramsTable: document.getElementById("params-table"),
+        paramsBody: document.querySelector("#params-table tbody"),
+        paramsEmpty: document.getElementById("params-empty"),
+        selectAll: document.getElementById("select-all"),
+        deselectAll: document.getElementById("deselect-all"),
+        outputUrl: document.getElementById("output-url"),
+        copyOutput: document.getElementById("copy-output"),
+        openOutput: document.getElementById("open-output"),
+        openDetectedCyberChef: document.getElementById("open-detected-cyberchef"),
+        openOutputCyberChef: document.getElementById("open-output-cyberchef"),
+        openDetectedNote: document.getElementById("open-detected-note"),
+        openOutputNote: document.getElementById("open-output-note"),
+        outputStatus: document.getElementById("output-status"),
+        fragmentEmpty: document.getElementById("fragment-empty"),
+        fragmentResults: document.getElementById("fragment-results"),
+        fragmentRaw: document.getElementById("fragment-raw"),
+        fragmentDecodedWrapper: document.getElementById("fragment-decoded-wrapper"),
+        fragmentDecoded: document.getElementById("fragment-decoded"),
+        fragmentLinkWrapper: document.getElementById("fragment-link-wrapper"),
+        fragmentCyberChef: document.getElementById("fragment-cyberchef")
+      };
+
+      let state = {
+        url: "",
+        params: [],
+        fragment: ""
+      };
+
+      const base64url = {
+        encode(value) {
+          const encoded = btoa(unescape(encodeURIComponent(value)));
+          return encoded.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+        },
+        decode(value) {
+          const padded = value.replace(/-/g, "+").replace(/_/g, "/");
+          const padLength = (4 - (padded.length % 4)) % 4;
+          const normalized = padded + "=".repeat(padLength);
+          return decodeURIComponent(escape(atob(normalized)));
+        }
+      };
+
+      function encodeForCyberChef(value) {
+        const encoded = btoa(unescape(encodeURIComponent(value)));
+        return encodeURIComponent(encoded);
+      }
+
+      function isTrackingParam(key) {
+        const lower = key.toLowerCase();
+        return TRACKING_PARAM_RULES.some((rule) => {
+          if (rule.type === "prefix") {
+            return lower.startsWith(rule.value.toLowerCase());
+          }
+          return lower === rule.value.toLowerCase();
+        });
+      }
+
+      function extractUrl(text) {
+        if (!text) return "";
+        const match = text.match(/https?:\/\/[^\s<>"]+/i);
+        if (!match) return "";
+        return trimTrailingPunctuation(match[0]);
+      }
+
+      function trimTrailingPunctuation(url) {
+        let trimmed = url;
+        while (/[).,!?;:]$/.test(trimmed)) {
+          trimmed = trimmed.slice(0, -1);
+        }
+        return trimmed;
+      }
+
+      function parseUrl(urlString) {
+        try {
+          return new URL(urlString);
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function buildStateFromUrl(urlObject) {
+        const params = [];
+        for (const [key, value] of urlObject.searchParams.entries()) {
+          const tracking = isTrackingParam(key);
+          params.push({
+            key,
+            value,
+            include: !tracking,
+            tracking
+          });
+        }
+        return {
+          url: urlObject.origin + urlObject.pathname,
+          params,
+          fragment: urlObject.hash ? urlObject.hash.slice(1) : ""
+        };
+      }
+
+      function renderParams() {
+        elements.paramsBody.innerHTML = "";
+        if (!state.params.length) {
+          elements.paramsTable.classList.add("hidden");
+          elements.paramsEmpty.classList.remove("hidden");
+          return;
+        }
+        elements.paramsTable.classList.remove("hidden");
+        elements.paramsEmpty.classList.add("hidden");
+
+        state.params.forEach((param, index) => {
+          const row = document.createElement("tr");
+
+          const keepCell = document.createElement("td");
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = param.include;
+          checkbox.addEventListener("change", () => {
+            state.params[index].include = checkbox.checked;
+            updateOutput();
+            syncHash();
+          });
+          keepCell.appendChild(checkbox);
+
+          const keyCell = document.createElement("td");
+          keyCell.textContent = param.key;
+
+          const valueCell = document.createElement("td");
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = param.value;
+          input.addEventListener("input", () => {
+            state.params[index].value = input.value;
+            updateOutput();
+            syncHash();
+          });
+          valueCell.appendChild(input);
+
+          const noteCell = document.createElement("td");
+          if (param.tracking) {
+            const pill = document.createElement("span");
+            pill.className = "pill tracking";
+            pill.textContent = "tracking";
+            noteCell.appendChild(pill);
+          } else {
+            const pill = document.createElement("span");
+            pill.className = "pill";
+            pill.textContent = "keep";
+            noteCell.appendChild(pill);
+          }
+
+          row.appendChild(keepCell);
+          row.appendChild(keyCell);
+          row.appendChild(valueCell);
+          row.appendChild(noteCell);
+          elements.paramsBody.appendChild(row);
+        });
+      }
+
+      function updateOutput() {
+        if (!state.url) {
+          elements.outputUrl.value = "";
+          elements.openOutput.href = "";
+          setCyberChefLink(elements.openOutputCyberChef, elements.openOutputNote, "");
+          return;
+        }
+        const urlObject = parseUrl(state.url);
+        if (!urlObject) return;
+        const params = new URLSearchParams();
+        state.params.forEach((param) => {
+          if (param.include) {
+            params.append(param.key, param.value);
+          }
+        });
+        urlObject.search = params.toString() ? `?${params.toString()}` : "";
+        urlObject.hash = state.fragment ? `#${state.fragment}` : "";
+        const rewritten = urlObject.toString();
+        elements.outputUrl.value = rewritten;
+        elements.openOutput.href = rewritten;
+        setCyberChefLink(elements.openOutputCyberChef, elements.openOutputNote, rewritten);
+        elements.outputStatus.textContent = params.toString()
+          ? `${params.toString().split("&").length} parameter(s) included.`
+          : "No query parameters included.";
+      }
+
+      function updateFragmentAnalysis(fragment) {
+        if (!fragment) {
+          elements.fragmentEmpty.classList.remove("hidden");
+          elements.fragmentResults.classList.add("hidden");
+          return;
+        }
+        elements.fragmentEmpty.classList.add("hidden");
+        elements.fragmentResults.classList.remove("hidden");
+        elements.fragmentRaw.textContent = `Fragment: #${fragment}`;
+
+        let decodedText = "";
+        let decodedJson = null;
+        let decodedOk = false;
+
+        try {
+          decodedText = base64url.decode(fragment);
+          decodedOk = true;
+          try {
+            decodedJson = JSON.parse(decodedText);
+          } catch (error) {
+            decodedJson = null;
+          }
+        } catch (error) {
+          decodedOk = false;
+        }
+
+        if (decodedOk) {
+          elements.fragmentDecodedWrapper.classList.remove("hidden");
+          elements.fragmentDecoded.textContent = decodedJson
+            ? JSON.stringify(decodedJson, null, 2)
+            : decodedText;
+          elements.fragmentLinkWrapper.classList.add("hidden");
+        } else {
+          elements.fragmentDecodedWrapper.classList.add("hidden");
+          elements.fragmentLinkWrapper.classList.remove("hidden");
+          elements.fragmentCyberChef.href = `https://gchq.github.io/CyberChef/#input=${encodeForCyberChef(
+            fragment
+          )}`;
+        }
+      }
+
+      function syncHash() {
+        const encoded = base64url.encode(JSON.stringify(state));
+        const newHash = `state=${encoded}`;
+        if (location.hash.slice(1) !== newHash) {
+          history.replaceState(null, "", `#${newHash}`);
+        }
+      }
+
+      function loadStateFromHash() {
+        if (!location.hash.startsWith("#state=")) return false;
+        const value = location.hash.slice(7);
+        if (!value) return false;
+        try {
+          const parsed = JSON.parse(base64url.decode(value));
+          if (!parsed || typeof parsed.url !== "string") return false;
+          state = {
+            url: parsed.url || "",
+            params: Array.isArray(parsed.params) ? parsed.params : [],
+            fragment: parsed.fragment || ""
+          };
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function handleParsedUrl(urlObject) {
+        state = buildStateFromUrl(urlObject);
+        renderParams();
+        updateOutput();
+        updateFragmentAnalysis(state.fragment);
+        syncHash();
+      }
+
+      function handleInputText(text) {
+        const extracted = extractUrl(text);
+        if (extracted) {
+          elements.detectedUrl.value = extracted;
+          elements.inputStatus.textContent = `Detected URL: ${extracted}`;
+          setCyberChefLink(elements.openDetectedCyberChef, elements.openDetectedNote, extracted);
+          const urlObject = parseUrl(extracted);
+          if (urlObject) {
+            handleParsedUrl(urlObject);
+          } else {
+            elements.inputStatus.textContent = "Detected text looks like a URL but is invalid.";
+          }
+        } else {
+          elements.inputStatus.textContent = "No URL detected yet.";
+        }
+      }
+
+      function clearAll() {
+        state = { url: "", params: [], fragment: "" };
+        elements.inputText.value = "";
+        elements.detectedUrl.value = "";
+        elements.outputUrl.value = "";
+        setCyberChefLink(elements.openDetectedCyberChef, elements.openDetectedNote, "");
+        setCyberChefLink(elements.openOutputCyberChef, elements.openOutputNote, "");
+        elements.outputStatus.textContent = "";
+        elements.inputStatus.textContent = "Paste text to begin.";
+        renderParams();
+        updateFragmentAnalysis("");
+        syncHash();
+      }
+
+      let inputTimer = null;
+      elements.inputText.addEventListener("input", (event) => {
+        const value = event.target.value;
+        clearTimeout(inputTimer);
+        inputTimer = setTimeout(() => handleInputText(value), 350);
+      });
+
+      elements.parseButton.addEventListener("click", () => {
+        const urlString = elements.detectedUrl.value.trim();
+        if (!urlString) {
+          elements.inputStatus.textContent = "Enter a URL to parse.";
+          return;
+        }
+        const urlObject = parseUrl(urlString);
+        if (!urlObject) {
+          elements.inputStatus.textContent = "That URL is not valid.";
+          return;
+        }
+        elements.inputStatus.textContent = "Parsed URL successfully.";
+        setCyberChefLink(elements.openDetectedCyberChef, elements.openDetectedNote, urlString);
+        handleParsedUrl(urlObject);
+      });
+
+      elements.clearButton.addEventListener("click", clearAll);
+
+      elements.selectAll.addEventListener("click", () => {
+        state.params.forEach((param) => {
+          param.include = true;
+        });
+        renderParams();
+        updateOutput();
+        syncHash();
+      });
+
+      elements.deselectAll.addEventListener("click", () => {
+        state.params.forEach((param) => {
+          param.include = false;
+        });
+        renderParams();
+        updateOutput();
+        syncHash();
+      });
+
+      elements.copyOutput.addEventListener("click", async () => {
+        if (!elements.outputUrl.value) return;
+        try {
+          await navigator.clipboard.writeText(elements.outputUrl.value);
+          elements.outputStatus.textContent = "Copied to clipboard.";
+        } catch (error) {
+          elements.outputStatus.textContent = "Copy failed. Select and copy manually.";
+        }
+      });
+
+      function setCyberChefLink(linkEl, noteEl, value) {
+        if (!value) {
+          linkEl.classList.add("disabled");
+          linkEl.setAttribute("aria-disabled", "true");
+          linkEl.removeAttribute("href");
+          if (noteEl) {
+            noteEl.textContent =
+              noteEl.dataset.disabledText || "Paste or generate a URL to enable this link.";
+          }
+          return;
+        }
+        linkEl.classList.remove("disabled");
+        linkEl.setAttribute("aria-disabled", "false");
+        linkEl.href = `https://gchq.github.io/CyberChef/#input=${encodeForCyberChef(value)}`;
+        if (noteEl) {
+          noteEl.textContent = "CyberChef link ready.";
+        }
+      }
+
+      function hydrateFromState() {
+        if (!state.url) return;
+        elements.detectedUrl.value = state.url + (state.fragment ? `#${state.fragment}` : "");
+        setCyberChefLink(elements.openDetectedCyberChef, elements.openDetectedNote, elements.detectedUrl.value);
+        renderParams();
+        updateOutput();
+        updateFragmentAnalysis(state.fragment);
+      }
+
+      if (loadStateFromHash()) {
+        hydrateFromState();
+        elements.inputStatus.textContent = "Loaded state from shared link.";
+      }
+    </script>
+  </body>
+</html>
