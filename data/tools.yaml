@@ -20,7 +20,7 @@ tools:
       description: "Parse a URL, review query parameters, and rebuild a cleaner link."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
+        introduced_commit: "f97c3182bd7aae8170b009bc82aba87960a4ce6d"
         updated_commit: null
       tags:
         - "html"
