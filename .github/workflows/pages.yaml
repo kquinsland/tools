@@ -25,6 +25,8 @@ defaults:
         shell: bash
 
 jobs:
+    # TODO: require ci_pre-commit.yaml so we don't even try to build if linting ... etc is broken.
+
     build:
         runs-on: ubuntu-latest
         permissions:
