@@ -1,5 +1,5 @@
 ---
-date: 2025-12-21T10:00:00-08:00
+date: 2025-12-20T10:00:00-08:00
 draft: false
 title: '3MF Inspector'
 description: 'Inspect 3MF metadata, thumbnails, and mesh objects directly in the browser.'

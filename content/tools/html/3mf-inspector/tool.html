@@ -192,6 +192,18 @@
         font-size: 0.92rem;
       }
 
+      .meta-value {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+
+      .meta-value.copyable {
+        cursor: pointer;
+        text-decoration: underline;
+        text-decoration-style: dotted;
+        text-underline-offset: 3px;
+      }
+
       .chip {
         display: inline-flex;
         align-items: center;
@@ -306,11 +318,27 @@
         thumbnails: [],
         unit: "millimeter",
         modelFiles: [],
+        fileSize: 0,
+        metadataSections: [],
+        slic3rObjectMeta: new Map(),
       };
 
       const formatNumber = (value) => {
         if (Number.isNaN(value)) return "–";
         return Number.parseFloat(value).toFixed(3).replace(/\.000$/, "");
+      };
+
+      const formatBytes = (bytes) => {
+        if (!bytes || Number.isNaN(bytes)) return "0 bytes";
+        if (bytes < 1024) return `${bytes} bytes`;
+        const units = ["KB", "MB", "GB", "TB"];
+        let size = bytes / 1024;
+        let unitIndex = 0;
+        while (size >= 1024 && unitIndex < units.length - 1) {
+          size /= 1024;
+          unitIndex += 1;
+        }
+        return `${bytes} bytes (${size.toFixed(1)} ${units[unitIndex]})`;
       };
 
       const setStatus = (message, tone = "info") => {
@@ -528,6 +556,7 @@
           `Objects: ${state.objects.length}`,
           `Unit: ${state.unit}`,
           `Metadata entries: ${state.metadata.length}`,
+          `File size: ${formatBytes(state.fileSize)}`,
         ];
         items.forEach((text) => {
           const li = document.createElement("li");
@@ -540,36 +569,74 @@
       };
 
       const renderMetadata = () => {
-        if (!state.metadata.length) {
+        const wrapper = document.createElement("div");
+
+        if (!state.metadata.length && !state.metadataSections.length) {
           metadataTable.textContent = "No metadata found in the model files.";
           metadataSection.hidden = false;
           return;
         }
-        const table = document.createElement("table");
-        const thead = document.createElement("thead");
-        const headRow = document.createElement("tr");
-        ["Name", "Value", "Type", "Source"].forEach((label) => {
-          const th = document.createElement("th");
-          th.textContent = label;
-          headRow.appendChild(th);
-        });
-        thead.appendChild(headRow);
-        table.appendChild(thead);
-        const tbody = document.createElement("tbody");
-        state.metadata.forEach((entry) => {
-          const row = document.createElement("tr");
-          [entry.name, entry.value, entry.type || "–", entry.source].forEach(
-            (value) => {
+
+        if (state.metadata.length) {
+          const table = document.createElement("table");
+          const thead = document.createElement("thead");
+          const headRow = document.createElement("tr");
+          ["Name", "Value", "Type", "Source"].forEach((label) => {
+            const th = document.createElement("th");
+            th.textContent = label;
+            headRow.appendChild(th);
+          });
+          thead.appendChild(headRow);
+          table.appendChild(thead);
+          const tbody = document.createElement("tbody");
+          state.metadata.forEach((entry) => {
+            const row = document.createElement("tr");
+            [entry.name, entry.value, entry.type || "–", entry.source].forEach(
+              (value) => {
+                const td = document.createElement("td");
+                td.textContent = value;
+                row.appendChild(td);
+              }
+            );
+            tbody.appendChild(row);
+          });
+          table.appendChild(tbody);
+          wrapper.appendChild(table);
+        }
+
+        state.metadataSections.forEach((section) => {
+          const details = document.createElement("details");
+          details.open = false;
+          const summary = document.createElement("summary");
+          summary.textContent = `${section.label} (${section.entries.length})`;
+          details.appendChild(summary);
+          const table = document.createElement("table");
+          const thead = document.createElement("thead");
+          const headRow = document.createElement("tr");
+          ["Key", "Value", "Type"].forEach((label) => {
+            const th = document.createElement("th");
+            th.textContent = label;
+            headRow.appendChild(th);
+          });
+          thead.appendChild(headRow);
+          table.appendChild(thead);
+          const tbody = document.createElement("tbody");
+          section.entries.forEach((entry) => {
+            const row = document.createElement("tr");
+            [entry.key, entry.value, entry.type || "–"].forEach((value) => {
               const td = document.createElement("td");
               td.textContent = value;
               row.appendChild(td);
-            }
-          );
-          tbody.appendChild(row);
+            });
+            tbody.appendChild(row);
+          });
+          table.appendChild(tbody);
+          details.appendChild(table);
+          wrapper.appendChild(details);
         });
-        table.appendChild(tbody);
+
         metadataTable.textContent = "";
-        metadataTable.appendChild(table);
+        metadataTable.appendChild(wrapper);
         metadataSection.hidden = false;
       };
 
@@ -631,9 +698,39 @@
             [`Components`, object.components.length ? object.components.join(", ") : "–"],
             [`Source`, object.source],
           ];
+          if (object.slic3rName) {
+            entries.push([`Slic3r name`, object.slic3rName]);
+          }
+          if (object.extruder) {
+            entries.push([`Extruder`, object.extruder]);
+          }
+          if (object.sourceFile) {
+            entries.push([`Source file`, object.sourceFile]);
+          }
           entries.forEach(([label, value]) => {
             const item = document.createElement("div");
-            item.textContent = `${label}: ${value}`;
+            const labelSpan = document.createElement("span");
+            labelSpan.textContent = `${label}: `;
+            const valueSpan = document.createElement("span");
+            valueSpan.className = "meta-value";
+            valueSpan.textContent = value;
+            if (label === "Source file" && value && value !== "–") {
+              valueSpan.classList.add("copyable");
+              valueSpan.title = "Click to copy full path";
+              valueSpan.addEventListener("click", async () => {
+                try {
+                  await navigator.clipboard.writeText(value);
+                  valueSpan.title = "Copied!";
+                  setTimeout(() => {
+                    valueSpan.title = "Click to copy full path";
+                  }, 1200);
+                } catch (error) {
+                  console.error(error);
+                }
+              });
+            }
+            item.appendChild(labelSpan);
+            item.appendChild(valueSpan);
             meta.appendChild(item);
           });
           card.appendChild(meta);
@@ -786,7 +883,59 @@
             components,
             source: sourceName,
             thumbnail: null,
+            slic3rName: "",
+            extruder: "",
+            sourceFile: "",
           });
+        });
+      };
+
+      const addSlic3rMetadata = (doc, sourceName) => {
+        const entries = [];
+        const objectMap = new Map();
+        const objectNodes = doc.getElementsByTagName("object");
+        Array.from(objectNodes).forEach((objectNode) => {
+          const id = objectNode.getAttribute("id");
+          if (!id) return;
+          const data = objectMap.get(id) || {
+            name: "",
+            extruder: "",
+            sourceFiles: new Set(),
+          };
+          const metadataNodes = objectNode.getElementsByTagName("metadata");
+          Array.from(metadataNodes).forEach((meta) => {
+            const type = meta.getAttribute("type") || "";
+            const key = meta.getAttribute("key") || "";
+            const value = meta.getAttribute("value") || "";
+            entries.push({ key, value, type });
+            if (type === "object" && key === "name") data.name = value;
+            if (type === "object" && key === "extruder") data.extruder = value;
+          });
+          const volumeNodes = objectNode.getElementsByTagName("volume");
+          Array.from(volumeNodes).forEach((volume) => {
+            const volumeMeta = volume.getElementsByTagName("metadata");
+            Array.from(volumeMeta).forEach((meta) => {
+              const type = meta.getAttribute("type") || "";
+              const key = meta.getAttribute("key") || "";
+              const value = meta.getAttribute("value") || "";
+              entries.push({ key, value, type });
+              if (type === "volume" && key === "source_file" && value) {
+                data.sourceFiles.add(value);
+              }
+            });
+          });
+          objectMap.set(id, data);
+        });
+
+        if (entries.length) {
+          state.metadataSections.push({
+            label: sourceName,
+            entries,
+          });
+        }
+
+        objectMap.forEach((data, id) => {
+          state.slic3rObjectMeta.set(id, data);
         });
       };
 
@@ -798,6 +947,7 @@
           return;
         }
         setStatus(`Loading ${file.name}...`);
+        const startTime = performance.now();
         try {
           const buffer = await file.arrayBuffer();
           const zip = await JSZip.loadAsync(buffer);
@@ -806,6 +956,9 @@
           state.metadata = [];
           state.thumbnails = [];
           state.modelFiles = [];
+          state.fileSize = file.size || 0;
+          state.metadataSections = [];
+          state.slic3rObjectMeta = new Map();
 
           const relsTargets = [];
           const relsFiles = Object.keys(zip.files).filter((name) => name.endsWith(".rels"));
@@ -826,6 +979,26 @@
             parseModel(modelText, modelFile);
           }
 
+          const metadataConfigFiles = Object.keys(zip.files).filter(
+            (name) => name.startsWith("Metadata/") && name.endsWith(".config")
+          );
+          for (const metadataFile of metadataConfigFiles) {
+            const metadataText = await zip.files[metadataFile].async("text");
+            const parser = new DOMParser();
+            const metadataDoc = parser.parseFromString(metadataText, "application/xml");
+            addSlic3rMetadata(metadataDoc, metadataFile);
+          }
+
+          state.objects.forEach((object) => {
+            const extra = state.slic3rObjectMeta.get(String(object.id));
+            if (!extra) return;
+            object.slic3rName = extra.name || "";
+            object.extruder = extra.extruder || "";
+            if (extra.sourceFiles && extra.sourceFiles.size) {
+              object.sourceFile = Array.from(extra.sourceFiles).join(", ");
+            }
+          });
+
           await assignThumbnails(zip, state.objects, relsTargets);
 
           renderSummary();
@@ -834,7 +1007,11 @@
           renderObjects();
 
           clearButton.disabled = false;
-          setStatus(`Loaded ${file.name}.`, "success");
+          const elapsed = (performance.now() - startTime) / 1000;
+          setStatus(
+            `Loaded ${file.name} in ${elapsed.toFixed(2)} seconds.`,
+            "success"
+          );
         } catch (error) {
           console.error(error);
           setStatus("Unable to parse this 3MF file. See console for details.", "error");
