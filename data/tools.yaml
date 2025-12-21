@@ -1,6 +1,20 @@
 ---
 version: 1
 tools:
+  - html/3mf-inspector:
+      title: "3MF Inspector"
+      language: "html"
+      description: "Inspect 3MF metadata, thumbnails, and mesh objects directly in the browser."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "html"
+        - "3mf"
+        - "3d"
+        - "metadata"
+        - "mesh"
   - html/hello-world:
       title: "Hello, World"
       language: "html"

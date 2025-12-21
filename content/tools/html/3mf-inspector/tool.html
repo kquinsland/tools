@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>3MF Inspector</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Bookerly", "Georgia", "Times New Roman", serif;
+        background: #f6f1ea;
+        color: #1d1b16;
+      }
+
+      body {
+        margin: 0;
+        padding: 24px;
+      }
+
+      .tool-shell {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+
+      header {
+        margin-bottom: 24px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+        letter-spacing: 0.02em;
+      }
+
+      p {
+        margin: 0 0 12px;
+        line-height: 1.5;
+      }
+
+      .panel {
+        background: #fff9f2;
+        border: 1px solid #d9cbb7;
+        border-radius: 14px;
+        padding: 16px;
+        box-shadow: 0 8px 24px rgba(31, 24, 16, 0.08);
+      }
+
+      #file-section {
+        display: grid;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      #drop-zone {
+        border: 2px dashed #b79c7a;
+        border-radius: 14px;
+        padding: 24px;
+        text-align: center;
+        background: #fff;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+
+      #drop-zone.dragover {
+        border-color: #7a5b33;
+        background: #fff4e6;
+      }
+
+      #file-input {
+        display: block;
+        margin-top: 12px;
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      button {
+        border: none;
+        background: #7a5b33;
+        color: #fff;
+        padding: 10px 16px;
+        border-radius: 999px;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #c7b29a;
+        color: #2d241a;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      #status-section {
+        margin-top: 12px;
+        font-size: 0.95rem;
+      }
+
+      #status-section span {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #efe4d6;
+      }
+
+      #summary-section {
+        margin-bottom: 24px;
+      }
+
+      #thumbnails-section {
+        margin-bottom: 24px;
+      }
+
+      .thumbnail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+      }
+
+      .thumbnail-card {
+        border: 1px solid #e1d2bf;
+        border-radius: 12px;
+        padding: 10px;
+        text-align: center;
+        background: #fff;
+      }
+
+      .thumbnail-card img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        display: block;
+        margin: 0 auto 8px;
+      }
+
+      #metadata-section {
+        margin-bottom: 24px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid #eadfce;
+        font-size: 0.95rem;
+      }
+
+      th {
+        background: #f4e9d9;
+      }
+
+      #objects-section {
+        margin-bottom: 24px;
+      }
+
+      .object-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .object-card {
+        border: 1px solid #d9cbb7;
+        border-radius: 14px;
+        padding: 16px;
+        background: #fff;
+      }
+
+      .object-card h3 {
+        margin-top: 0;
+        margin-bottom: 8px;
+      }
+
+      .object-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 8px 16px;
+        margin-bottom: 12px;
+      }
+
+      .object-meta div {
+        font-size: 0.92rem;
+      }
+
+      .meta-value {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+
+      .meta-value.copyable {
+        cursor: pointer;
+        text-decoration: underline;
+        text-decoration-style: dotted;
+        text-underline-offset: 3px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #f2e7d6;
+        font-size: 0.85rem;
+      }
+
+      .color-swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 1px solid #ccc;
+        display: inline-block;
+      }
+
+      .object-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .object-actions a {
+        display: inline-block;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: #2f4b3a;
+        color: #fff;
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+
+      .note {
+        font-size: 0.9rem;
+        color: #4a3b2b;
+      }
+
+      @media (max-width: 720px) {
+        body {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tool-shell">
+      <header>
+        <h1>3MF Inspector</h1>
+        <p>
+          Drop a 3MF file to see package metadata, thumbnails, and every object
+          inside the model. Mesh objects can be exported as ASCII STL.
+        </p>
+      </header>
+
+      <section id="file-section" class="panel">
+        <div id="drop-zone">
+          <strong>Drag &amp; drop a .3mf file here</strong>
+          <p class="note">Or choose one from your device.</p>
+          <input id="file-input" type="file" accept=".3mf" />
+        </div>
+        <div class="button-row">
+          <button id="clear-button" class="secondary" type="button" disabled>
+            Clear
+          </button>
+        </div>
+        <div id="status-section"><span>Waiting for a 3MF file.</span></div>
+      </section>
+
+      <section id="summary-section" class="panel" hidden>
+        <h2>Package Summary</h2>
+        <div id="summary-details"></div>
+      </section>
+
+      <section id="thumbnails-section" class="panel" hidden>
+        <h2>Thumbnails</h2>
+        <div class="thumbnail-grid" id="thumbnail-grid"></div>
+      </section>
+
+      <section id="metadata-section" class="panel" hidden>
+        <h2>Metadata</h2>
+        <div id="metadata-table"></div>
+      </section>
+
+      <section id="objects-section" class="panel" hidden>
+        <h2>Objects</h2>
+        <div class="object-grid" id="object-grid"></div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script>
+      const fileInput = document.getElementById("file-input");
+      const dropZone = document.getElementById("drop-zone");
+      const statusSection = document.getElementById("status-section");
+      const clearButton = document.getElementById("clear-button");
+      const summarySection = document.getElementById("summary-section");
+      const summaryDetails = document.getElementById("summary-details");
+      const thumbnailsSection = document.getElementById("thumbnails-section");
+      const thumbnailGrid = document.getElementById("thumbnail-grid");
+      const metadataSection = document.getElementById("metadata-section");
+      const metadataTable = document.getElementById("metadata-table");
+      const objectsSection = document.getElementById("objects-section");
+      const objectGrid = document.getElementById("object-grid");
+
+      const state = {
+        zip: null,
+        objects: [],
+        metadata: [],
+        thumbnails: [],
+        unit: "millimeter",
+        modelFiles: [],
+        fileSize: 0,
+        metadataSections: [],
+        slic3rObjectMeta: new Map(),
+      };
+
+      const formatNumber = (value) => {
+        if (Number.isNaN(value)) return "–";
+        return Number.parseFloat(value).toFixed(3).replace(/\.000$/, "");
+      };
+
+      const formatBytes = (bytes) => {
+        if (!bytes || Number.isNaN(bytes)) return "0 bytes";
+        if (bytes < 1024) return `${bytes} bytes`;
+        const units = ["KB", "MB", "GB", "TB"];
+        let size = bytes / 1024;
+        let unitIndex = 0;
+        while (size >= 1024 && unitIndex < units.length - 1) {
+          size /= 1024;
+          unitIndex += 1;
+        }
+        return `${bytes} bytes (${size.toFixed(1)} ${units[unitIndex]})`;
+      };
+
+      const setStatus = (message, tone = "info") => {
+        const span = statusSection.querySelector("span");
+        span.textContent = message;
+        span.style.background =
+          tone === "error" ? "#f8d7d7" : tone === "success" ? "#dbefda" : "#efe4d6";
+      };
+
+      const resetUI = () => {
+        summarySection.hidden = true;
+        thumbnailsSection.hidden = true;
+        metadataSection.hidden = true;
+        objectsSection.hidden = true;
+        summaryDetails.textContent = "";
+        thumbnailGrid.textContent = "";
+        metadataTable.textContent = "";
+        objectGrid.textContent = "";
+        clearButton.disabled = true;
+      };
+
+      const normalizeKey = (value) =>
+        (value || "")
+          .toString()
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "");
+
+      const getDirectChild = (node, name) => {
+        const children = Array.from(node.children);
+        return children.find((child) => child.localName === name) || null;
+      };
+
+      const resolveTargetPath = (basePath, target) => {
+        const baseDir = basePath.split("/").slice(0, -1).join("/");
+        const raw = target.startsWith("/") ? target.slice(1) : `${baseDir}/${target}`;
+        const parts = raw.split("/");
+        const stack = [];
+        for (const part of parts) {
+          if (!part || part === ".") continue;
+          if (part === "..") {
+            stack.pop();
+            continue;
+          }
+          stack.push(part);
+        }
+        return stack.join("/");
+      };
+
+      const parseRels = (text, relsPath) => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, "application/xml");
+        const rels = Array.from(doc.getElementsByTagName("Relationship"));
+        return rels.map((rel) => ({
+          id: rel.getAttribute("Id"),
+          type: rel.getAttribute("Type"),
+          target: resolveTargetPath(relsPath, rel.getAttribute("Target") || ""),
+        }));
+      };
+
+      const parseColorResources = (doc) => {
+        const colorGroups = new Map();
+        const baseMaterials = new Map();
+        const colorgroupNodes = doc.getElementsByTagNameNS("*", "colorgroup");
+        Array.from(colorgroupNodes).forEach((group) => {
+          const id = group.getAttribute("id");
+          const colors = Array.from(group.getElementsByTagNameNS("*", "color")).map(
+            (node) => node.getAttribute("color") || ""
+          );
+          if (id) colorGroups.set(id, colors);
+        });
+
+        const basematerialsNodes = doc.getElementsByTagNameNS("*", "basematerials");
+        Array.from(basematerialsNodes).forEach((group) => {
+          const id = group.getAttribute("id");
+          const materials = Array.from(group.getElementsByTagNameNS("*", "base")).map(
+            (node) => ({
+              name: node.getAttribute("name") || "",
+              color: node.getAttribute("displaycolor") || "",
+            })
+          );
+          if (id) baseMaterials.set(id, materials);
+        });
+
+        return { colorGroups, baseMaterials };
+      };
+
+      const resolveColor = (pid, pindex, colorGroups, baseMaterials) => {
+        if (!pid || pindex === null || pindex === undefined || Number.isNaN(pindex)) {
+          return null;
+        }
+        if (colorGroups.has(pid)) {
+          return colorGroups.get(pid)[pindex] || null;
+        }
+        if (baseMaterials.has(pid)) {
+          return baseMaterials.get(pid)[pindex]?.color || null;
+        }
+        return null;
+      };
+
+      const parseMesh = (mesh) => {
+        const vertices = [];
+        const triangles = [];
+        const verticesNode = getDirectChild(mesh, "vertices");
+        const trianglesNode = getDirectChild(mesh, "triangles");
+
+        if (verticesNode) {
+          Array.from(verticesNode.getElementsByTagNameNS("*", "vertex")).forEach(
+            (vertex) => {
+              vertices.push({
+                x: Number.parseFloat(vertex.getAttribute("x") || "0"),
+                y: Number.parseFloat(vertex.getAttribute("y") || "0"),
+                z: Number.parseFloat(vertex.getAttribute("z") || "0"),
+              });
+            }
+          );
+        }
+
+        if (trianglesNode) {
+          Array.from(trianglesNode.getElementsByTagNameNS("*", "triangle")).forEach(
+            (triangle) => {
+              triangles.push({
+                v1: Number.parseInt(triangle.getAttribute("v1"), 10),
+                v2: Number.parseInt(triangle.getAttribute("v2"), 10),
+                v3: Number.parseInt(triangle.getAttribute("v3"), 10),
+                pid: triangle.getAttribute("pid"),
+                p1: Number.parseInt(triangle.getAttribute("p1"), 10),
+              });
+            }
+          );
+        }
+
+        return { vertices, triangles };
+      };
+
+      const computeBounds = (vertices) => {
+        if (!vertices.length) {
+          return null;
+        }
+        let minX = vertices[0].x;
+        let minY = vertices[0].y;
+        let minZ = vertices[0].z;
+        let maxX = vertices[0].x;
+        let maxY = vertices[0].y;
+        let maxZ = vertices[0].z;
+        vertices.forEach((vertex) => {
+          minX = Math.min(minX, vertex.x);
+          minY = Math.min(minY, vertex.y);
+          minZ = Math.min(minZ, vertex.z);
+          maxX = Math.max(maxX, vertex.x);
+          maxY = Math.max(maxY, vertex.y);
+          maxZ = Math.max(maxZ, vertex.z);
+        });
+        return {
+          minX,
+          minY,
+          minZ,
+          maxX,
+          maxY,
+          maxZ,
+        };
+      };
+
+      const buildSTL = (object) => {
+        const { vertices, triangles } = object.mesh;
+        const lines = [`solid ${object.name || `object_${object.id}`}`];
+        triangles.forEach((tri) => {
+          const v1 = vertices[tri.v1];
+          const v2 = vertices[tri.v2];
+          const v3 = vertices[tri.v3];
+          if (!v1 || !v2 || !v3) return;
+          const ux = v2.x - v1.x;
+          const uy = v2.y - v1.y;
+          const uz = v2.z - v1.z;
+          const vx = v3.x - v1.x;
+          const vy = v3.y - v1.y;
+          const vz = v3.z - v1.z;
+          let nx = uy * vz - uz * vy;
+          let ny = uz * vx - ux * vz;
+          let nz = ux * vy - uy * vx;
+          const length = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+          nx /= length;
+          ny /= length;
+          nz /= length;
+          lines.push(`  facet normal ${nx} ${ny} ${nz}`);
+          lines.push("    outer loop");
+          lines.push(`      vertex ${v1.x} ${v1.y} ${v1.z}`);
+          lines.push(`      vertex ${v2.x} ${v2.y} ${v2.z}`);
+          lines.push(`      vertex ${v3.x} ${v3.y} ${v3.z}`);
+          lines.push("    endloop");
+          lines.push("  endfacet");
+        });
+        lines.push(`endsolid ${object.name || `object_${object.id}`}`);
+        return lines.join("\n");
+      };
+
+      const createObjectDownload = (object) => {
+        const stlData = buildSTL(object);
+        const blob = new Blob([stlData], { type: "application/sla" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${object.name || `object_${object.id}`}.stl`;
+        link.textContent = "Download STL";
+        link.addEventListener("click", () => {
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        });
+        return link;
+      };
+
+      const renderSummary = () => {
+        const list = document.createElement("ul");
+        list.className = "note";
+        const items = [
+          `Model files: ${state.modelFiles.length}`,
+          `Objects: ${state.objects.length}`,
+          `Unit: ${state.unit}`,
+          `Metadata entries: ${state.metadata.length}`,
+          `File size: ${formatBytes(state.fileSize)}`,
+        ];
+        items.forEach((text) => {
+          const li = document.createElement("li");
+          li.textContent = text;
+          list.appendChild(li);
+        });
+        summaryDetails.textContent = "";
+        summaryDetails.appendChild(list);
+        summarySection.hidden = false;
+      };
+
+      const renderMetadata = () => {
+        const wrapper = document.createElement("div");
+
+        if (!state.metadata.length && !state.metadataSections.length) {
+          metadataTable.textContent = "No metadata found in the model files.";
+          metadataSection.hidden = false;
+          return;
+        }
+
+        if (state.metadata.length) {
+          const table = document.createElement("table");
+          const thead = document.createElement("thead");
+          const headRow = document.createElement("tr");
+          ["Name", "Value", "Type", "Source"].forEach((label) => {
+            const th = document.createElement("th");
+            th.textContent = label;
+            headRow.appendChild(th);
+          });
+          thead.appendChild(headRow);
+          table.appendChild(thead);
+          const tbody = document.createElement("tbody");
+          state.metadata.forEach((entry) => {
+            const row = document.createElement("tr");
+            [entry.name, entry.value, entry.type || "–", entry.source].forEach(
+              (value) => {
+                const td = document.createElement("td");
+                td.textContent = value;
+                row.appendChild(td);
+              }
+            );
+            tbody.appendChild(row);
+          });
+          table.appendChild(tbody);
+          wrapper.appendChild(table);
+        }
+
+        state.metadataSections.forEach((section) => {
+          const details = document.createElement("details");
+          details.open = false;
+          const summary = document.createElement("summary");
+          summary.textContent = `${section.label} (${section.entries.length})`;
+          details.appendChild(summary);
+          const table = document.createElement("table");
+          const thead = document.createElement("thead");
+          const headRow = document.createElement("tr");
+          ["Key", "Value", "Type"].forEach((label) => {
+            const th = document.createElement("th");
+            th.textContent = label;
+            headRow.appendChild(th);
+          });
+          thead.appendChild(headRow);
+          table.appendChild(thead);
+          const tbody = document.createElement("tbody");
+          section.entries.forEach((entry) => {
+            const row = document.createElement("tr");
+            [entry.key, entry.value, entry.type || "–"].forEach((value) => {
+              const td = document.createElement("td");
+              td.textContent = value;
+              row.appendChild(td);
+            });
+            tbody.appendChild(row);
+          });
+          table.appendChild(tbody);
+          details.appendChild(table);
+          wrapper.appendChild(details);
+        });
+
+        metadataTable.textContent = "";
+        metadataTable.appendChild(wrapper);
+        metadataSection.hidden = false;
+      };
+
+      const renderThumbnails = () => {
+        if (!state.thumbnails.length) {
+          thumbnailsSection.hidden = true;
+          return;
+        }
+        thumbnailGrid.textContent = "";
+        state.thumbnails.forEach((thumb) => {
+          const card = document.createElement("div");
+          card.className = "thumbnail-card";
+          const img = document.createElement("img");
+          img.src = thumb.url;
+          img.alt = thumb.label;
+          const label = document.createElement("div");
+          label.textContent = thumb.label;
+          card.appendChild(img);
+          card.appendChild(label);
+          thumbnailGrid.appendChild(card);
+        });
+        thumbnailsSection.hidden = false;
+      };
+
+      const renderObjects = () => {
+        objectGrid.textContent = "";
+        if (!state.objects.length) {
+          objectGrid.textContent = "No objects found in this 3MF file.";
+          objectsSection.hidden = false;
+          return;
+        }
+        state.objects.forEach((object) => {
+          const card = document.createElement("div");
+          card.className = "object-card";
+
+          const title = document.createElement("h3");
+          title.textContent = object.name || `Object ${object.id}`;
+          card.appendChild(title);
+
+          const meta = document.createElement("div");
+          meta.className = "object-meta";
+          const entries = [
+            [`ID`, object.id],
+            [`Type`, object.type],
+            [
+              `Mesh`,
+              object.mesh
+                ? `${object.mesh.vertices.length} vertices / ${object.mesh.triangles.length} triangles`
+                : "No mesh",
+            ],
+            [
+              `Size`,
+              object.bounds
+                ? `${formatNumber(object.bounds.maxX - object.bounds.minX)} × ${formatNumber(
+                    object.bounds.maxY - object.bounds.minY
+                  )} × ${formatNumber(object.bounds.maxZ - object.bounds.minZ)} ${state.unit}`
+                : "–",
+            ],
+            [`Components`, object.components.length ? object.components.join(", ") : "–"],
+            [`Source`, object.source],
+          ];
+          if (object.slic3rName) {
+            entries.push([`Slic3r name`, object.slic3rName]);
+          }
+          if (object.extruder) {
+            entries.push([`Extruder`, object.extruder]);
+          }
+          if (object.sourceFile) {
+            entries.push([`Source file`, object.sourceFile]);
+          }
+          entries.forEach(([label, value]) => {
+            const item = document.createElement("div");
+            const labelSpan = document.createElement("span");
+            labelSpan.textContent = `${label}: `;
+            const valueSpan = document.createElement("span");
+            valueSpan.className = "meta-value";
+            valueSpan.textContent = value;
+            if (label === "Source file" && value && value !== "–") {
+              valueSpan.classList.add("copyable");
+              valueSpan.title = "Click to copy full path";
+              valueSpan.addEventListener("click", async () => {
+                try {
+                  await navigator.clipboard.writeText(value);
+                  valueSpan.title = "Copied!";
+                  setTimeout(() => {
+                    valueSpan.title = "Click to copy full path";
+                  }, 1200);
+                } catch (error) {
+                  console.error(error);
+                }
+              });
+            }
+            item.appendChild(labelSpan);
+            item.appendChild(valueSpan);
+            meta.appendChild(item);
+          });
+          card.appendChild(meta);
+
+          if (object.color) {
+            const colorChip = document.createElement("div");
+            colorChip.className = "chip";
+            const swatch = document.createElement("span");
+            swatch.className = "color-swatch";
+            swatch.style.background = object.color;
+            const text = document.createElement("span");
+            text.textContent = `Color ${object.color}`;
+            colorChip.appendChild(swatch);
+            colorChip.appendChild(text);
+            card.appendChild(colorChip);
+          }
+
+          if (object.thumbnail) {
+            const thumbWrap = document.createElement("div");
+            thumbWrap.style.marginTop = "12px";
+            const img = document.createElement("img");
+            img.src = object.thumbnail.url;
+            img.alt = object.thumbnail.label;
+            img.style.maxWidth = "220px";
+            img.style.borderRadius = "10px";
+            thumbWrap.appendChild(img);
+            card.appendChild(thumbWrap);
+          }
+
+          const actions = document.createElement("div");
+          actions.className = "object-actions";
+          if (object.mesh && object.mesh.triangles.length) {
+            actions.appendChild(createObjectDownload(object));
+          }
+          card.appendChild(actions);
+          objectGrid.appendChild(card);
+        });
+        objectsSection.hidden = false;
+      };
+
+      const assignThumbnails = async (zip, objects, thumbnailTargets) => {
+        const imageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
+        const imageFiles = Object.keys(zip.files).filter((name) =>
+          imageExtensions.some((ext) => name.toLowerCase().endsWith(ext))
+        );
+
+        const thumbnails = [];
+        const used = new Set();
+
+        const addThumb = async (name, label, objectId) => {
+          if (!zip.files[name]) return;
+          const blob = await zip.files[name].async("blob");
+          const url = URL.createObjectURL(blob);
+          const thumb = { name, label, url };
+          if (objectId) {
+            const object = objects.find((item) => item.id === objectId);
+            if (object) object.thumbnail = thumb;
+          } else {
+            thumbnails.push(thumb);
+          }
+          used.add(name);
+        };
+
+        for (const target of thumbnailTargets) {
+          if (zip.files[target]) {
+            await addThumb(target, "Package thumbnail");
+          }
+        }
+
+        for (const name of imageFiles) {
+          const lower = name.toLowerCase();
+          if (!lower.includes("thumb")) continue;
+          const match = objects.find((object) => {
+            const key = normalizeKey(object.name || "");
+            return lower.includes(String(object.id)) || (key && lower.includes(key));
+          });
+          if (match) {
+            await addThumb(name, `Thumbnail for ${match.name || `Object ${match.id}`}`, match.id);
+          } else if (!used.has(name)) {
+            await addThumb(name, "Thumbnail");
+          }
+        }
+
+        state.thumbnails = thumbnails;
+      };
+
+      const parseModel = (text, sourceName) => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, "application/xml");
+        const model = doc.getElementsByTagNameNS("*", "model")[0];
+        if (!model) return;
+        state.unit = model.getAttribute("unit") || state.unit;
+
+        const metadataNodes = doc.getElementsByTagNameNS("*", "metadata");
+        Array.from(metadataNodes).forEach((node) => {
+          const name = node.getAttribute("name") || "(unnamed)";
+          state.metadata.push({
+            name,
+            value: node.textContent?.trim() || "",
+            type: node.getAttribute("type") || "",
+            source: sourceName,
+          });
+        });
+
+        const { colorGroups, baseMaterials } = parseColorResources(doc);
+        const objectNodes = doc.getElementsByTagNameNS("*", "object");
+        Array.from(objectNodes).forEach((objectNode) => {
+          const id = objectNode.getAttribute("id") || "unknown";
+          const name = objectNode.getAttribute("name") || "";
+          const type = objectNode.getAttribute("type") || "model";
+          const componentsNode = getDirectChild(objectNode, "components");
+          const meshNode = getDirectChild(objectNode, "mesh");
+          let mesh = null;
+          let bounds = null;
+          let color = null;
+          const components = [];
+
+          if (meshNode) {
+            mesh = parseMesh(meshNode);
+            bounds = computeBounds(mesh.vertices);
+            const pid = objectNode.getAttribute("pid");
+            const pindex = Number.parseInt(objectNode.getAttribute("pindex"), 10);
+            color = resolveColor(pid, pindex, colorGroups, baseMaterials);
+            if (!color && mesh.triangles.length) {
+              const tri = mesh.triangles[0];
+              color = resolveColor(tri.pid, tri.p1, colorGroups, baseMaterials);
+            }
+          }
+
+          if (componentsNode) {
+            Array.from(componentsNode.getElementsByTagNameNS("*", "component")).forEach(
+              (component) => {
+                const objectId = component.getAttribute("objectid") || "";
+                const transform = component.getAttribute("transform") || "";
+                const value = transform
+                  ? `${objectId} (transform: ${transform})`
+                  : objectId;
+                if (objectId) components.push(value);
+              }
+            );
+          }
+
+          state.objects.push({
+            id,
+            name,
+            type,
+            mesh,
+            bounds,
+            color,
+            components,
+            source: sourceName,
+            thumbnail: null,
+            slic3rName: "",
+            extruder: "",
+            sourceFile: "",
+          });
+        });
+      };
+
+      const addSlic3rMetadata = (doc, sourceName) => {
+        const entries = [];
+        const objectMap = new Map();
+        const objectNodes = doc.getElementsByTagName("object");
+        Array.from(objectNodes).forEach((objectNode) => {
+          const id = objectNode.getAttribute("id");
+          if (!id) return;
+          const data = objectMap.get(id) || {
+            name: "",
+            extruder: "",
+            sourceFiles: new Set(),
+          };
+          const metadataNodes = objectNode.getElementsByTagName("metadata");
+          Array.from(metadataNodes).forEach((meta) => {
+            const type = meta.getAttribute("type") || "";
+            const key = meta.getAttribute("key") || "";
+            const value = meta.getAttribute("value") || "";
+            entries.push({ key, value, type });
+            if (type === "object" && key === "name") data.name = value;
+            if (type === "object" && key === "extruder") data.extruder = value;
+          });
+          const volumeNodes = objectNode.getElementsByTagName("volume");
+          Array.from(volumeNodes).forEach((volume) => {
+            const volumeMeta = volume.getElementsByTagName("metadata");
+            Array.from(volumeMeta).forEach((meta) => {
+              const type = meta.getAttribute("type") || "";
+              const key = meta.getAttribute("key") || "";
+              const value = meta.getAttribute("value") || "";
+              entries.push({ key, value, type });
+              if (type === "volume" && key === "source_file" && value) {
+                data.sourceFiles.add(value);
+              }
+            });
+          });
+          objectMap.set(id, data);
+        });
+
+        if (entries.length) {
+          state.metadataSections.push({
+            label: sourceName,
+            entries,
+          });
+        }
+
+        objectMap.forEach((data, id) => {
+          state.slic3rObjectMeta.set(id, data);
+        });
+      };
+
+      const handleFile = async (file) => {
+        resetUI();
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith(".3mf")) {
+          setStatus("Please select a .3mf file.", "error");
+          return;
+        }
+        setStatus(`Loading ${file.name}...`);
+        const startTime = performance.now();
+        try {
+          const buffer = await file.arrayBuffer();
+          const zip = await JSZip.loadAsync(buffer);
+          state.zip = zip;
+          state.objects = [];
+          state.metadata = [];
+          state.thumbnails = [];
+          state.modelFiles = [];
+          state.fileSize = file.size || 0;
+          state.metadataSections = [];
+          state.slic3rObjectMeta = new Map();
+
+          const relsTargets = [];
+          const relsFiles = Object.keys(zip.files).filter((name) => name.endsWith(".rels"));
+          for (const relsFile of relsFiles) {
+            const relsText = await zip.files[relsFile].async("text");
+            const rels = parseRels(relsText, relsFile);
+            rels.forEach((rel) => {
+              if (rel.type && rel.type.toLowerCase().includes("thumbnail")) {
+                relsTargets.push(rel.target);
+              }
+            });
+          }
+
+          const modelFiles = Object.keys(zip.files).filter((name) => name.endsWith(".model"));
+          state.modelFiles = modelFiles;
+          for (const modelFile of modelFiles) {
+            const modelText = await zip.files[modelFile].async("text");
+            parseModel(modelText, modelFile);
+          }
+
+          const metadataConfigFiles = Object.keys(zip.files).filter(
+            (name) => name.startsWith("Metadata/") && name.endsWith(".config")
+          );
+          for (const metadataFile of metadataConfigFiles) {
+            const metadataText = await zip.files[metadataFile].async("text");
+            const parser = new DOMParser();
+            const metadataDoc = parser.parseFromString(metadataText, "application/xml");
+            addSlic3rMetadata(metadataDoc, metadataFile);
+          }
+
+          state.objects.forEach((object) => {
+            const extra = state.slic3rObjectMeta.get(String(object.id));
+            if (!extra) return;
+            object.slic3rName = extra.name || "";
+            object.extruder = extra.extruder || "";
+            if (extra.sourceFiles && extra.sourceFiles.size) {
+              object.sourceFile = Array.from(extra.sourceFiles).join(", ");
+            }
+          });
+
+          await assignThumbnails(zip, state.objects, relsTargets);
+
+          renderSummary();
+          renderThumbnails();
+          renderMetadata();
+          renderObjects();
+
+          clearButton.disabled = false;
+          const elapsed = (performance.now() - startTime) / 1000;
+          setStatus(
+            `Loaded ${file.name} in ${elapsed.toFixed(2)} seconds.`,
+            "success"
+          );
+        } catch (error) {
+          console.error(error);
+          setStatus("Unable to parse this 3MF file. See console for details.", "error");
+        }
+      };
+
+      fileInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        handleFile(file);
+      });
+
+      dropZone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        dropZone.classList.add("dragover");
+      });
+
+      dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("dragover");
+      });
+
+      dropZone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        dropZone.classList.remove("dragover");
+        const file = event.dataTransfer.files[0];
+        if (file) handleFile(file);
+      });
+
+      clearButton.addEventListener("click", () => {
+        resetUI();
+        fileInput.value = "";
+        setStatus("Waiting for a 3MF file.");
+      });
+    </script>
+  </body>
+</html>
