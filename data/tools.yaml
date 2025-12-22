@@ -7,8 +7,8 @@ tools:
       description: "Inspect 3MF metadata, thumbnails, and mesh objects directly in the browser."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
-        updated_commit: null
+        introduced_commit: "f78e582ac9cb67a84843a088bfaf1d1d765c6cc0"
+        updated_commit: "15e2dcdefa0d57ed68334cc4d4aac4127f0f66b7"
       tags:
         - "html"
         - "3mf"
@@ -28,6 +28,20 @@ tools:
         - "html"
         - "basic"
         - "input"
+  - html/helm-chart-discovery:
+      title: "Helm Chart Discovery"
+      language: "html"
+      description: "Fetch a Helm repository index.yaml and explore chart metadata with search and filters."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "helm"
+        - "charts"
+        - "html"
+        - "discover"
+        - "search"
   - html/url-inspect-rewrite:
       title: "URL Inspect & Rewrite"
       language: "html"

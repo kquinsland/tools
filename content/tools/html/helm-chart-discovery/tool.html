@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Helm Chart Discovery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f2ee;
+        --panel: #fffdf9;
+        --ink: #1c1a18;
+        --muted: #5d564e;
+        --accent: #c45a2a;
+        --accent-ink: #5d2714;
+        --accent-soft: #f9e8df;
+        --border: #e2d8cf;
+        --shadow: 0 18px 40px rgba(20, 12, 4, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+        color: var(--ink);
+        background: radial-gradient(circle at top right, #fff7ee 0%, var(--bg) 55%, #efe7df 100%);
+        min-height: 100vh;
+      }
+
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 36px 20px 80px;
+      }
+
+      header {
+        margin-bottom: 28px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-family: "Fraunces", "Georgia", serif;
+        font-size: clamp(2rem, 4vw, 3rem);
+        letter-spacing: -0.02em;
+      }
+
+      p.lead {
+        margin: 0;
+        max-width: 70ch;
+        color: var(--muted);
+        font-size: 1.02rem;
+      }
+
+      section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 20px;
+        margin: 18px 0;
+        box-shadow: var(--shadow);
+      }
+
+      section h2 {
+        margin: 0 0 12px;
+        font-size: 1.15rem;
+        font-weight: 700;
+      }
+
+      label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      input[type="text"],
+      input[type="search"] {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 0.98rem;
+        font-family: "SF Mono", "Menlo", "Consolas", monospace;
+        background: #fbf8f4;
+      }
+
+      input[type="file"] {
+        border-radius: 12px;
+        padding: 10px 12px;
+        border: 1px dashed var(--border);
+        width: 100%;
+        background: #fbf8f4;
+      }
+
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .row > * {
+        flex: 1 1 240px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      button {
+        border: 1px solid var(--border);
+        background: var(--accent-soft);
+        color: var(--accent-ink);
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(196, 90, 42, 0.25);
+      }
+
+      button.secondary {
+        background: #f3ede7;
+        color: var(--muted);
+      }
+
+      .drop-zone {
+        border: 2px dashed var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        text-align: center;
+        color: var(--muted);
+        background: #fbf8f4;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+
+      .drop-zone.active {
+        border-color: var(--accent);
+        background: #fef1e8;
+      }
+
+      .status {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+        font-weight: 600;
+      }
+
+      .status span {
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #f2ebe4;
+        color: var(--muted);
+      }
+
+      .status span.good {
+        background: #e9f5ee;
+        color: #1b5a33;
+      }
+
+      .status span.bad {
+        background: #fdecea;
+        color: #8f1d14;
+      }
+
+      .chart-list {
+        display: grid;
+        gap: 14px;
+      }
+
+      details.chart-card {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      details.chart-card summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 16px 18px;
+        background: #fff7ef;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-weight: 700;
+      }
+
+      details.chart-card summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .chart-name {
+        font-family: "Fraunces", "Georgia", serif;
+        font-size: 1.05rem;
+      }
+
+      .badge {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        background: #f0e6dc;
+        color: var(--muted);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .chart-body {
+        padding: 16px 18px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .chart-meta {
+        display: grid;
+        gap: 6px;
+      }
+
+      .chart-meta div {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+      }
+
+      .chart-meta strong {
+        min-width: 120px;
+        color: var(--muted);
+      }
+
+      .version-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .version-item {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: #fffdf9;
+      }
+
+      .version-item header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 6px;
+        font-weight: 600;
+      }
+
+      .version-item a {
+        color: var(--accent-ink);
+        text-decoration: none;
+      }
+
+      .version-item a:hover {
+        text-decoration: underline;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .empty {
+        padding: 20px;
+        text-align: center;
+        color: var(--muted);
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        background: #fffaf4;
+      }
+
+      @media (max-width: 700px) {
+        details.chart-card summary {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .chart-meta div {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .chart-meta strong {
+          min-width: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Helm Chart Discovery</h1>
+        <p class="lead">
+          Paste a Helm repository domain, base URL, or full index.yaml path. The tool fetches the
+          index and summarizes charts, versions, and metadata with search and collapsible cards.
+        </p>
+      </header>
+
+      <section id="input-section">
+        <h2>1) Provide a repository</h2>
+        <div class="row">
+          <div>
+            <label for="repo-input">Repository URL or domain</label>
+            <input
+              id="repo-input"
+              type="text"
+              placeholder="charts.zigbee2mqtt.io or https://example.com/charts"
+            />
+          </div>
+          <div class="actions">
+            <button id="load-url">Load index.yaml</button>
+            <button id="load-sample" class="secondary">Load sample</button>
+            <button id="clear-all" class="secondary">Clear</button>
+          </div>
+        </div>
+
+        <div style="height: 14px"></div>
+
+        <div class="row">
+          <div>
+            <label for="file-input">Or open a local index.yaml file</label>
+            <input id="file-input" type="file" accept=".yaml,.yml" />
+          </div>
+          <div class="drop-zone" id="drop-zone">Drag and drop an index.yaml file here</div>
+        </div>
+      </section>
+
+      <section id="status-section">
+        <h2>2) Status</h2>
+        <div class="status">
+          <span id="status-pill">Waiting for input.</span>
+          <span id="count-pill">No charts loaded.</span>
+          <span id="source-pill">Source: none</span>
+        </div>
+      </section>
+
+      <section id="results-section">
+        <h2>3) Browse charts</h2>
+        <div class="row">
+          <div>
+            <label for="search-input">Search charts</label>
+            <input id="search-input" type="search" placeholder="Filter by name, description, keyword" />
+          </div>
+          <div class="actions">
+            <button id="expand-all" class="secondary">Expand all</button>
+            <button id="collapse-all" class="secondary">Collapse all</button>
+          </div>
+        </div>
+        <div style="height: 14px"></div>
+        <div id="chart-list" class="chart-list"></div>
+        <div id="empty-state" class="empty" hidden>No charts to display.</div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script>
+      const repoInput = document.getElementById("repo-input");
+      const loadUrlButton = document.getElementById("load-url");
+      const loadSampleButton = document.getElementById("load-sample");
+      const clearButton = document.getElementById("clear-all");
+      const fileInput = document.getElementById("file-input");
+      const dropZone = document.getElementById("drop-zone");
+      const statusPill = document.getElementById("status-pill");
+      const countPill = document.getElementById("count-pill");
+      const sourcePill = document.getElementById("source-pill");
+      const searchInput = document.getElementById("search-input");
+      const expandAllButton = document.getElementById("expand-all");
+      const collapseAllButton = document.getElementById("collapse-all");
+      const chartList = document.getElementById("chart-list");
+      const emptyState = document.getElementById("empty-state");
+
+      let charts = [];
+      let repoBaseUrl = "";
+      let activeSource = "";
+
+      const sampleUrl = "https://charts.bitnami.com/bitnami";
+
+      function setStatus(message, type) {
+        statusPill.textContent = message;
+        statusPill.className = type ? type : "";
+      }
+
+      function setCounts(chartCount, versionCount) {
+        if (chartCount === 0) {
+          countPill.textContent = "No charts loaded.";
+          return;
+        }
+        countPill.textContent = `${chartCount} charts, ${versionCount} versions`;
+      }
+
+      function setSource(text) {
+        sourcePill.textContent = text ? `Source: ${text}` : "Source: none";
+      }
+
+      function normalizeInput(value) {
+        const trimmed = value.trim();
+        if (!trimmed) {
+          return null;
+        }
+        const looksLikePath = /^([A-Za-z]:\\|\/.+)/.test(trimmed) || trimmed.startsWith("file://");
+        if (looksLikePath) {
+          return { error: "Local file paths cannot be fetched. Use the file picker instead." };
+        }
+        let normalized = trimmed;
+        if (!/^https?:\/\//i.test(normalized)) {
+          normalized = `https://${normalized}`;
+        }
+        if (!/index\.ya?ml$/i.test(normalized)) {
+          normalized = normalized.replace(/\/+$/, "");
+          normalized = `${normalized}/index.yaml`;
+        }
+        return { url: normalized };
+      }
+
+      function updateHash(value) {
+        if (!value) {
+          history.replaceState(null, "", window.location.pathname);
+          return;
+        }
+        const encoded = encodeURIComponent(value);
+        history.replaceState(null, "", `${window.location.pathname}#repo=${encoded}`);
+      }
+
+      function resolveUrl(entryUrl) {
+        if (!entryUrl) {
+          return "";
+        }
+        if (!repoBaseUrl) {
+          return entryUrl;
+        }
+        try {
+          return new URL(entryUrl, repoBaseUrl).toString();
+        } catch (error) {
+          return entryUrl;
+        }
+      }
+
+      function safeText(value) {
+        return value ? String(value) : "";
+      }
+
+      function parseIndexYaml(text, sourceUrl) {
+        let data;
+        try {
+          data = window.jsyaml.load(text);
+        } catch (error) {
+          throw new Error(`YAML parse error: ${error.message}`);
+        }
+
+        if (!data || !data.entries || typeof data.entries !== "object") {
+          throw new Error("No 'entries' section found in index.yaml.");
+        }
+
+        repoBaseUrl = sourceUrl ? new URL(".", sourceUrl).toString() : "";
+        charts = [];
+
+        let totalVersions = 0;
+
+        for (const [name, versions] of Object.entries(data.entries)) {
+          if (!Array.isArray(versions)) {
+            continue;
+          }
+          totalVersions += versions.length;
+          const latest = versions[0] || {};
+          const keywords = Array.isArray(latest.keywords) ? latest.keywords : [];
+          const chart = {
+            name,
+            latest,
+            versions,
+            keywordText: keywords.join(", "),
+            searchText: `${name} ${safeText(latest.description)} ${keywords.join(" ")}`.toLowerCase(),
+          };
+          charts.push(chart);
+        }
+
+        charts.sort((a, b) => a.name.localeCompare(b.name));
+
+        return { chartCount: charts.length, versionCount: totalVersions };
+      }
+
+      function renderCharts() {
+        const term = searchInput.value.trim().toLowerCase();
+        const fragment = document.createDocumentFragment();
+        let visibleCount = 0;
+
+        charts.forEach((chart) => {
+          if (term && !chart.searchText.includes(term)) {
+            return;
+          }
+          visibleCount += 1;
+
+          const details = document.createElement("details");
+          details.className = "chart-card";
+
+          const summary = document.createElement("summary");
+          const summaryLeft = document.createElement("span");
+          summaryLeft.className = "chart-name";
+          summaryLeft.textContent = chart.name;
+
+          const summaryRight = document.createElement("span");
+          summaryRight.className = "badge";
+          summaryRight.textContent = `Latest: ${safeText(chart.latest.version) || "unknown"}`;
+
+          summary.appendChild(summaryLeft);
+          summary.appendChild(summaryRight);
+          details.appendChild(summary);
+
+          const body = document.createElement("div");
+          body.className = "chart-body";
+
+          const meta = document.createElement("div");
+          meta.className = "chart-meta";
+
+          const description = safeText(chart.latest.description);
+          if (description) {
+            meta.appendChild(buildMetaRow("Description", description));
+          }
+
+          const appVersion = safeText(chart.latest.appVersion || chart.latest.appversion);
+          if (appVersion) {
+            meta.appendChild(buildMetaRow("App version", appVersion));
+          }
+
+          const home = safeText(chart.latest.home);
+          if (home) {
+            meta.appendChild(buildMetaRow("Homepage", home, true));
+          }
+
+          const sources = Array.isArray(chart.latest.sources) ? chart.latest.sources : [];
+          if (sources.length) {
+            meta.appendChild(buildMetaRow("Sources", sources.join(", "), true));
+          }
+
+          const keywords = safeText(chart.keywordText);
+          if (keywords) {
+            meta.appendChild(buildMetaRow("Keywords", keywords));
+          }
+
+          body.appendChild(meta);
+
+          const versionList = document.createElement("div");
+          versionList.className = "version-list";
+
+          chart.versions.forEach((version) => {
+            const versionItem = document.createElement("div");
+            versionItem.className = "version-item";
+
+            const versionHeader = document.createElement("header");
+            const versionTitle = document.createElement("span");
+            versionTitle.textContent = `Version ${safeText(version.version) || "unknown"}`;
+
+            const created = version.created ? new Date(version.created) : null;
+            const createdLabel = created && !Number.isNaN(created.getTime())
+              ? created.toLocaleDateString()
+              : safeText(version.created);
+
+            const createdBadge = document.createElement("span");
+            createdBadge.className = "badge";
+            createdBadge.textContent = createdLabel ? `Created ${createdLabel}` : "Created unknown";
+
+            versionHeader.appendChild(versionTitle);
+            versionHeader.appendChild(createdBadge);
+            versionItem.appendChild(versionHeader);
+
+            const urls = Array.isArray(version.urls) ? version.urls : [];
+            if (urls.length) {
+              const urlList = document.createElement("div");
+              urlList.className = "muted";
+              urls.forEach((urlValue, index) => {
+                const resolved = resolveUrl(urlValue);
+                const link = document.createElement("a");
+                link.href = resolved;
+                link.textContent = resolved;
+                link.target = "_blank";
+                link.rel = "noopener";
+                urlList.appendChild(link);
+                if (index < urls.length - 1) {
+                  urlList.appendChild(document.createElement("br"));
+                }
+              });
+              versionItem.appendChild(urlList);
+            }
+
+            const digest = safeText(version.digest);
+            if (digest) {
+              const digestLine = document.createElement("div");
+              digestLine.className = "muted";
+              digestLine.textContent = `Digest: ${digest}`;
+              versionItem.appendChild(digestLine);
+            }
+
+            versionList.appendChild(versionItem);
+          });
+
+          body.appendChild(versionList);
+          details.appendChild(body);
+          fragment.appendChild(details);
+        });
+
+        chartList.innerHTML = "";
+        chartList.appendChild(fragment);
+        emptyState.hidden = visibleCount !== 0;
+      }
+
+      function buildMetaRow(label, value, isLink) {
+        const row = document.createElement("div");
+        const labelEl = document.createElement("strong");
+        labelEl.textContent = `${label}:`;
+        row.appendChild(labelEl);
+
+        const valueEl = document.createElement("span");
+        if (isLink && /^https?:\/\//i.test(value)) {
+          const link = document.createElement("a");
+          link.href = value;
+          link.textContent = value;
+          link.target = "_blank";
+          link.rel = "noopener";
+          valueEl.appendChild(link);
+        } else {
+          valueEl.textContent = value;
+        }
+        row.appendChild(valueEl);
+        return row;
+      }
+
+      async function loadFromUrl() {
+        const normalized = normalizeInput(repoInput.value);
+        if (!normalized) {
+          setStatus("Enter a repo URL or domain.", "bad");
+          return;
+        }
+        if (normalized.error) {
+          setStatus(normalized.error, "bad");
+          return;
+        }
+
+        const url = normalized.url;
+        setStatus("Fetching index.yaml...", "");
+        setSource(url);
+
+        try {
+          const response = await fetch(url, { mode: "cors" });
+          if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+          }
+          const text = await response.text();
+          const counts = parseIndexYaml(text, url);
+          activeSource = url;
+          updateHash(repoInput.value.trim());
+          setStatus("Index loaded.", "good");
+          setCounts(counts.chartCount, counts.versionCount);
+          renderCharts();
+        } catch (error) {
+          setStatus(`Fetch error: ${error.message}`, "bad");
+          setCounts(0, 0);
+          chartList.innerHTML = "";
+          emptyState.hidden = false;
+        }
+      }
+
+      function loadFromFile(file) {
+        if (!file) {
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const counts = parseIndexYaml(event.target.result, "");
+            activeSource = file.name;
+            updateHash("");
+            setSource(file.name);
+            setStatus("Local index loaded.", "good");
+            setCounts(counts.chartCount, counts.versionCount);
+            renderCharts();
+          } catch (error) {
+            setStatus(`File error: ${error.message}`, "bad");
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      function clearAll() {
+        repoInput.value = "";
+        searchInput.value = "";
+        fileInput.value = "";
+        charts = [];
+        repoBaseUrl = "";
+        activeSource = "";
+        chartList.innerHTML = "";
+        emptyState.hidden = false;
+        setStatus("Waiting for input.", "");
+        setCounts(0, 0);
+        setSource("");
+        updateHash("");
+      }
+
+      loadUrlButton.addEventListener("click", loadFromUrl);
+      loadSampleButton.addEventListener("click", () => {
+        repoInput.value = sampleUrl;
+        loadFromUrl();
+      });
+      clearButton.addEventListener("click", clearAll);
+      searchInput.addEventListener("input", renderCharts);
+
+      expandAllButton.addEventListener("click", () => {
+        document.querySelectorAll("details.chart-card").forEach((item) => {
+          item.open = true;
+        });
+      });
+
+      collapseAllButton.addEventListener("click", () => {
+        document.querySelectorAll("details.chart-card").forEach((item) => {
+          item.open = false;
+        });
+      });
+
+      fileInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        loadFromFile(file);
+      });
+
+      dropZone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        dropZone.classList.add("active");
+      });
+
+      dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("active");
+      });
+
+      dropZone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        dropZone.classList.remove("active");
+        const file = event.dataTransfer.files[0];
+        loadFromFile(file);
+      });
+
+      window.addEventListener("load", () => {
+        const hash = window.location.hash;
+        if (hash.startsWith("#repo=")) {
+          const value = decodeURIComponent(hash.replace("#repo=", ""));
+          if (value) {
+            repoInput.value = value;
+            loadFromUrl();
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
