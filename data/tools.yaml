@@ -8,7 +8,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f78e582ac9cb67a84843a088bfaf1d1d765c6cc0"
-        updated_commit: "15e2dcdefa0d57ed68334cc4d4aac4127f0f66b7"
+        updated_commit: "b469eacd8c81a931947bed8663cc1c1fdc958bc5"
       tags:
         - "html"
         - "3mf"
@@ -34,8 +34,8 @@ tools:
       description: "Fetch a Helm repository index.yaml and explore chart metadata with search and filters."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
-        updated_commit: null
+        introduced_commit: "99e68e059b2bbb2bdfe8aa758dd595054fab542a"
+        updated_commit: "b469eacd8c81a931947bed8663cc1c1fdc958bc5"
       tags:
         - "helm"
         - "charts"
