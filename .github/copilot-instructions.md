@@ -88,6 +88,11 @@ This means:
 
 ## Notes for LLMs
 
+- When writing a PR body via `gh`, keep markdown newlines clean:
+  - Use plain `\n` newlines consistently (avoid mixing `\r\n`).
+  - Put each bullet on its own line; do not embed literal `\n` inside a bullet.
+  - Prefer `--body-file` with a prepared text file to avoid escape mishaps.
+
 - The `.github/skills` directory contains "skills" which are instructions for creating or modifying parts of the repository.
   - The skills should be used in addition to the general tool design guidelines above.
 - Remix existing tools: reference prior tools by name or include their source for faster, higher‑quality results.

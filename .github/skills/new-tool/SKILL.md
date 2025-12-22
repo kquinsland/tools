@@ -40,6 +40,8 @@ The entire process of creating a new tool and getting it integrated into the sit
 
 - Create folder: `content/tools/<language>/<new-tool-slug-here>/`.
 - Add `index.md` with front matter (title/description/tags/resources). See existing tools for examples.
+  - The `date` field only needs `YYYY-MM-DD` (time is not required).
+  - Hugo skips future-dated pages, so use the `date` command to confirm the current date before setting it.
 
   Regardless of method used to create the bundle, ensure the front matter includes:
 

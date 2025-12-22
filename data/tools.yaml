@@ -28,6 +28,20 @@ tools:
         - "html"
         - "basic"
         - "input"
+  - html/helm-chart-discovery:
+      title: "Helm Chart Discovery"
+      language: "html"
+      description: "Fetch a Helm repository index.yaml and explore chart metadata with search and filters."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "helm"
+        - "charts"
+        - "html"
+        - "discover"
+        - "search"
   - html/url-inspect-rewrite:
       title: "URL Inspect & Rewrite"
       language: "html"
