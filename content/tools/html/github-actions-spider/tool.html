@@ -470,6 +470,7 @@
       const toggleYamlBtn = document.getElementById("toggle-yaml-btn");
       const toggleJsonBtn = document.getElementById("toggle-json-btn");
       const copyOutputBtn = document.getElementById("copy-output-btn");
+      let urlSyncTimer = null;
 
       function setPhase(text, level = "") {
         state.phase = text;
@@ -528,6 +529,30 @@
         repoSection.hidden = true;
         updateStatusCounts();
         setPhase("Idle");
+      }
+
+      function getTargetFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("target") || "";
+      }
+
+      function setTargetInUrl(value) {
+        const params = new URLSearchParams(window.location.search);
+        if (value) {
+          params.set("target", value);
+        } else {
+          params.delete("target");
+        }
+        const query = params.toString();
+        const nextUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+        window.history.replaceState({}, "", nextUrl);
+      }
+
+      function scheduleTargetSync() {
+        window.clearTimeout(urlSyncTimer);
+        urlSyncTimer = window.setTimeout(() => {
+          setTargetInUrl(ghUrlInput.value.trim());
+        }, 250);
       }
 
       function getToken() {
@@ -1077,6 +1102,7 @@
       resetBtn.addEventListener("click", () => {
         resetState();
         logStatus("State reset.", "warn");
+        setTargetInUrl("");
       });
 
       selectAllBtn.addEventListener("click", () => {
@@ -1096,6 +1122,7 @@
       });
 
       searchInput.addEventListener("input", applyFilter);
+      ghUrlInput.addEventListener("input", scheduleTargetSync);
       statusErrors.addEventListener("click", toggleErrorFilter);
       statusErrors.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -1139,6 +1166,10 @@
 
       hydrateToken();
       updateStatusCounts();
+      const initialTarget = getTargetFromUrl();
+      if (initialTarget) {
+        ghUrlInput.value = initialTarget;
+      }
     </script>
   </body>
 </html>
