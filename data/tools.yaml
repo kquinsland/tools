@@ -22,7 +22,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f2085d75a899e83fbb27cfb1610e703f2c0b9815"
-        updated_commit: null
+        updated_commit: "a689dedc7bac0af680d3c7732b7f29acd3c24bca"
       tags:
         - "github"
         - "actions"
