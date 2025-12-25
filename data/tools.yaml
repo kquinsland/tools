@@ -21,7 +21,7 @@ tools:
       description: "Crawl repositories and extract GitHub Actions uses-steps from workflow files."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
+        introduced_commit: "f2085d75a899e83fbb27cfb1610e703f2c0b9815"
         updated_commit: null
       tags:
         - "github"
