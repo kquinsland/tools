@@ -15,6 +15,21 @@ tools:
         - "3d"
         - "metadata"
         - "mesh"
+  - html/github-actions-spider:
+      title: "GitHub Actions Spider"
+      language: "html"
+      description: "Crawl repositories and extract GitHub Actions uses-steps from workflow files."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "github"
+        - "actions"
+        - "workflow"
+        - "crawl"
+        - "html"
+        - "search"
   - html/hello-world:
       title: "Hello, World"
       language: "html"

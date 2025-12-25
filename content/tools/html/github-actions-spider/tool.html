@@ -1,0 +1,1144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GitHub Actions Spider</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Mulish:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f2ee;
+        --panel: #fffdfa;
+        --ink: #1c1a16;
+        --muted: #5f574e;
+        --accent: #cc5a2b;
+        --accent-ink: #7b2d11;
+        --accent-soft: #ffe9dc;
+        --border: #e5d9cf;
+        --shadow: 0 20px 45px rgba(33, 20, 10, 0.12);
+        --success: #1f6f3d;
+        --warning: #c35a12;
+        --error: #9b1c1c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Mulish", "Segoe UI", system-ui, sans-serif;
+        color: var(--ink);
+        background: radial-gradient(circle at top left, #fff5ec 0%, var(--bg) 55%, #efe5dc 100%);
+        min-height: 100vh;
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+      }
+
+      header {
+        margin-bottom: 28px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        font-size: clamp(2.2rem, 4vw, 3.2rem);
+        letter-spacing: -0.02em;
+      }
+
+      p.lead {
+        margin: 0;
+        max-width: 72ch;
+        color: var(--muted);
+        font-size: 1.05rem;
+      }
+
+      section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 20px;
+        margin: 18px 0;
+        box-shadow: var(--shadow);
+      }
+
+      section h2 {
+        margin: 0 0 12px;
+        font-size: 1.15rem;
+        font-weight: 700;
+      }
+
+      label {
+        font-weight: 700;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      input[type="text"],
+      input[type="search"],
+      input[type="password"],
+      textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 0.98rem;
+        font-family: "SF Mono", "Menlo", "Consolas", monospace;
+        background: #fbf8f4;
+      }
+
+      textarea {
+        min-height: 180px;
+        resize: vertical;
+      }
+
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+      }
+
+      .row > * {
+        flex: 1 1 240px;
+      }
+
+      .stack {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .stack > * {
+        flex: 1 1 auto;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      button {
+        border: 1px solid var(--border);
+        background: var(--accent-soft);
+        color: var(--accent-ink);
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(204, 90, 43, 0.25);
+      }
+
+      button.secondary {
+        background: #f3ece6;
+        color: var(--muted);
+      }
+
+      button.ghost {
+        background: transparent;
+        border-style: dashed;
+        color: var(--muted);
+      }
+
+      button.active {
+        background: var(--accent);
+        color: #fff7f2;
+        border-color: var(--accent);
+      }
+
+      .status-bar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+        font-weight: 700;
+      }
+
+      .status-pill {
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #f2ebe4;
+        color: var(--muted);
+      }
+
+      .status-pill.good {
+        background: #e8f6ee;
+        color: var(--success);
+      }
+
+      .status-pill.warn {
+        background: #fff3e4;
+        color: var(--warning);
+      }
+
+      .status-pill.bad {
+        background: #fdecea;
+        color: var(--error);
+      }
+
+      .status-pill.clickable {
+        cursor: pointer;
+      }
+
+      .status-pill.active {
+        box-shadow: inset 0 0 0 2px rgba(155, 28, 28, 0.2);
+      }
+
+      ul.log {
+        list-style: none;
+        margin: 14px 0 0;
+        padding: 0;
+        max-height: 220px;
+        overflow: auto;
+        border-top: 1px dashed var(--border);
+      }
+
+      ul.log li {
+        padding: 8px 0;
+        border-bottom: 1px dashed var(--border);
+        font-size: 0.95rem;
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin: 8px 0 0;
+      }
+
+      .token-actions {
+        justify-content: flex-end;
+        margin-top: 8px;
+      }
+
+      details.repo-card {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: #fff;
+        margin-bottom: 14px;
+        overflow: hidden;
+      }
+
+      details.repo-card summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        background: #fff3ea;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-weight: 700;
+      }
+
+      details.repo-card summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .repo-meta {
+        font-size: 0.9rem;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--border);
+        padding: 10px 12px;
+        text-align: left;
+        font-size: 0.95rem;
+      }
+
+      th {
+        background: #fbf5ef;
+        font-weight: 700;
+      }
+
+      tr.hidden {
+        display: none;
+      }
+
+      .repo-list {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+
+      .repo-item {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 10px 12px;
+        background: #fff;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .repo-item input {
+        transform: scale(1.1);
+      }
+
+      .repo-item span {
+        font-weight: 600;
+      }
+
+      details.raw-data {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 12px 16px;
+        background: #fffdf9;
+      }
+
+      details.raw-data summary {
+        cursor: pointer;
+        font-weight: 700;
+        list-style: none;
+      }
+
+      details.raw-data summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      @media (max-width: 720px) {
+        section {
+          padding: 16px;
+        }
+
+        th,
+        td {
+          font-size: 0.88rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>GitHub Actions Spider</h1>
+        <p class="lead">
+          Crawl GitHub workflow files and list every <code>uses</code> step with its repo, file,
+          job, and step details. Works with a single workflow file, a repo, or an entire user/org.
+        </p>
+      </header>
+
+      <section id="status-section">
+        <h2>Status</h2>
+        <div class="status-bar" id="status-bar">
+          <span class="status-pill" id="status-phase">Idle</span>
+        </div>
+        <div class="status-bar" id="status-rate-bar" style="margin-top: 8px;">
+          <span class="status-pill" id="status-rate">Rate limit: —</span>
+        </div>
+        <div class="status-bar" id="status-counts" style="margin-top: 8px;">
+          <span class="status-pill" id="status-repos">Repos: 0</span>
+          <span class="status-pill" id="status-files">Workflows: 0</span>
+          <span class="status-pill" id="status-entries">Entries: 0</span>
+          <span class="status-pill" id="status-errors-count">Errors: 0</span>
+        </div>
+        <ul class="log" id="status-log"></ul>
+        <div class="actions" style="margin-top: 10px;">
+          <span class="status-pill clickable" id="status-errors" role="button" tabindex="0">Show errors only</span>
+        </div>
+      </section>
+
+      <section id="input-section">
+        <h2>Scan target</h2>
+        <div class="row stack">
+          <div>
+            <label for="gh-url">GitHub URL</label>
+            <input
+              type="text"
+              id="gh-url"
+              placeholder="https://github.com/octo-org/octo-repo or /blob/main/.github/workflows/ci.yml"
+            />
+            <p class="hint">Supports workflow files, repo URLs, or a user/org profile.</p>
+          </div>
+          <div>
+            <label for="pat-input">Personal access token (optional)</label>
+            <input type="password" id="pat-input" placeholder="ghp_..." />
+            <p class="hint">Stored locally in your browser. Required for private repos or higher rate limits.</p>
+            <div class="actions token-actions">
+              <button class="secondary" id="save-pat-btn">Save token</button>
+              <button class="ghost" id="clear-pat-btn">Clear token</button>
+            </div>
+          </div>
+        </div>
+        <div class="actions" style="margin-top: 12px;">
+          <button id="scan-btn">Analyze</button>
+          <button class="secondary" id="reset-btn">Reset</button>
+        </div>
+      </section>
+
+      <section id="repo-section" hidden>
+        <h2>Select repos to scan</h2>
+        <p class="muted" id="repo-hint">Select one or more repos and click “Scan selected”.</p>
+        <div class="actions" style="margin: 8px 0 14px;">
+          <button class="secondary" id="select-all-btn">Select all</button>
+          <button class="secondary" id="select-none-btn">Select none</button>
+          <button id="scan-selected-btn">Scan selected</button>
+        </div>
+        <div class="repo-list" id="repo-list"></div>
+      </section>
+
+      <section id="results-section">
+        <h2>Results</h2>
+        <label for="search-input">Search / filter</label>
+        <input type="search" id="search-input" placeholder="Filter by file, job, step, uses..." />
+        <div class="hint">Matches any column. Repos with no matches are hidden.</div>
+        <div id="results-container" style="margin-top: 14px;"></div>
+      </section>
+
+      <section id="raw-section">
+        <h2>Raw extracted data</h2>
+        <details class="raw-data" open>
+          <summary>Raw output (copy/paste-friendly)</summary>
+          <div class="actions" style="margin: 10px 0;">
+            <button class="secondary active" id="toggle-yaml-btn">YAML view</button>
+            <button class="secondary" id="toggle-json-btn">JSON view</button>
+            <button class="secondary" id="copy-output-btn">Copy</button>
+          </div>
+          <p class="hint">You can paste anything here; the tool will overwrite it when new data is generated.</p>
+          <textarea id="raw-yaml"></textarea>
+        </details>
+      </section>
+    </div>
+
+    <script>
+      const API_BASE = "https://api.github.com";
+      const PAT_KEY = "gh-actions-spider.pat";
+      const state = {
+        entries: [],
+        repos: [],
+        errors: 0,
+        workflows: 0,
+        phase: "Idle",
+        repoScanQueue: [],
+        rawFormat: "yaml",
+        rateLimit: null,
+        logFilter: "all",
+      };
+
+      const statusLog = document.getElementById("status-log");
+      const statusPhase = document.getElementById("status-phase");
+      const statusRepos = document.getElementById("status-repos");
+      const statusFiles = document.getElementById("status-files");
+      const statusEntries = document.getElementById("status-entries");
+      const statusRate = document.getElementById("status-rate");
+      const statusErrorsCount = document.getElementById("status-errors-count");
+      const statusErrors = document.getElementById("status-errors");
+
+      const ghUrlInput = document.getElementById("gh-url");
+      const patInput = document.getElementById("pat-input");
+      const scanBtn = document.getElementById("scan-btn");
+      const savePatBtn = document.getElementById("save-pat-btn");
+      const clearPatBtn = document.getElementById("clear-pat-btn");
+      const resetBtn = document.getElementById("reset-btn");
+      const repoSection = document.getElementById("repo-section");
+      const repoList = document.getElementById("repo-list");
+      const repoHint = document.getElementById("repo-hint");
+      const selectAllBtn = document.getElementById("select-all-btn");
+      const selectNoneBtn = document.getElementById("select-none-btn");
+      const scanSelectedBtn = document.getElementById("scan-selected-btn");
+      const searchInput = document.getElementById("search-input");
+      const resultsContainer = document.getElementById("results-container");
+      const rawYaml = document.getElementById("raw-yaml");
+      const toggleYamlBtn = document.getElementById("toggle-yaml-btn");
+      const toggleJsonBtn = document.getElementById("toggle-json-btn");
+      const copyOutputBtn = document.getElementById("copy-output-btn");
+
+      function setPhase(text, level = "") {
+        state.phase = text;
+        statusPhase.textContent = text;
+        statusPhase.className = `status-pill ${level}`.trim();
+      }
+
+      function updateStatusCounts() {
+        statusRepos.textContent = `Repos: ${state.repos.length}`;
+        statusFiles.textContent = `Workflows: ${state.workflows}`;
+        statusEntries.textContent = `Entries: ${state.entries.length}`;
+        statusErrorsCount.textContent = `Errors: ${state.errors}`;
+        const countClasses = ["status-pill"];
+        if (state.errors) countClasses.push("bad");
+        statusErrorsCount.className = countClasses.join(" ");
+        updateErrorToggleLabel();
+        updateRateLimitUI();
+      }
+
+      function formatTimestamp(date = new Date()) {
+        return date.toLocaleTimeString("en-GB", { hour12: false });
+      }
+
+      function logStatus(message, level = "") {
+        const item = document.createElement("li");
+        const timestamp = formatTimestamp();
+        item.dataset.level = level || "info";
+        item.textContent = `[${timestamp}] ${message}`;
+        if (level) {
+          item.style.color = level === "bad" ? "var(--error)" : level === "warn" ? "var(--warning)" : "var(--success)";
+        }
+        statusLog.prepend(item);
+        applyLogFilter();
+      }
+
+      function applyLogFilter() {
+        const showErrorsOnly = state.logFilter === "errors";
+        statusLog.querySelectorAll("li").forEach((item) => {
+          const isError = item.dataset.level === "bad";
+          item.hidden = showErrorsOnly && !isError;
+        });
+      }
+
+      function resetState() {
+        state.entries = [];
+        state.repos = [];
+        state.workflows = 0;
+        state.errors = 0;
+        state.repoScanQueue = [];
+        state.rateLimit = null;
+        state.logFilter = "all";
+        statusLog.innerHTML = "";
+        repoList.innerHTML = "";
+        resultsContainer.innerHTML = "";
+        rawYaml.value = "";
+        repoSection.hidden = true;
+        updateStatusCounts();
+        setPhase("Idle");
+      }
+
+      function getToken() {
+        return localStorage.getItem(PAT_KEY) || "";
+      }
+
+      function setToken(token) {
+        if (token) {
+          localStorage.setItem(PAT_KEY, token);
+        }
+      }
+
+      function clearToken() {
+        localStorage.removeItem(PAT_KEY);
+      }
+
+      function buildHeaders() {
+        const headers = {
+          Accept: "application/vnd.github+json",
+        };
+        const token = getToken();
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+        return headers;
+      }
+
+      async function parseError(response) {
+        const text = await response.text();
+        let message = text;
+        try {
+          const data = JSON.parse(text);
+          if (data && data.message) {
+            message = data.message;
+          }
+        } catch (error) {
+          // Keep raw text if JSON parsing fails.
+        }
+
+        if (response.status === 401) {
+          message = `Authentication failed: ${message}`;
+        } else if (response.status === 403 && /rate limit/i.test(message)) {
+          message = `Rate limit exceeded: ${message}`;
+        } else if (response.status === 404) {
+          message = `Not found: ${message}`;
+        }
+        return `${response.status} ${response.statusText} - ${message}`;
+      }
+
+      function updateRateLimitFromResponse(response) {
+        const limit = response.headers.get("x-ratelimit-limit");
+        const remaining = response.headers.get("x-ratelimit-remaining");
+        const reset = response.headers.get("x-ratelimit-reset");
+        if (!limit || !remaining || !reset) return;
+        const nextRate = {
+          limit: Number(limit),
+          remaining: Number(remaining),
+          reset: Number(reset),
+        };
+        const prevRemaining = state.rateLimit ? state.rateLimit.remaining : null;
+        state.rateLimit = nextRate;
+        updateRateLimitUI();
+        if (nextRate.remaining === 0 && prevRemaining !== 0) {
+          const resetTime = new Date(nextRate.reset * 1000).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          logStatus(`Rate limit reached. Resets at ${resetTime}.`, "bad");
+        }
+      }
+
+      function formatRateLimit(rate) {
+        if (!rate) return "Rate limit: —";
+        const { limit, remaining, reset } = rate;
+        const resetMs = reset * 1000;
+        const now = Date.now();
+        const seconds = Math.max(0, Math.ceil((resetMs - now) / 1000));
+        const minutes = Math.floor(seconds / 60);
+        const resetTime = new Date(resetMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        if (remaining === 0) {
+          return `Rate limit: 0/${limit} reset in ${minutes}m (${resetTime})`;
+        }
+        return `Rate limit: ${remaining}/${limit} resets in ${minutes}m (${resetTime})`;
+      }
+
+      function updateRateLimitUI() {
+        statusRate.textContent = formatRateLimit(state.rateLimit);
+        if (!state.rateLimit) {
+          statusRate.className = "status-pill";
+          return;
+        }
+        if (state.rateLimit.remaining === 0) {
+          statusRate.className = "status-pill bad";
+        } else if (state.rateLimit.remaining <= 5) {
+          statusRate.className = "status-pill warn";
+        } else {
+          statusRate.className = "status-pill good";
+        }
+      }
+
+      function toggleErrorFilter() {
+        state.logFilter = state.logFilter === "errors" ? "all" : "errors";
+        statusErrors.classList.toggle("active", state.logFilter === "errors");
+        applyLogFilter();
+        updateErrorToggleLabel();
+      }
+
+      function updateErrorToggleLabel() {
+        const label = state.logFilter === "errors" ? "Show all log entries" : "Show errors only";
+        statusErrors.textContent = label;
+      }
+
+      async function fetchJson(url) {
+        const response = await fetch(url, { headers: buildHeaders() });
+        if (!response.ok) {
+          updateRateLimitFromResponse(response);
+          throw new Error(await parseError(response));
+        }
+        updateRateLimitFromResponse(response);
+        return response.json();
+      }
+
+      function parseLinkHeader(header) {
+        if (!header) return {};
+        return header
+          .split(",")
+          .map((part) => part.trim())
+          .reduce((acc, part) => {
+            const match = part.match(/<([^>]+)>;\s*rel=\"([^"]+)\"/);
+            if (match) {
+              acc[match[2]] = match[1];
+            }
+            return acc;
+          }, {});
+      }
+
+      async function fetchPaged(url) {
+        const results = [];
+        let nextUrl = url;
+        while (nextUrl) {
+          const response = await fetch(nextUrl, { headers: buildHeaders() });
+          if (!response.ok) {
+            updateRateLimitFromResponse(response);
+            throw new Error(await parseError(response));
+          }
+          updateRateLimitFromResponse(response);
+          const data = await response.json();
+          results.push(...data);
+          const links = parseLinkHeader(response.headers.get("link"));
+          nextUrl = links.next || "";
+        }
+        return results;
+      }
+
+      function normalizeUrl(value) {
+        if (!value) return "";
+        const trimmed = value.trim();
+        if (!trimmed) return "";
+        if (!/^https?:\/\//i.test(trimmed)) {
+          return `https://github.com/${trimmed.replace(/^\/+/, "")}`;
+        }
+        return trimmed;
+      }
+
+      function parseGitHubTarget(input) {
+        const normalized = normalizeUrl(input);
+        const url = new URL(normalized);
+        if (!/github\.com$|raw\.githubusercontent\.com$/.test(url.hostname)) {
+          throw new Error("Only github.com URLs are supported.");
+        }
+
+        const parts = url.pathname.split("/").filter(Boolean);
+        if (url.hostname === "raw.githubusercontent.com") {
+          if (parts.length < 4) {
+            throw new Error("Raw GitHub URL is missing required segments.");
+          }
+          return {
+            type: "file",
+            owner: parts[0],
+            repo: parts[1],
+            ref: parts[2],
+            path: parts.slice(3).join("/"),
+          };
+        }
+
+        if (parts.length >= 5 && parts[2] === "blob") {
+          return {
+            type: "file",
+            owner: parts[0],
+            repo: parts[1],
+            ref: parts[3],
+            path: parts.slice(4).join("/"),
+          };
+        }
+
+        if (parts.length >= 2) {
+          return {
+            type: "repo",
+            owner: parts[0],
+            repo: parts[1],
+          };
+        }
+
+        if (parts.length === 1) {
+          return {
+            type: "account",
+            owner: parts[0],
+          };
+        }
+
+        throw new Error("Could not parse GitHub URL.");
+      }
+
+      function buildFileUrl(repoFullName, filePath, ref = "") {
+        const safeRef = ref ? encodeURIComponent(ref) : "HEAD";
+        const safePath = filePath
+          .split("/")
+          .map((part) => encodeURIComponent(part))
+          .join("/");
+        return `https://github.com/${repoFullName}/blob/${safeRef}/${safePath}`;
+      }
+
+      function extractUsesEntries({ repoFullName, filePath, workflow, ref = "" }) {
+        const records = [];
+        if (!workflow || typeof workflow !== "object") return records;
+        const fileUrl = buildFileUrl(repoFullName, filePath, ref);
+        const jobs = workflow.jobs || {};
+        Object.entries(jobs).forEach(([jobName, job]) => {
+          const steps = job && Array.isArray(job.steps) ? job.steps : [];
+          steps.forEach((step, index) => {
+            if (step && step.uses) {
+              records.push({
+                repo: repoFullName,
+                file: filePath,
+                fileUrl,
+                job: jobName,
+                stepName: step.name || step.uses || `Step ${index + 1}`,
+                stepId: step.id || "",
+                uses: step.uses,
+              });
+            }
+          });
+        });
+        return records;
+      }
+
+      function decodeBase64Utf8(base64Text) {
+        const cleaned = base64Text.replace(/\n/g, "");
+        const binary = atob(cleaned);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+      }
+
+      async function fetchWorkflowContent(owner, repo, path, ref = "") {
+        const encodedPath = encodeURIComponent(path).replace(/%2F/g, "/");
+        let url = `${API_BASE}/repos/${owner}/${repo}/contents/${encodedPath}`;
+        if (ref) {
+          url += `?ref=${encodeURIComponent(ref)}`;
+        }
+        const data = await fetchJson(url);
+        if (data && data.content) {
+          return decodeBase64Utf8(data.content);
+        }
+        if (data && data.download_url) {
+          const response = await fetch(data.download_url, { headers: buildHeaders() });
+          if (!response.ok) {
+            throw new Error(`Failed to download ${path}`);
+          }
+          return response.text();
+        }
+        throw new Error(`No content returned for ${path}`);
+      }
+
+      function addRepo(repoFullName) {
+        if (!state.repos.includes(repoFullName)) {
+          state.repos.push(repoFullName);
+        }
+      }
+
+      async function scanWorkflowFile({ owner, repo, path, ref = "" }) {
+        setPhase(`Scanning ${owner}/${repo}`, "warn");
+        logStatus(`Fetching workflow ${owner}/${repo}/${path}`);
+        const repoFullName = `${owner}/${repo}`;
+        addRepo(repoFullName);
+        const content = await fetchWorkflowContent(owner, repo, path, ref);
+        let workflow;
+        try {
+          workflow = jsyaml.load(content);
+        } catch (error) {
+          throw new Error(`Failed to parse YAML in ${path}: ${error.message}`);
+        }
+        const records = extractUsesEntries({ repoFullName, filePath: path, workflow, ref });
+        state.entries.push(...records);
+        state.workflows += 1;
+        updateStatusCounts();
+        renderResults();
+        logStatus(`Extracted ${records.length} entries from ${path}`, "good");
+      }
+
+      async function scanRepo(owner, repo) {
+        const repoFullName = `${owner}/${repo}`;
+        addRepo(repoFullName);
+        updateStatusCounts();
+        setPhase(`Listing ${repoFullName}`, "warn");
+        logStatus(`Listing workflows for ${repoFullName}`);
+        let files = [];
+        try {
+          files = await fetchJson(`${API_BASE}/repos/${owner}/${repo}/contents/.github/workflows`);
+        } catch (error) {
+          state.errors += 1;
+          updateStatusCounts();
+          logStatus(`No workflows found for ${repoFullName}: ${error.message}`, "bad");
+          return;
+        }
+
+        const workflowFiles = Array.isArray(files)
+          ? files.filter((file) => file.type === "file" && /\.ya?ml$/i.test(file.name))
+          : [];
+
+        for (const file of workflowFiles) {
+          try {
+            await scanWorkflowFile({ owner, repo, path: file.path });
+          } catch (error) {
+            state.errors += 1;
+            updateStatusCounts();
+            logStatus(`Error parsing ${repoFullName}/${file.path}: ${error.message}`, "bad");
+          }
+        }
+      }
+
+      function renderRepoSelection(repos, owner, accountType) {
+        repoList.innerHTML = "";
+        repoSection.hidden = false;
+        repoHint.textContent = `${owner} is a ${accountType}. Select repos to scan.`;
+        repos.forEach((repo) => {
+          const item = document.createElement("label");
+          item.className = "repo-item";
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.value = repo.full_name;
+          checkbox.checked = true;
+          const span = document.createElement("span");
+          span.textContent = repo.full_name;
+          item.appendChild(checkbox);
+          item.appendChild(span);
+          repoList.appendChild(item);
+        });
+      }
+
+      function renderResults() {
+        const grouped = state.entries.reduce((acc, entry) => {
+          if (!acc[entry.repo]) acc[entry.repo] = [];
+          acc[entry.repo].push(entry);
+          return acc;
+        }, {});
+
+        resultsContainer.innerHTML = "";
+        const repos = Object.keys(grouped).sort();
+        if (repos.length === 0) {
+          resultsContainer.innerHTML = "<p class=\"muted\">No entries yet. Run a scan to see results.</p>";
+        }
+
+        repos.forEach((repoName) => {
+          const entries = grouped[repoName];
+          const details = document.createElement("details");
+          details.className = "repo-card";
+          details.open = true;
+          const summary = document.createElement("summary");
+          summary.innerHTML = `<span>${repoName}</span><span class=\"repo-meta\">${entries.length} entries</span>`;
+          details.appendChild(summary);
+
+          const table = document.createElement("table");
+          table.innerHTML = `
+            <thead>
+              <tr>
+                <th>Workflow file</th>
+                <th>Job</th>
+                <th>Step</th>
+                <th>Step ID</th>
+                <th>Uses</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          `;
+          const tbody = table.querySelector("tbody");
+          entries.forEach((entry) => {
+            const row = document.createElement("tr");
+            row.dataset.search = `${entry.repo} ${entry.file} ${entry.job} ${entry.stepName} ${entry.stepId} ${entry.uses}`
+              .toLowerCase();
+            row.innerHTML = `
+              <td><a href="${entry.fileUrl}" target="_blank" rel="noreferrer"><code>${entry.file}</code></a></td>
+              <td>${entry.job}</td>
+              <td>${entry.stepName}</td>
+              <td>${entry.stepId || "—"}</td>
+              <td><code>${entry.uses}</code></td>
+            `;
+            tbody.appendChild(row);
+          });
+
+          details.appendChild(table);
+          resultsContainer.appendChild(details);
+        });
+
+        updateRawOutput();
+        applyFilter();
+      }
+
+      function buildOutput() {
+        return state.entries.map((entry) => ({
+          repo: entry.repo,
+          file: entry.file,
+          file_url: entry.fileUrl,
+          job: entry.job,
+          step_name: entry.stepName,
+          step_id: entry.stepId || null,
+          uses: entry.uses,
+        }));
+      }
+
+      function updateRawOutput() {
+        const output = buildOutput();
+        if (state.rawFormat === "json") {
+          rawYaml.value = JSON.stringify(output, null, 2);
+        } else {
+          rawYaml.value = jsyaml.dump(output, { noRefs: true, lineWidth: 120 });
+        }
+      }
+
+      function applyFilter() {
+        const query = searchInput.value.trim().toLowerCase();
+        const cards = resultsContainer.querySelectorAll("details.repo-card");
+        cards.forEach((card) => {
+          const rows = card.querySelectorAll("tbody tr");
+          let visibleRows = 0;
+          rows.forEach((row) => {
+            const match = !query || row.dataset.search.includes(query);
+            row.classList.toggle("hidden", !match);
+            if (match) visibleRows += 1;
+          });
+          card.hidden = visibleRows === 0;
+        });
+      }
+
+      async function listReposForAccount(owner) {
+        setPhase("Resolving account", "warn");
+        const account = await fetchJson(`${API_BASE}/users/${owner}`);
+        const type = account.type === "Organization" ? "org" : "user";
+        setPhase(`Listing ${type} repos`, "warn");
+        const listUrl =
+          type === "org"
+            ? `${API_BASE}/orgs/${owner}/repos?per_page=100&sort=updated`
+            : `${API_BASE}/users/${owner}/repos?per_page=100&sort=updated`;
+        const repos = await fetchPaged(listUrl);
+        if (!repos.length) {
+          throw new Error(`No repos found for ${owner}.`);
+        }
+        renderRepoSelection(repos, owner, account.type);
+        logStatus(`Loaded ${repos.length} repos for ${owner}`, "good");
+        return repos;
+      }
+
+      async function handleScan() {
+        resetState();
+        const input = ghUrlInput.value.trim();
+        if (!input) {
+          logStatus("Please enter a GitHub URL.", "warn");
+          setPhase("Waiting for input", "warn");
+          return;
+        }
+
+        let target;
+        try {
+          target = parseGitHubTarget(input);
+        } catch (error) {
+          state.errors += 1;
+          updateStatusCounts();
+          setPhase("Invalid URL", "bad");
+          logStatus(error.message, "bad");
+          return;
+        }
+
+        try {
+          if (target.type === "file") {
+            setPhase("Scanning workflow", "warn");
+            await scanWorkflowFile(target);
+            setPhase("Done", "good");
+          } else if (target.type === "repo") {
+            setPhase("Scanning repo", "warn");
+            await scanRepo(target.owner, target.repo);
+            setPhase("Done", "good");
+          } else if (target.type === "account") {
+            await listReposForAccount(target.owner);
+            setPhase("Awaiting selection", "warn");
+          }
+        } catch (error) {
+          state.errors += 1;
+          updateStatusCounts();
+          setPhase("Error", "bad");
+          logStatus(error.message, "bad");
+        }
+      }
+
+      async function scanSelectedRepos() {
+        const selected = Array.from(repoList.querySelectorAll("input[type=checkbox]:checked"));
+        if (!selected.length) {
+          logStatus("No repos selected.", "warn");
+          return;
+        }
+        state.repos = [];
+        updateStatusCounts();
+        for (const checkbox of selected) {
+          const [owner, repo] = checkbox.value.split("/");
+          try {
+            await scanRepo(owner, repo);
+          } catch (error) {
+            state.errors += 1;
+            updateStatusCounts();
+            logStatus(`Error scanning ${checkbox.value}: ${error.message}`, "bad");
+          }
+        }
+        setPhase("Done", "good");
+      }
+
+      scanBtn.addEventListener("click", () => {
+        handleScan();
+      });
+
+      savePatBtn.addEventListener("click", () => {
+        const token = patInput.value.trim();
+        if (token) {
+          setToken(token);
+          logStatus("Token saved in localStorage.", "good");
+        } else {
+          logStatus("No token to save.", "warn");
+        }
+      });
+
+      clearPatBtn.addEventListener("click", () => {
+        clearToken();
+        patInput.value = "";
+        logStatus("Token cleared from localStorage.", "warn");
+      });
+
+      resetBtn.addEventListener("click", () => {
+        resetState();
+        logStatus("State reset.", "warn");
+      });
+
+      selectAllBtn.addEventListener("click", () => {
+        repoList.querySelectorAll("input[type=checkbox]").forEach((checkbox) => {
+          checkbox.checked = true;
+        });
+      });
+
+      selectNoneBtn.addEventListener("click", () => {
+        repoList.querySelectorAll("input[type=checkbox]").forEach((checkbox) => {
+          checkbox.checked = false;
+        });
+      });
+
+      scanSelectedBtn.addEventListener("click", () => {
+        scanSelectedRepos();
+      });
+
+      searchInput.addEventListener("input", applyFilter);
+      statusErrors.addEventListener("click", toggleErrorFilter);
+      statusErrors.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          toggleErrorFilter();
+        }
+      });
+
+      function setRawFormat(format) {
+        state.rawFormat = format;
+        toggleYamlBtn.classList.toggle("active", format === "yaml");
+        toggleJsonBtn.classList.toggle("active", format === "json");
+        updateRawOutput();
+      }
+
+      toggleYamlBtn.addEventListener("click", () => {
+        setRawFormat("yaml");
+      });
+
+      toggleJsonBtn.addEventListener("click", () => {
+        setRawFormat("json");
+      });
+
+      copyOutputBtn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(rawYaml.value);
+          const label = state.rawFormat === "json" ? "JSON" : "YAML";
+          logStatus(`${label} copied to clipboard.`, "good");
+        } catch (error) {
+          logStatus("Clipboard copy failed. Use manual copy.", "warn");
+        }
+      });
+
+      function hydrateToken() {
+        const stored = getToken();
+        if (stored) {
+          patInput.value = stored;
+          logStatus("Token loaded from localStorage.", "good");
+        }
+      }
+
+      hydrateToken();
+      updateStatusCounts();
+    </script>
+  </body>
+</html>
