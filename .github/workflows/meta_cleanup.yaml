@@ -51,7 +51,7 @@ on:
 
 jobs:
     del_runs:
-        runs-on: ubun
+        runs-on: ubuntu-latest
         permissions:
             actions: write
             contents: read
