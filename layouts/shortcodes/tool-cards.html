@@ -55,9 +55,9 @@
                 <span class="tool-card-emoji" aria-hidden="true">{{ $emoji }}</span>
                 {{- end }}
                 <div class="markdown-inner tool-card-content">
-                    <h3>{{ (default $slug $tool.title) | htmlEscape }}</h3>
+                    <h3>{{ default $slug $tool.title }}</h3>
                     {{- with $tool.description }}
-                    <p>{{ . | htmlEscape }}</p>
+                    <p>{{ . }}</p>
                     {{- end }}
                 </div>
             </a>

@@ -6,7 +6,7 @@ This is powered by Hugo and the "rendered" site is hosted via [GitHub Pages](htt
 
 ## How it works
 
-// TODO: llm diagram
+// TODO: llm diagram of the deploy process for GitHub Pages and add to this `readme.md`
 
 ## TODOs
 

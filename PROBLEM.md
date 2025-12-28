@@ -1,110 +1,26 @@
-Please fill in `ci/convert_page_images.py` with python code that does the following:
+I have created a git branch for you, please get right to work on:
 
-The tool is meant to parse the front-matter of every relevant index.md file.
-It should look for any file that happens to be an image file (png, jpg, jpeg, gif, webp, avif, svg)
-If it finds any image files that are not already `webp` format, it should convert them to the webp format.
+The high level idea is to be able to present the user with their most commonly used tools.
+The way to do this is to track page access per tool.
 
-The converted webp files should be saved in the same directory as the original image files and should have the same base name as the original file but with a .webp extension.
+Keeping the number one directive / rule for this repo: local, self-contained, this means that there can be no remote server to send usage data to.
+This means we need to store usage data locally on the user's machine.
 
-The front matter must then be updated to replace the original image file paths with the new webp file paths.
-The tool should work in one of two modes:
+Rather than duplicate code, it is possible to put a simple javascript snippet into the `static` directory that each tool can load to handle the tracking.
 
-- A recursive mode, where it searches through all subdirectories of a given root directory for index.md files and processes them accordingly.
-- A single-file mode, where it processes only a specified index.md file.
+For example, the `static/test.js` file is accessible at `https://web-server-here.tld/test.js`.
 
-The tool should have reasonable/sane defaults for CLI arguments, such as the root directory to start searching from and quality settings for the webp conversion.
-The tool should also provide helpful error messages if it encounters issues, such as missing files or unsupported image formats.
-
-## Example
-
-Assuming the tool encounters a directory structure like this:
-
-```shell
-content/tools/html
-├── hello-world
-│   ├── images
-│   │   └── tool-icon.png
-│   ├── index.md
-│   └── tool.html
-└── _index.md
-```
-
-And the `content/tools/html/hello-world/index.md` file looks like this:
-
-```markdown
----
-date: 2025-12-17T18:02:54-08:00
-draft: false
-# This ends up in the <title> tag, not an automatic H1
-title: 'Hello, World'
-description: 'This is the first tool description here.'
-# # Don't need a ToC for the single page
-# bookToc: false
+To facilitate user management of this data, please also create a simple page at `static/analytics.html` that can read and display the usage data and export it.
+As always, the user must be given a way to clear it it as well.
 
 
-resources:
-    # Made available for use below
-    - name: tool-icon
-      src: images/tool-icon.png
+So the tasks are:
 
-    - name: tool-file
-      src: tool.html
+- Create `static/analytics.js` that tracks page access and stores it locally.
+- Create `static/analytics.html` that reads, displays, exports, and clears the usage data.
+- Update the skill/documentation around creating new tools to include loading the `analytics.js` file for tracking.
+- Update existing tools to load the `analytics.js` file for tracking.
 
 
-# HugoBook theme does not really show these anywhere but can be useful metadata for searching/filtering
-tags:
-    - demo
-    - html
-    - basic
-    - input
----
-# Hello, World
-
-This the the first tool.
-
-This theme offers up a few different ways to link to tools.
-
-Access it [here]({{< tool-link >}}).
-
-or {{< tool-link link_text="here">}}.
-
-{{<button href="tool.html">}}Open{{</button>}}
-
-{{< tool-image >}}
-
-// TODO: default scaling and sizing options for tool images?
-
-```
-
-Then the script should identify that the page bundle has two resources: `images/tool-icon.png` and `tool.html`.
-Recognizing that `tool-icon.png` is an image file that is not already `webp` format, it should convert the `content/tools/html/hello-world/files/tool-icon.png` file to `content/tools/html/hello-world/files/tool-icon.webp` and update the front-matter of `content/tools/html/hello-world/index.md` to reflect this change, resulting in the following updated front-matter:
-
-```markdown
-
----
-# <... omitted for brevity ...>
-
-resources:
-    - name: tool-icon
-      src: images/tool-icon.webp
-
-    - name: tool-file
-      src: tool.html
-
-<... omitted for brevity ...>
-
----
-# <... omitted for brevity ...>
-```
-
-The tool should make no other changes to the markdown content or front-matter.
-
-The original file should be deleted only after the conversion and front matter update is successful.
-
-Print out basic stats at the end, such as number of files processed, number of images converted, and any errors encountered.
-Do not treat a front-mater parse error or file missing error or conversion error as a fatal error; continue processing other files.
-
-## General Requirements
-
-- Use Python 3.14.
-- Use `ty` and `ruff` tools (already in $PATH) to check your code for type and linting issues before submitting.
+If possible, the analytics.js file should add a footer to each page that indicates tracking is enabled and links to the analytics.html page for user management of the data.
+The footer should indicate the number of times the user has accessed that tool if possible.

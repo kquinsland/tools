@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Usage Analytics</title>
+    <style>
+        :root {
+            color-scheme: light;
+        }
+
+        body {
+            font-family: "Bookerly", "Georgia", "Times New Roman", serif;
+            margin: 2rem auto;
+            max-width: 900px;
+            padding: 0 1.5rem 3rem;
+            color: #222;
+            line-height: 1.55;
+            background: #fbfaf7;
+        }
+
+        header {
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin: 0.4rem 0;
+        }
+
+        .panel {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+            margin-bottom: 1.2rem;
+        }
+
+        #analytics-summary {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        #analytics-summary strong {
+            font-weight: 700;
+        }
+
+        #analytics-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        #analytics-table th,
+        #analytics-table td {
+            padding: 0.6rem 0.5rem;
+            border-bottom: 1px solid #e3e3e3;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        #analytics-table th {
+            background: #f3f1ea;
+            font-weight: 600;
+        }
+
+        #analytics-table tbody tr:hover {
+            background: #faf8f2;
+        }
+
+        #export-actions,
+        #analytics-clear {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        #export-actions {
+            margin-top: 0.75rem;
+        }
+
+        #analytics-clear {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .clear-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        button {
+            border: none;
+            border-radius: 999px;
+            padding: 0.55rem 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #1d4f6d;
+            color: #fff;
+        }
+
+        button.secondary {
+            background: #e7e0d1;
+            color: #3f2e18;
+        }
+
+        button.danger {
+            background: #9b2f2f;
+            color: #fff;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #analytics-empty {
+            color: #5f5a4d;
+            font-style: italic;
+        }
+
+        #export-output {
+            width: 100%;
+            min-height: 160px;
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background: #f6f4ef;
+            font-family: "Courier New", monospace;
+            font-size: 0.85rem;
+            white-space: pre;
+        }
+
+        @media (max-width: 720px) {
+            body {
+                margin: 1.2rem auto;
+                padding: 0 1rem 2rem;
+            }
+
+            #export-actions,
+            #analytics-clear,
+            .clear-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+
+<body data-analytics-skip="true">
+    <div id="analytics-app">
+        <header>
+            <h1>Local Usage Analytics</h1>
+            <p>This page shows how often you have opened each tool on this device.</p>
+            <p>All data stays in your browser storage. You can export or clear it at any time.</p>
+            <p>Local docs: <a href="/analytics/">/analytics/</a></p>
+        </header>
+
+        <section id="analytics-summary" class="panel">
+            <div><strong>Total tools tracked:</strong> <span id="summary-tools">0</span></div>
+            <div><strong>Total opens recorded:</strong> <span id="summary-opens">0</span></div>
+            <div><strong>Last updated:</strong> <span id="summary-updated">Never</span></div>
+        </section>
+
+        <section class="panel">
+            <table id="analytics-table">
+                <thead>
+                    <tr>
+                        <th data-sort-key="title">Tool</th>
+                        <th data-sort-key="path">Path</th>
+                        <th data-sort-key="count">Opens</th>
+                        <th data-sort-key="lastAccess">Last access</th>
+                    </tr>
+                </thead>
+                <tbody id="analytics-body"></tbody>
+            </table>
+            <div id="analytics-empty" hidden>No usage data found yet. Open a tool to start tracking.</div>
+        </section>
+
+        <section id="analytics-export" class="panel">
+            <strong>Export preview</strong>
+            <div id="export-actions">
+                <button id="export-json">Export JSON</button>
+                <button id="copy-json" class="secondary">Copy JSON</button>
+                <a id="download-link" hidden>Download</a>
+            </div>
+            <textarea id="export-output" readonly></textarea>
+        </section>
+
+        <section id="analytics-clear" class="panel">
+            <p><strong>Data removal</strong></p>
+            <p>Choose what to clear. This cannot be undone.</p>
+            <div class="clear-actions">
+                <button id="clear-analytics" class="danger">Clear analytics data</button>
+                <button id="clear-all-storage" class="danger">Clear all tool local data</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="/analytics.js"></script>
+    <script>
+        (() => {
+            "use strict";
+
+            const STORAGE_KEY = "tools.localAnalytics.v1";
+
+            const safeJsonParse = (value) => {
+                try {
+                    return JSON.parse(value);
+                } catch (error) {
+                    return null;
+                }
+            };
+
+            const loadData = () => {
+                if (typeof localStorage === "undefined") {
+                    return { version: 1, tools: {}, updatedAt: null };
+                }
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) {
+                    return { version: 1, tools: {}, updatedAt: null };
+                }
+                const parsed = safeJsonParse(raw);
+                if (!parsed || typeof parsed !== "object") {
+                    return { version: 1, tools: {}, updatedAt: null };
+                }
+                if (!parsed.tools || typeof parsed.tools !== "object") {
+                    parsed.tools = {};
+                }
+                return parsed;
+            };
+
+            const formatDate = (value) => {
+                if (!value) {
+                    return "Never";
+                }
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) {
+                    return "Unknown";
+                }
+                return date.toLocaleString();
+            };
+
+            const serialize = (data) => JSON.stringify(data, null, 2);
+
+            const state = {
+                data: loadData()
+            };
+
+            const summaryTools = document.getElementById("summary-tools");
+            const summaryOpens = document.getElementById("summary-opens");
+            const summaryUpdated = document.getElementById("summary-updated");
+            const tableBody = document.getElementById("analytics-body");
+            const emptyState = document.getElementById("analytics-empty");
+            const tableHeaders = Array.from(document.querySelectorAll("#analytics-table th[data-sort-key]"));
+            const exportOutput = document.getElementById("export-output");
+            const exportButton = document.getElementById("export-json");
+            const copyButton = document.getElementById("copy-json");
+            const clearAnalyticsButton = document.getElementById("clear-analytics");
+            const clearAllButton = document.getElementById("clear-all-storage");
+            const downloadLink = document.getElementById("download-link");
+            const sortState = {
+                key: "count",
+                direction: "desc"
+            };
+
+            const render = () => {
+                const tools = Object.values(state.data.tools || {});
+                tools.sort((a, b) => {
+                    const key = sortState.key;
+                    const direction = sortState.direction === "asc" ? 1 : -1;
+                    let valueA = a[key];
+                    let valueB = b[key];
+
+                    if (key === "count") {
+                        valueA = Number(valueA || 0);
+                        valueB = Number(valueB || 0);
+                        return (valueA - valueB) * direction;
+                    }
+
+                    if (key === "lastAccess") {
+                        const dateA = valueA ? new Date(valueA).getTime() : 0;
+                        const dateB = valueB ? new Date(valueB).getTime() : 0;
+                        return (dateA - dateB) * direction;
+                    }
+
+                    return String(valueA || "").localeCompare(String(valueB || "")) * direction;
+                });
+
+                tableBody.innerHTML = "";
+                let totalOpens = 0;
+
+                tools.forEach((tool) => {
+                    totalOpens += tool.count || 0;
+                    const row = document.createElement("tr");
+
+                    const titleCell = document.createElement("td");
+                    titleCell.textContent = tool.title || "Untitled tool";
+
+                    const pathCell = document.createElement("td");
+                    const pathValue = tool.path || "";
+                    if (pathValue) {
+                        const link = document.createElement("a");
+                        link.href = pathValue;
+                        link.textContent = pathValue;
+                        pathCell.appendChild(link);
+                    } else {
+                        pathCell.textContent = "";
+                    }
+
+                    const countCell = document.createElement("td");
+                    countCell.textContent = tool.count || 0;
+
+                    const lastCell = document.createElement("td");
+                    lastCell.textContent = formatDate(tool.lastAccess);
+
+                    row.appendChild(titleCell);
+                    row.appendChild(pathCell);
+                    row.appendChild(countCell);
+                    row.appendChild(lastCell);
+                    tableBody.appendChild(row);
+                });
+
+                emptyState.hidden = tools.length !== 0;
+                summaryTools.textContent = tools.length;
+                summaryOpens.textContent = totalOpens;
+                summaryUpdated.textContent = formatDate(state.data.updatedAt);
+
+                exportOutput.value = serialize(state.data);
+                exportButton.disabled = tools.length === 0;
+                copyButton.disabled = tools.length === 0;
+                clearAnalyticsButton.disabled = tools.length === 0;
+            };
+
+            const updateSortIndicators = () => {
+                tableHeaders.forEach((header) => {
+                    const key = header.dataset.sortKey;
+                    const label = header.dataset.label || header.textContent.trim();
+                    header.textContent = label;
+                    if (key === sortState.key) {
+                        header.textContent = `${label} ${sortState.direction === "asc" ? "▲" : "▼"}`;
+                    }
+                });
+            };
+
+            const handleSort = (event) => {
+                const header = event.currentTarget;
+                const key = header.dataset.sortKey;
+                if (!key) return;
+
+                if (sortState.key === key) {
+                    sortState.direction = sortState.direction === "asc" ? "desc" : "asc";
+                } else {
+                    sortState.key = key;
+                    sortState.direction = key === "count" ? "desc" : "asc";
+                }
+                updateSortIndicators();
+                render();
+            };
+
+            const downloadJson = () => {
+                const blob = new Blob([serialize(state.data)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                downloadLink.href = url;
+                downloadLink.download = "tool-analytics.json";
+                downloadLink.hidden = false;
+                downloadLink.textContent = "Download JSON";
+                downloadLink.click();
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                    downloadLink.hidden = true;
+                }, 1000);
+            };
+
+            const copyJson = async () => {
+                try {
+                    await navigator.clipboard.writeText(serialize(state.data));
+                    copyButton.textContent = "Copied!";
+                    setTimeout(() => {
+                        copyButton.textContent = "Copy JSON";
+                    }, 1500);
+                } catch (error) {
+                    copyButton.textContent = "Copy failed";
+                    setTimeout(() => {
+                        copyButton.textContent = "Copy JSON";
+                    }, 1500);
+                }
+            };
+
+            const clearAnalytics = () => {
+                const confirmed = window.confirm("Clear all local analytics data?");
+                if (!confirmed) {
+                    return;
+                }
+                localStorage.removeItem(STORAGE_KEY);
+                state.data = loadData();
+                render();
+            };
+
+            const clearAllStorage = () => {
+                const confirmed = window.confirm(
+                    "Clear all local storage for every tool on this site? This removes analytics and any saved tool data."
+                );
+                if (!confirmed) {
+                    return;
+                }
+                localStorage.clear();
+                state.data = loadData();
+                render();
+            };
+
+            exportButton.addEventListener("click", downloadJson);
+            copyButton.addEventListener("click", copyJson);
+            clearAnalyticsButton.addEventListener("click", clearAnalytics);
+            clearAllButton.addEventListener("click", clearAllStorage);
+            tableHeaders.forEach((header) => {
+                header.dataset.label = header.textContent.trim();
+                header.style.cursor = "pointer";
+                header.addEventListener("click", handleSort);
+            });
+
+            updateSortIndicators();
+            render();
+        })();
+    </script>
+</body>
+
+</html>

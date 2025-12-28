@@ -1,6 +1,35 @@
 ---
 version: 1
 tools:
+  - html/3mf-inspector:
+      title: "3MF Inspector"
+      language: "html"
+      description: "Inspect 3MF metadata, thumbnails, and mesh objects directly in the browser."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "f78e582ac9cb67a84843a088bfaf1d1d765c6cc0"
+        updated_commit: "b469eacd8c81a931947bed8663cc1c1fdc958bc5"
+      tags:
+        - "html"
+        - "3mf"
+        - "3d"
+        - "metadata"
+        - "mesh"
+  - html/github-actions-spider:
+      title: "GitHub Actions Spider"
+      language: "html"
+      description: "Crawl repositories and extract GitHub Actions uses-steps from workflow files."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "f2085d75a899e83fbb27cfb1610e703f2c0b9815"
+        updated_commit: "a689dedc7bac0af680d3c7732b7f29acd3c24bca"
+      tags:
+        - "github"
+        - "actions"
+        - "workflow"
+        - "crawl"
+        - "html"
+        - "search"
   - html/hello-world:
       title: "Hello, World"
       language: "html"
@@ -14,6 +43,48 @@ tools:
         - "html"
         - "basic"
         - "input"
+  - html/helm-chart-discovery:
+      title: "Helm Chart Discovery"
+      language: "html"
+      description: "Fetch a Helm repository index.yaml and explore chart metadata with search and filters."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "99e68e059b2bbb2bdfe8aa758dd595054fab542a"
+        updated_commit: "b469eacd8c81a931947bed8663cc1c1fdc958bc5"
+      tags:
+        - "helm"
+        - "charts"
+        - "html"
+        - "discover"
+        - "search"
+  - html/k9s-log-cleaner:
+      title: "K9s Log Cleaner"
+      language: "html"
+      description: "Clean up terminal-copied log lines by removing wrap artifacts and border pipes."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "b16836b801ee3cc927c18127249dc0f7a5e5c11d"
+        updated_commit: null
+      tags:
+        - "html"
+        - "logs"
+        - "cleanup"
+        - "text"
+        - "terminal"
+  - html/url-inspect-rewrite:
+      title: "URL Inspect & Rewrite"
+      language: "html"
+      description: "Parse a URL, review query parameters, and rebuild a cleaner link."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "f97c3182bd7aae8170b009bc82aba87960a4ce6d"
+        updated_commit: null
+      tags:
+        - "html"
+        - "url"
+        - "query"
+        - "privacy"
+        - "cleanup"
   - python/hello-python:
       title: "Hello, Python"
       language: "python"
