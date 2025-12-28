@@ -57,6 +57,20 @@ tools:
         - "html"
         - "discover"
         - "search"
+  - html/k9s-log-cleaner:
+      title: "K9s Log Cleaner"
+      language: "html"
+      description: "Clean up terminal-copied log lines by removing wrap artifacts and border pipes."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "html"
+        - "logs"
+        - "cleanup"
+        - "text"
+        - "terminal"
   - html/url-inspect-rewrite:
       title: "URL Inspect & Rewrite"
       language: "html"
