@@ -65,3 +65,12 @@ repos:
                 (?x)^(
                     (static/(?:android-chrome-\d+x\d+|apple-touch-icon|favicon(?:-\d+x\d+)?|favicon)\.(?:png|ico))
                 )$
+
+    - repo: local
+      hooks:
+          - id: check-tool-analytics
+            name: Check HTML tools include analytics.js
+            entry: uv run ci/check_tool_analytics.py
+            language: system
+            files: ^content/tools/html/.*/tool\\.html$
+            pass_filenames: true

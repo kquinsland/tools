@@ -54,6 +54,7 @@ The entire process of creating a new tool and getting it integrated into the sit
 
 1. **Build the tool file**
    - For HTML/JS tools, create `tool.html` with inline JS/CSS as per design guidelines.
+   - Include the local tracking snippet: add `<script src="/analytics.js"></script>` before `</body>` so usage is tracked.
    - For Python tools, create `tool.py` with necessary functionality and PEP-723 header.
 
 2. **Test the tool**
