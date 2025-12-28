@@ -63,7 +63,7 @@ tools:
       description: "Clean up terminal-copied log lines by removing wrap artifacts and border pipes."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
+        introduced_commit: "b16836b801ee3cc927c18127249dc0f7a5e5c11d"
         updated_commit: null
       tags:
         - "html"
