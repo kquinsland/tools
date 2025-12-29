@@ -340,6 +340,7 @@
       const titleCache = new Map();
       const pendingTitles = new Map();
       let urls = [];
+      let isApplyingState = false;
 
       function saveInput(value) {
         localStorage.setItem(storageKey, value);
@@ -350,6 +351,65 @@
         if (stored) {
           inputEl.value = stored;
         }
+      }
+
+      function readHashState() {
+        if (!location.hash.startsWith("#state=")) {
+          return null;
+        }
+        try {
+          const raw = location.hash.slice("#state=".length);
+          const decoded = decodeURIComponent(raw);
+          return JSON.parse(decoded);
+        } catch (error) {
+          addLog("Failed to read URL state.", "error");
+          return null;
+        }
+      }
+
+      function applyState(state) {
+        if (!state) return;
+        isApplyingState = true;
+        inputEl.value = typeof state.t === "string" ? state.t : "";
+        const mode = typeof state.m === "string" ? state.m : "url";
+        const modeInput = document.querySelector(
+          `input[name='link-text'][value='${mode}']`,
+        );
+        if (modeInput) {
+          modeInput.checked = true;
+        }
+        optionNewTab.checked = Boolean(state.n);
+        optionList.checked = Boolean(state.l);
+        optionCheckbox.checked = Boolean(state.c);
+        isApplyingState = false;
+      }
+
+      function isDefaultState(state) {
+        return (
+          (!state.t || state.t === "") &&
+          (state.m === "url" || !state.m) &&
+          !state.n &&
+          !state.l &&
+          !state.c
+        );
+      }
+
+      function updateHashState() {
+        if (isApplyingState) return;
+        const state = {
+          t: inputEl.value,
+          m: currentLinkTextMode(),
+          n: optionNewTab.checked,
+          l: optionList.checked,
+          c: optionCheckbox.checked,
+        };
+        const baseUrl = `${location.pathname}${location.search}`;
+        if (isDefaultState(state)) {
+          history.replaceState(null, "", baseUrl);
+          return;
+        }
+        const encoded = encodeURIComponent(JSON.stringify(state));
+        history.replaceState(null, "", `${baseUrl}#state=${encoded}`);
       }
 
       function extractUrls(text) {
@@ -500,6 +560,7 @@
         addLog(`Extracted ${urls.length} URL${urls.length === 1 ? "" : "s"}.`);
         renderUrlList();
         renderMarkdown();
+        updateHashState();
         if (currentLinkTextMode() === "title") {
           urls.forEach((url) => fetchTitle(url));
         }
@@ -514,6 +575,7 @@
         option.addEventListener("change", () => {
           addLog(`Link text mode set to "${currentLinkTextMode()}".`);
           renderMarkdown();
+          updateHashState();
           if (currentLinkTextMode() === "title") {
             urls.forEach((url) => fetchTitle(url));
           }
@@ -524,6 +586,7 @@
         option.addEventListener("change", () => {
           addLog("Formatting options updated.");
           renderMarkdown();
+          updateHashState();
         });
       });
 
@@ -552,7 +615,16 @@
 
       clearLogButton.addEventListener("click", clearLog);
 
-      loadInput();
+      const hashState = readHashState();
+      if (hashState) {
+        applyState(hashState);
+        addLog("Loaded state from URL.");
+      } else {
+        loadInput();
+        if (inputEl.value) {
+          addLog("Loaded input from local storage.");
+        }
+      }
       refresh();
     </script>
     <script src="/analytics.js"></script>
