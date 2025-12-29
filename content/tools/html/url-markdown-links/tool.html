@@ -262,7 +262,10 @@
       <section id="raw-input-section" class="panel">
         <label for="raw-input">Input text (URLs will be extracted automatically)</label>
         <textarea id="raw-input" placeholder="Paste text containing URLs here..."></textarea>
-        <div class="helper">Your input is saved in local storage so it stays on refresh.</div>
+        <div class="toolbar">
+          <button id="clear-input-top" class="secondary">Clear input</button>
+          <span class="status">Your input is saved in local storage so it stays on refresh.</span>
+        </div>
       </section>
 
       <section id="url-list-section" class="panel">
@@ -332,6 +335,7 @@
       const copyButton = document.getElementById("copy-button");
       const copyStatus = document.getElementById("copy-status");
       const clearButton = document.getElementById("clear-button");
+      const clearInputTop = document.getElementById("clear-input-top");
       const clearLogButton = document.getElementById("clear-log");
       const logList = document.getElementById("log-list");
       const logEmpty = document.getElementById("log-empty");
@@ -651,14 +655,17 @@
         }, 1800);
       });
 
-      clearButton.addEventListener("click", () => {
+      function clearInput() {
         inputEl.value = "";
         saveInput("");
         titleCache.clear();
         pendingTitles.clear();
         addLog("Input cleared.");
         refresh();
-      });
+      }
+
+      clearButton.addEventListener("click", clearInput);
+      clearInputTop.addEventListener("click", clearInput);
 
       clearLogButton.addEventListener("click", clearLog);
 
