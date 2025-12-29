@@ -1,26 +1,27 @@
-I have created a git branch for you, please get right to work on:
+Start by creating a new branch using the `tool/too-name-here` pattern.
+When you are done, use the `gh` tool to create a pull request against the `main` branch.
 
-The high level idea is to be able to present the user with their most commonly used tools.
-The way to do this is to track page access per tool.
+The tool you are to build will be a HTML page meant to quickly facilitate working with URLs and Markdown links.
 
-Keeping the number one directive / rule for this repo: local, self-contained, this means that there can be no remote server to send usage data to.
-This means we need to store usage data locally on the user's machine.
+At the top of the page, the user will paste in text that may contain URLs .
+Extract all URLs  from the text and display them in a list below the input area.
+Disregard all other text.
+Persist the raw input in either local storage or the URL hash so that if the user refreshes the page, their input is not lost and/or the state can be shared via URL.
 
-Rather than duplicate code, it is possible to put a simple javascript snippet into the `static` directory that each tool can load to handle the tracking.
+In a second text area below the list of URLs, display a Markdown-formatted link for each URL, one per line.
+The user should be able to toggle different options for the Markdown links, including:
 
-For example, the `static/test.js` file is accessible at `https://web-server-here.tld/test.js`.
+- Link text: either the URL itself, or "Link" or the title of the webpage (fetched from the URL)
+- Whether to open the link in a new tab (i.e., adding `target="_blank"` to the link)
+- Weather to add a leading list item marker
+- Weather to add a `[ ]` checkbox before each link
 
-To facilitate user management of this data, please also create a simple page at `static/analytics.html` that can read and display the usage data and export it.
-As always, the user must be given a way to clear it it as well.
+Each option should be a toggle.
+When the user changes any of the options, the Markdown links should update automatically.
 
+If the user chooses to use the webpage title as the link text, fetch the title asynchronously and update the Markdown links once the title is retrieved.
 
-So the tasks are:
+If there was an error fetching the title for a URL, use the URL itself as the link text for that URL.
 
-- Create `static/analytics.js` that tracks page access and stores it locally.
-- Create `static/analytics.html` that reads, displays, exports, and clears the usage data.
-- Update the skill/documentation around creating new tools to include loading the `analytics.js` file for tracking.
-- Update existing tools to load the `analytics.js` file for tracking.
-
-
-If possible, the analytics.js file should add a footer to each page that indicates tracking is enabled and links to the analytics.html page for user management of the data.
-The footer should indicate the number of times the user has accessed that tool if possible.
+There should be a button to copy the generated Markdown links to the clipboard.
+The page should feature a console / log area at the bottom that displays any errors encountered during the fetching of webpage titles.
