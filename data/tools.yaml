@@ -85,6 +85,19 @@ tools:
         - "query"
         - "privacy"
         - "cleanup"
+  - html/url-markdown-links:
+      title: "URL to Markdown Links"
+      language: "html"
+      description: "Extract URLs from text and format them as Markdown links with optional list and checkbox helpers."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "html"
+        - "url"
+        - "markdown"
+        - "links"
   - python/hello-python:
       title: "Hello, Python"
       language: "python"

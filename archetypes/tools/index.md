@@ -16,7 +16,7 @@ resources:
 
     # Made available for use below
     - name: tool-icon
-      src: images/tool-icon.webp
+      src: images/placeholder-tool-icon.webp
 
 # HugoBook theme does not really show these anywhere but can be useful metadata for searching/filtering
 tags:

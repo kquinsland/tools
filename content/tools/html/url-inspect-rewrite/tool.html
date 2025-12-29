@@ -605,6 +605,21 @@
         }
       }
 
+      function loadUrlFromHash() {
+        if (!location.hash.startsWith("#url=")) return false;
+        const value = location.hash.slice(5);
+        if (!value) return false;
+        try {
+          const decoded = decodeURIComponent(value);
+          if (!decoded) return false;
+          elements.inputText.value = decoded;
+          handleInputText(decoded);
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+
       function handleParsedUrl(urlObject) {
         state = buildStateFromUrl(urlObject);
         renderParams();
@@ -728,6 +743,8 @@
       if (loadStateFromHash()) {
         hydrateFromState();
         elements.inputStatus.textContent = "Loaded state from shared link.";
+      } else if (loadUrlFromHash()) {
+        elements.inputStatus.textContent = "Loaded URL from shared link.";
       }
     </script>
     <script src="/analytics.js"></script>
