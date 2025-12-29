@@ -78,7 +78,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f97c3182bd7aae8170b009bc82aba87960a4ce6d"
-        updated_commit: "5d5af151bf71cf481bb06940ec7c1b8639ec725e"
+        updated_commit: "90117da6f02a7a2e676bdc053717f49332ec357d"
       tags:
         - "html"
         - "url"
@@ -91,8 +91,8 @@ tools:
       description: "Extract URLs from text and format them as Markdown links with optional list and checkbox helpers."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
-        updated_commit: null
+        introduced_commit: "eee81257ad54ff8cf9d9c21400203d238cbfbb36"
+        updated_commit: "5273ee60bec83b8e7dbb9970e79e746af3db743c"
       tags:
         - "html"
         - "url"
