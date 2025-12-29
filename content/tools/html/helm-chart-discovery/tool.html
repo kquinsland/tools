@@ -82,7 +82,8 @@
       }
 
       input[type="text"],
-      input[type="search"] {
+      input[type="search"],
+      textarea {
         width: 100%;
         border: 1px solid var(--border);
         border-radius: 12px;
@@ -278,6 +279,20 @@
         color: var(--muted);
       }
 
+      .hint {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #fffaf4;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .hint strong {
+        color: var(--ink);
+      }
+
       .empty {
         padding: 20px;
         text-align: center;
@@ -309,24 +324,25 @@
       <header>
         <h1>Helm Chart Discovery</h1>
         <p class="lead">
-          Paste a Helm repository domain, base URL, or full index.yaml path. The tool fetches the
-          index and summarizes charts, versions, and metadata with search and collapsible cards.
+          Paste a Helm repository domain, base URL, or full index.yaml path, or use an OCI chart
+          reference (oci://...). The tool fetches chart versions and metadata with search and
+          collapsible cards.
         </p>
       </header>
 
       <section id="input-section">
-        <h2>1) Provide a repository</h2>
+        <h2>1) Provide a repository or OCI reference</h2>
         <div class="row">
           <div>
-            <label for="repo-input">Repository URL or domain</label>
+            <label for="repo-input">Repository URL, domain, or OCI reference</label>
             <input
               id="repo-input"
               type="text"
-              placeholder="charts.zigbee2mqtt.io or https://example.com/charts"
+              placeholder="charts.zigbee2mqtt.io or oci://registry.example.com/namespace/chart"
             />
           </div>
           <div class="actions">
-            <button id="load-url">Load index.yaml</button>
+            <button id="load-url">Load</button>
             <button id="load-sample" class="secondary">Load sample</button>
             <button id="clear-all" class="secondary">Clear</button>
           </div>
@@ -341,10 +357,81 @@
           </div>
           <div class="drop-zone" id="drop-zone">Drag and drop an index.yaml file here</div>
         </div>
+
+        <div id="oci-hints" class="hint">
+          OCI tips: chart versions with a "+" (build metadata) are often stored as tags with "_"
+          instead (example: 1.2.3+build.4 → 1.2.3_build.4). Registries must allow CORS for browser
+          access.
+        </div>
+      </section>
+
+      <section id="oci-auth-section">
+        <h2>2) Optional OCI registry credentials</h2>
+        <div class="row">
+          <div>
+            <label for="oci-username">Registry username</label>
+            <input id="oci-username" type="text" placeholder="username" autocomplete="username" />
+          </div>
+          <div>
+            <label for="oci-password">Registry password / token</label>
+            <input
+              id="oci-password"
+              type="password"
+              placeholder="password or token"
+              autocomplete="current-password"
+            />
+          </div>
+          <div class="actions">
+            <button id="clear-oci-auth" class="secondary">Clear OCI credentials</button>
+          </div>
+        </div>
+        <div class="hint" id="oci-auth-hint">
+          Credentials are stored locally in this browser only and sent as Basic auth when a
+          registry requires it. Clear them when done.
+        </div>
+      </section>
+
+      <section id="oci-fallback" hidden>
+        <h2>3) OCI CORS fallback</h2>
+        <div class="hint">
+          <strong>Registry blocked CORS.</strong> You can still open the tags list in a new tab and
+          manually import it here. Metadata (description, app version, sources) requires registry
+          API access, so manual import will list versions only.
+        </div>
+        <div class="row" style="margin-top: 12px">
+          <div class="actions">
+            <a id="oci-tags-link" href="#" target="_blank" rel="noopener">Open tags list</a>
+          </div>
+          <div class="actions">
+            <button id="copy-oci-tags" class="secondary">Copy tags list URL</button>
+          </div>
+        </div>
+        <div style="height: 12px"></div>
+        <div class="row">
+          <div>
+            <label for="oci-tags-text">Paste tags list JSON</label>
+            <textarea
+              id="oci-tags-text"
+              rows="4"
+              placeholder='{"name":"...","tags":["1.0.0"]}'
+            ></textarea>
+          </div>
+          <div class="actions">
+            <button id="load-oci-tags">Load tags JSON</button>
+            <button id="clear-oci-tags" class="secondary">Clear tags</button>
+          </div>
+        </div>
+        <div style="height: 12px"></div>
+        <div class="row">
+          <div>
+            <label for="oci-tags-file">Or upload tags list JSON</label>
+            <input id="oci-tags-file" type="file" accept=".json,application/json" />
+          </div>
+        </div>
       </section>
 
       <section id="status-section">
-        <h2>2) Status</h2>
+        <h2>4) Status</h2>
         <div class="status">
           <span id="status-pill">Waiting for input.</span>
           <span id="count-pill">No charts loaded.</span>
@@ -353,7 +440,7 @@
       </section>
 
       <section id="results-section">
-        <h2>3) Browse charts</h2>
+        <h2>5) Browse charts</h2>
         <div class="row">
           <div>
             <label for="search-input">Search charts</label>
@@ -378,6 +465,16 @@
       const clearButton = document.getElementById("clear-all");
       const fileInput = document.getElementById("file-input");
       const dropZone = document.getElementById("drop-zone");
+      const ociUsernameInput = document.getElementById("oci-username");
+      const ociPasswordInput = document.getElementById("oci-password");
+      const clearOciAuthButton = document.getElementById("clear-oci-auth");
+      const ociFallbackSection = document.getElementById("oci-fallback");
+      const ociTagsLink = document.getElementById("oci-tags-link");
+      const copyOciTagsButton = document.getElementById("copy-oci-tags");
+      const ociTagsText = document.getElementById("oci-tags-text");
+      const loadOciTagsButton = document.getElementById("load-oci-tags");
+      const clearOciTagsButton = document.getElementById("clear-oci-tags");
+      const ociTagsFile = document.getElementById("oci-tags-file");
       const statusPill = document.getElementById("status-pill");
       const countPill = document.getElementById("count-pill");
       const sourcePill = document.getElementById("source-pill");
@@ -390,8 +487,15 @@
       let charts = [];
       let repoBaseUrl = "";
       let activeSource = "";
+      let lastOciTagsUrl = "";
+      let lastOciParsed = null;
 
       const sampleUrl = "https://charts.bitnami.com/bitnami";
+      const ociAuthCache = new Map();
+      const ociAuthStorageKey = "helm-oci-auth";
+
+      const helmConfigMediaType = "application/vnd.cncf.helm.config.v1+json";
+      const helmChartLayerMediaType = "application/vnd.cncf.helm.chart.content.v1.tar+gzip";
 
       function setStatus(message, type) {
         statusPill.textContent = message;
@@ -410,10 +514,43 @@
         sourcePill.textContent = text ? `Source: ${text}` : "Source: none";
       }
 
+      function showOciFallback(url) {
+        if (!url) {
+          return;
+        }
+        lastOciTagsUrl = url;
+        ociTagsLink.href = url;
+        ociTagsLink.textContent = url;
+        ociFallbackSection.hidden = false;
+      }
+
+      function hideOciFallback() {
+        ociFallbackSection.hidden = true;
+      }
+
+      async function copyText(value) {
+        if (!value) {
+          return;
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(value);
+          return;
+        }
+        const temp = document.createElement("textarea");
+        temp.value = value;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand("copy");
+        document.body.removeChild(temp);
+      }
+
       function normalizeInput(value) {
         const trimmed = value.trim();
         if (!trimmed) {
           return null;
+        }
+        if (/^oci:\/\//i.test(trimmed)) {
+          return { type: "oci", ref: trimmed };
         }
         const looksLikePath = /^([A-Za-z]:\\|\/.+)/.test(trimmed) || trimmed.startsWith("file://");
         if (looksLikePath) {
@@ -427,7 +564,7 @@
           normalized = normalized.replace(/\/+$/, "");
           normalized = `${normalized}/index.yaml`;
         }
-        return { url: normalized };
+        return { type: "http", url: normalized };
       }
 
       function updateHash(value) {
@@ -494,6 +631,325 @@
         charts.sort((a, b) => a.name.localeCompare(b.name));
 
         return { chartCount: charts.length, versionCount: totalVersions };
+      }
+
+      function parseOciReference(value) {
+        const trimmed = value.trim();
+        if (!/^oci:\/\//i.test(trimmed)) {
+          return { error: "OCI references must start with oci://." };
+        }
+        const withoutScheme = trimmed.replace(/^oci:\/\//i, "");
+        const [refPart, digestPart, extraPart] = withoutScheme.split("@");
+        if (extraPart) {
+          return { error: "OCI references may only include a single digest (@sha256:...)." };
+        }
+        if (!refPart || !refPart.includes("/")) {
+          return { error: "OCI references must include a registry and chart path." };
+        }
+        const firstSlash = refPart.indexOf("/");
+        const registry = refPart.slice(0, firstSlash);
+        let repository = refPart.slice(firstSlash + 1);
+        if (!registry || !repository) {
+          return { error: "OCI references must include a registry and chart path." };
+        }
+        let tag = null;
+        const lastSlash = repository.lastIndexOf("/");
+        const lastSegment = repository.slice(lastSlash + 1);
+        const tagIndex = lastSegment.lastIndexOf(":");
+        if (tagIndex > -1) {
+          tag = lastSegment.slice(tagIndex + 1);
+          if (!tag) {
+            return { error: "OCI references with a tag must include a tag value." };
+          }
+          repository = `${repository.slice(0, lastSlash + 1)}${lastSegment.slice(0, tagIndex)}`;
+        }
+        const chartName = repository.split("/").pop();
+        const referenceBase = `oci://${registry}/${repository}`;
+        const reference = digestPart
+          ? `${referenceBase}@${digestPart}`
+          : tag
+            ? `${referenceBase}:${tag}`
+            : referenceBase;
+        return {
+          registry,
+          repository,
+          chartName,
+          tag,
+          digest: digestPart || null,
+          reference,
+        };
+      }
+
+      function parseAuthenticateHeader(value) {
+        if (!value) {
+          return null;
+        }
+        const trimmed = value.trim();
+        if (!/^Bearer\s+/i.test(trimmed)) {
+          return null;
+        }
+        const params = {};
+        trimmed
+          .replace(/^Bearer\s+/i, "")
+          .split(/,\s*/)
+          .forEach((part) => {
+            const [key, rawValue] = part.split("=");
+            if (!key || !rawValue) {
+              return;
+            }
+            params[key.trim()] = rawValue.trim().replace(/^"|"$/g, "");
+          });
+        return params;
+      }
+
+      async function fetchWithAuth(url, options, authScope) {
+        const headers = new Headers(options && options.headers ? options.headers : {});
+        const cacheKey = authScope ? `${authScope.registry}|${authScope.repository}` : null;
+        const cachedToken = cacheKey ? ociAuthCache.get(cacheKey) : null;
+        if (cachedToken) {
+          headers.set("Authorization", `Bearer ${cachedToken}`);
+        } else {
+          const basicAuth = getBasicAuthHeader();
+          if (basicAuth) {
+            headers.set("Authorization", basicAuth);
+          }
+        }
+
+        let response = await fetch(url, { ...options, headers, mode: "cors" });
+        if (response.status !== 401) {
+          return response;
+        }
+        const authHeader = parseAuthenticateHeader(response.headers.get("WWW-Authenticate"));
+        if (!authHeader || !authHeader.realm) {
+          return response;
+        }
+
+        const tokenUrl = new URL(authHeader.realm);
+        if (authHeader.service) {
+          tokenUrl.searchParams.set("service", authHeader.service);
+        }
+        const scopeValue = authHeader.scope
+          ? authHeader.scope
+          : authScope
+            ? `repository:${authScope.repository}:pull`
+            : "";
+        if (scopeValue) {
+          tokenUrl.searchParams.set("scope", scopeValue);
+        }
+
+        const tokenHeaders = new Headers();
+        const basicAuth = getBasicAuthHeader();
+        if (basicAuth) {
+          tokenHeaders.set("Authorization", basicAuth);
+        }
+        const tokenResponse = await fetch(tokenUrl.toString(), { mode: "cors", headers: tokenHeaders });
+        if (!tokenResponse.ok) {
+          return response;
+        }
+        const tokenData = await tokenResponse.json();
+        const token = tokenData.token || tokenData.access_token;
+        if (!token) {
+          return response;
+        }
+        if (cacheKey) {
+          ociAuthCache.set(cacheKey, token);
+        }
+        headers.set("Authorization", `Bearer ${token}`);
+        response = await fetch(url, { ...options, headers, mode: "cors" });
+        return response;
+      }
+
+      async function fetchJsonWithAuth(url, options, authScope) {
+        const response = await fetchWithAuth(url, options, authScope);
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+        return response.json();
+      }
+
+      function normalizeSemver(value) {
+        if (!value) {
+          return null;
+        }
+        const cleaned = String(value).trim().replace(/^v/, "").replace(/_/g, "+");
+        const [mainPlus, build] = cleaned.split("+");
+        const [main, pre] = mainPlus.split("-");
+        const parts = main.split(".");
+        if (parts.length < 1) {
+          return null;
+        }
+        const numbers = parts.map((part) => Number(part));
+        if (numbers.some((num) => Number.isNaN(num))) {
+          return null;
+        }
+        return {
+          major: numbers[0] || 0,
+          minor: numbers[1] || 0,
+          patch: numbers[2] || 0,
+          pre: pre ? pre.split(".") : [],
+          build,
+        };
+      }
+
+      function compareSemver(a, b) {
+        if (a.major !== b.major) {
+          return a.major - b.major;
+        }
+        if (a.minor !== b.minor) {
+          return a.minor - b.minor;
+        }
+        if (a.patch !== b.patch) {
+          return a.patch - b.patch;
+        }
+        const aPre = a.pre;
+        const bPre = b.pre;
+        if (!aPre.length && !bPre.length) {
+          return 0;
+        }
+        if (!aPre.length) {
+          return 1;
+        }
+        if (!bPre.length) {
+          return -1;
+        }
+        const length = Math.max(aPre.length, bPre.length);
+        for (let i = 0; i < length; i += 1) {
+          const aPart = aPre[i];
+          const bPart = bPre[i];
+          if (aPart === undefined) {
+            return -1;
+          }
+          if (bPart === undefined) {
+            return 1;
+          }
+          const aNum = Number(aPart);
+          const bNum = Number(bPart);
+          const aIsNum = !Number.isNaN(aNum);
+          const bIsNum = !Number.isNaN(bNum);
+          if (aIsNum && bIsNum) {
+            if (aNum !== bNum) {
+              return aNum - bNum;
+            }
+            continue;
+          }
+          if (aIsNum) {
+            return -1;
+          }
+          if (bIsNum) {
+            return 1;
+          }
+          if (aPart !== bPart) {
+            return aPart.localeCompare(bPart);
+          }
+        }
+        return 0;
+      }
+
+      function compareVersionEntries(a, b) {
+        const aKey = a.version || a.ociTag || "";
+        const bKey = b.version || b.ociTag || "";
+        const aSem = normalizeSemver(aKey);
+        const bSem = normalizeSemver(bKey);
+        if (aSem && bSem) {
+          return compareSemver(aSem, bSem);
+        }
+        if (aSem) {
+          return 1;
+        }
+        if (bSem) {
+          return -1;
+        }
+        return aKey.localeCompare(bKey);
+      }
+
+      async function mapWithConcurrency(items, limit, task) {
+        const results = new Array(items.length);
+        let index = 0;
+        const workers = new Array(Math.min(limit, items.length)).fill(null).map(async () => {
+          while (index < items.length) {
+            const current = index;
+            index += 1;
+            results[current] = await task(items[current], current);
+          }
+        });
+        await Promise.all(workers);
+        return results;
+      }
+
+      async function fetchOciTags(registryBase, repository) {
+        const url = `${registryBase}/v2/${repository}/tags/list`;
+        return fetchJsonWithAuth(url, {}, { registry: registryBase, repository });
+      }
+
+      async function fetchOciManifest(registryBase, repository, reference) {
+        const url = `${registryBase}/v2/${repository}/manifests/${encodeURIComponent(reference)}`;
+        const response = await fetchWithAuth(
+          url,
+          {
+            headers: {
+              Accept: "application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json, application/json",
+            },
+          },
+          { registry: registryBase, repository },
+        );
+        if (!response.ok) {
+          throw new Error(`Manifest request failed with status ${response.status}`);
+        }
+        return response.json();
+      }
+
+      async function fetchOciConfig(registryBase, repository, digest) {
+        const url = `${registryBase}/v2/${repository}/blobs/${digest}`;
+        const response = await fetchWithAuth(
+          url,
+          { headers: { Accept: `${helmConfigMediaType}, application/json` } },
+          { registry: registryBase, repository },
+        );
+        if (!response.ok) {
+          throw new Error(`Config request failed with status ${response.status}`);
+        }
+        return response.json();
+      }
+
+      async function fetchOciVersionData(parsed, reference) {
+        const registryBase = `https://${parsed.registry}`;
+        let manifest = await fetchOciManifest(registryBase, parsed.repository, reference);
+        if (manifest.mediaType === "application/vnd.oci.image.index.v1+json") {
+          const firstManifest = Array.isArray(manifest.manifests) ? manifest.manifests[0] : null;
+          if (firstManifest && firstManifest.digest) {
+            manifest = await fetchOciManifest(registryBase, parsed.repository, firstManifest.digest);
+          }
+        }
+        const manifestToUse = manifest;
+        if (!manifestToUse || !manifestToUse.config) {
+          throw new Error("No OCI manifest config found.");
+        }
+        const config = await fetchOciConfig(registryBase, parsed.repository, manifestToUse.config.digest);
+        const chartMeta = config || {};
+        const versionValue = chartMeta.version || chartMeta.chartVersion || "";
+        const created =
+          (manifestToUse.annotations && manifestToUse.annotations["org.opencontainers.image.created"]) ||
+          chartMeta.created ||
+          null;
+        const chartLayer = Array.isArray(manifestToUse.layers)
+          ? manifestToUse.layers.find((layer) => layer.mediaType === helmChartLayerMediaType)
+          : null;
+        const digest = chartLayer ? chartLayer.digest : "";
+
+        return {
+          chartMeta,
+          versionEntry: {
+            version: versionValue || "",
+            created,
+            digest,
+            ociRef: parsed.digest
+              ? `oci://${parsed.registry}/${parsed.repository}@${parsed.digest}`
+              : `oci://${parsed.registry}/${parsed.repository}:${reference}`,
+            ociTag: parsed.tag || (parsed.digest ? "" : reference),
+            ociConfigDigest: manifestToUse.config.digest,
+            ociMediaType: manifestToUse.config.mediaType,
+          },
+        };
       }
 
       function renderCharts() {
@@ -599,11 +1055,18 @@
               versionItem.appendChild(urlList);
             }
 
+            if (version.ociRef) {
+              const refLine = document.createElement("div");
+              refLine.className = "muted";
+              refLine.textContent = `OCI ref: ${version.ociRef}`;
+              versionItem.appendChild(refLine);
+            }
+
             const digest = safeText(version.digest);
             if (digest) {
               const digestLine = document.createElement("div");
               digestLine.className = "muted";
-              digestLine.textContent = `Digest: ${digest}`;
+              digestLine.textContent = `Chart digest: ${digest}`;
               versionItem.appendChild(digestLine);
             }
 
@@ -641,10 +1104,109 @@
         return row;
       }
 
+      function getOciCredentials() {
+        const username = ociUsernameInput.value.trim();
+        const password = ociPasswordInput.value;
+        if (!username || !password) {
+          return null;
+        }
+        return { username, password };
+      }
+
+      function storeOciCredentials() {
+        const credentials = getOciCredentials();
+        if (!credentials) {
+          localStorage.removeItem(ociAuthStorageKey);
+          return;
+        }
+        localStorage.setItem(ociAuthStorageKey, JSON.stringify(credentials));
+      }
+
+      function loadOciCredentials() {
+        const raw = localStorage.getItem(ociAuthStorageKey);
+        if (!raw) {
+          return;
+        }
+        try {
+          const data = JSON.parse(raw);
+          if (data && typeof data.username === "string" && typeof data.password === "string") {
+            ociUsernameInput.value = data.username;
+            ociPasswordInput.value = data.password;
+          }
+        } catch (error) {
+          localStorage.removeItem(ociAuthStorageKey);
+        }
+      }
+
+      function clearOciCredentials() {
+        ociUsernameInput.value = "";
+        ociPasswordInput.value = "";
+        localStorage.removeItem(ociAuthStorageKey);
+        ociAuthCache.clear();
+      }
+
+      function getBasicAuthHeader() {
+        const credentials = getOciCredentials();
+        if (!credentials) {
+          return null;
+        }
+        return `Basic ${btoa(`${credentials.username}:${credentials.password}`)}`;
+      }
+
+      function loadOciTagsFromData(data) {
+        if (!lastOciParsed) {
+          setStatus("Enter an OCI reference before importing tags.", "bad");
+          return;
+        }
+        const tags = Array.isArray(data.tags) ? data.tags : [];
+        if (!tags.length) {
+          setStatus("No tags found in the provided JSON.", "bad");
+          return;
+        }
+        const versions = tags.map((tag) => ({
+          version: tag,
+          created: "",
+          digest: "",
+          ociRef: `oci://${lastOciParsed.registry}/${lastOciParsed.repository}:${tag}`,
+          ociTag: tag,
+        }));
+        versions.sort((a, b) => compareVersionEntries(b, a));
+        const latest = versions[0];
+        const chartName = lastOciParsed.chartName || lastOciParsed.repository.split("/").pop();
+        charts = [
+          {
+            name: chartName,
+            latest,
+            versions,
+            keywordText: "",
+            searchText: `${chartName}`.toLowerCase(),
+          },
+        ];
+        activeSource = lastOciParsed.reference;
+        setSource(lastOciParsed.reference);
+        updateHash(lastOciParsed.reference);
+        setStatus("OCI tags loaded (metadata requires registry access).", "good");
+        setCounts(1, versions.length);
+        renderCharts();
+      }
+
+      function loadOciTagsFromText(text) {
+        if (!text || !text.trim()) {
+          setStatus("Paste tags list JSON to import.", "bad");
+          return;
+        }
+        try {
+          const data = JSON.parse(text);
+          loadOciTagsFromData(data);
+        } catch (error) {
+          setStatus("Tags list JSON is not valid JSON.", "bad");
+        }
+      }
+
       async function loadFromUrl() {
         const normalized = normalizeInput(repoInput.value);
         if (!normalized) {
-          setStatus("Enter a repo URL or domain.", "bad");
+          setStatus("Enter a repo URL, domain, or OCI reference.", "bad");
           return;
         }
         if (normalized.error) {
@@ -652,7 +1214,13 @@
           return;
         }
 
+        if (normalized.type === "oci") {
+          await loadFromOci(normalized.ref);
+          return;
+        }
+
         const url = normalized.url;
+        hideOciFallback();
         setStatus("Fetching index.yaml...", "");
         setSource(url);
 
@@ -676,10 +1244,98 @@
         }
       }
 
+      async function loadFromOci(reference) {
+        const parsed = parseOciReference(reference);
+        if (parsed.error) {
+          setStatus(parsed.error, "bad");
+          return;
+        }
+        setStatus("Fetching OCI chart metadata...", "");
+        setSource(parsed.reference);
+        repoBaseUrl = "";
+        lastOciParsed = parsed;
+
+        try {
+          const registryBase = `https://${parsed.registry}`;
+          lastOciTagsUrl = `${registryBase}/v2/${parsed.repository}/tags/list`;
+          let references = [];
+          if (parsed.digest) {
+            references = [parsed.digest];
+          } else if (parsed.tag) {
+            references = [parsed.tag];
+          } else {
+            const tagData = await fetchOciTags(registryBase, parsed.repository);
+            references = Array.isArray(tagData.tags) ? tagData.tags : [];
+          }
+          if (!references.length) {
+            throw new Error("No OCI tags found for this chart.");
+          }
+
+          const versionResults = await mapWithConcurrency(references, 6, async (tag) => {
+            try {
+              return await fetchOciVersionData(parsed, tag);
+            } catch (error) {
+              return { error };
+            }
+          });
+
+          const versions = [];
+          versionResults.forEach((result) => {
+            if (!result || result.error) {
+              return;
+            }
+            const chartMeta = result.chartMeta || {};
+            const versionEntry = result.versionEntry;
+            if (!versionEntry.version) {
+              versionEntry.version = chartMeta.version || "";
+            }
+            versionEntry.appVersion = chartMeta.appVersion || chartMeta.appversion || "";
+            versionEntry.description = chartMeta.description || "";
+            versionEntry.home = chartMeta.home || "";
+            versionEntry.sources = Array.isArray(chartMeta.sources) ? chartMeta.sources : [];
+            versionEntry.keywords = Array.isArray(chartMeta.keywords) ? chartMeta.keywords : [];
+            versionEntry.name = chartMeta.name || parsed.chartName;
+            versions.push(versionEntry);
+          });
+
+          if (!versions.length) {
+            throw new Error("No OCI chart versions could be parsed.");
+          }
+
+          versions.sort((a, b) => compareVersionEntries(b, a));
+          const latest = versions[0];
+          const keywords = Array.isArray(latest.keywords) ? latest.keywords : [];
+          const chartName = latest.name || parsed.chartName;
+
+          charts = [
+            {
+              name: chartName,
+              latest,
+              versions,
+              keywordText: keywords.join(", "),
+              searchText: `${chartName} ${safeText(latest.description)} ${keywords.join(" ")}`.toLowerCase(),
+            },
+          ];
+          activeSource = parsed.reference;
+          updateHash(reference);
+          setStatus("OCI chart loaded.", "good");
+          setCounts(1, versions.length);
+          hideOciFallback();
+          renderCharts();
+        } catch (error) {
+          setStatus(`OCI error: ${error.message}`, "bad");
+          showOciFallback(lastOciTagsUrl);
+          setCounts(0, 0);
+          chartList.innerHTML = "";
+          emptyState.hidden = false;
+        }
+      }
+
       function loadFromFile(file) {
         if (!file) {
           return;
         }
+        hideOciFallback();
         const reader = new FileReader();
         reader.onload = (event) => {
           try {
@@ -701,14 +1357,19 @@
         repoInput.value = "";
         searchInput.value = "";
         fileInput.value = "";
+        ociTagsText.value = "";
+        ociTagsFile.value = "";
         charts = [];
         repoBaseUrl = "";
         activeSource = "";
+        lastOciTagsUrl = "";
+        lastOciParsed = null;
         chartList.innerHTML = "";
         emptyState.hidden = false;
         setStatus("Waiting for input.", "");
         setCounts(0, 0);
         setSource("");
+        hideOciFallback();
         updateHash("");
       }
 
@@ -719,6 +1380,24 @@
       });
       clearButton.addEventListener("click", clearAll);
       searchInput.addEventListener("input", renderCharts);
+      ociUsernameInput.addEventListener("input", storeOciCredentials);
+      ociPasswordInput.addEventListener("input", storeOciCredentials);
+      clearOciAuthButton.addEventListener("click", clearOciCredentials);
+      copyOciTagsButton.addEventListener("click", async () => {
+        if (!lastOciTagsUrl) {
+          setStatus("No tags list URL to copy yet.", "bad");
+          return;
+        }
+        await copyText(lastOciTagsUrl);
+        setStatus("Tags list URL copied.", "good");
+      });
+      loadOciTagsButton.addEventListener("click", () => {
+        loadOciTagsFromText(ociTagsText.value);
+      });
+      clearOciTagsButton.addEventListener("click", () => {
+        ociTagsText.value = "";
+        ociTagsFile.value = "";
+      });
 
       expandAllButton.addEventListener("click", () => {
         document.querySelectorAll("details.chart-card").forEach((item) => {
@@ -735,6 +1414,18 @@
       fileInput.addEventListener("change", (event) => {
         const file = event.target.files[0];
         loadFromFile(file);
+      });
+
+      ociTagsFile.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) {
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (fileEvent) => {
+          loadOciTagsFromText(fileEvent.target.result);
+        };
+        reader.readAsText(file);
       });
 
       dropZone.addEventListener("dragover", (event) => {
@@ -754,6 +1445,7 @@
       });
 
       window.addEventListener("load", () => {
+        loadOciCredentials();
         const hash = window.location.hash;
         if (hash.startsWith("#repo=")) {
           const value = decodeURIComponent(hash.replace("#repo=", ""));
