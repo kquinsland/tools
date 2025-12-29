@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>URL to Markdown Links</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1e2a32;
+        --muted: #5e6b75;
+        --paper: #f7f2ec;
+        --card: #ffffff;
+        --line: #d6c9bb;
+        --accent: #c46b2e;
+        --accent-soft: #f1d9c8;
+        --shadow: 0 12px 30px rgba(32, 29, 26, 0.08);
+        --radius: 16px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", "Trebuchet MS", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(circle at top, #fff7ee 0%, var(--paper) 42%, #f1ece5 100%);
+      }
+
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 32px 20px 56px;
+      }
+
+      header {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 28px;
+      }
+
+      header h1 {
+        font-size: clamp(1.8rem, 2.2vw, 2.4rem);
+        margin: 0;
+        letter-spacing: -0.02em;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 720px;
+      }
+
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 20px;
+      }
+
+      .panel + .panel {
+        margin-top: 20px;
+      }
+
+      label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 140px;
+        resize: vertical;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 12px;
+        font-size: 0.98rem;
+        line-height: 1.5;
+        background: #fffdfb;
+      }
+
+      textarea:focus {
+        outline: 2px solid var(--accent-soft);
+        border-color: var(--accent);
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+      }
+
+      .option-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px 14px;
+        background: #fffaf6;
+      }
+
+      .option-card h3 {
+        margin: 0 0 8px;
+        font-size: 0.96rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .option-group {
+        display: grid;
+        gap: 8px;
+        font-size: 0.95rem;
+      }
+
+      .option-group label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        margin: 0;
+      }
+
+      .option-group input {
+        accent-color: var(--accent);
+      }
+
+      .helper {
+        font-size: 0.85rem;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+
+      ul.url-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 8px;
+      }
+
+      ul.url-list li {
+        padding: 8px 10px;
+        border: 1px dashed var(--line);
+        border-radius: 10px;
+        background: #fffaf6;
+        overflow-wrap: anywhere;
+        font-size: 0.92rem;
+      }
+
+      .count {
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-top: 12px;
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 18px;
+        font-weight: 600;
+        background: var(--accent);
+        color: #fff;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .status {
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      textarea.output {
+        width: 100%;
+        min-height: 160px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: #fffdfb;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        resize: vertical;
+        white-space: pre;
+      }
+
+      .log {
+        background: #1b1b1b;
+        color: #f8e9dc;
+        border-radius: 12px;
+        padding: 14px;
+        min-height: 80px;
+        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-size: 0.85rem;
+      }
+
+      .log ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 6px;
+      }
+
+      .log .empty {
+        color: #c8b9aa;
+      }
+
+      @media (max-width: 720px) {
+        main {
+          padding: 24px 16px 40px;
+        }
+        .toolbar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>URL to Markdown Links</h1>
+        <p>
+          Paste any text, extract every URL, and instantly build Markdown link lines.
+          Titles are fetched through a read-only proxy to avoid CORS issues.
+        </p>
+      </header>
+
+      <section id="raw-input-section" class="panel">
+        <label for="raw-input">Input text (URLs will be extracted automatically)</label>
+        <textarea id="raw-input" placeholder="Paste text containing URLs here..."></textarea>
+        <div class="helper">Your input is saved in local storage so it stays on refresh.</div>
+      </section>
+
+      <section id="url-list-section" class="panel">
+        <div class="row" style="align-items: center;">
+          <div>
+            <label>Extracted URLs</label>
+            <div class="count"><span id="url-count">0</span> URLs found</div>
+          </div>
+        </div>
+        <ul id="url-list" class="url-list"></ul>
+      </section>
+
+      <section id="options-section" class="panel">
+        <div class="row">
+          <div class="option-card">
+            <h3>Link Text</h3>
+            <div class="option-group" id="link-text-options">
+              <label><input type="radio" name="link-text" value="url" checked /> Use the URL</label>
+              <label><input type="radio" name="link-text" value="link" /> Use “Link”</label>
+              <label><input type="radio" name="link-text" value="title" /> Use webpage title</label>
+            </div>
+            <div class="helper">Titles fetch in the background. If unavailable, URLs are used.</div>
+          </div>
+          <div class="option-card">
+            <h3>Formatting</h3>
+            <div class="option-group">
+              <label><input type="checkbox" id="option-newtab" /> Open in new tab</label>
+              <label><input type="checkbox" id="option-list" /> Add list marker (- )</label>
+              <label><input type="checkbox" id="option-checkbox" /> Add checkbox [ ]</label>
+            </div>
+            <div class="helper">Checkboxes automatically include a list marker.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="markdown-output-section" class="panel">
+        <label for="markdown-output">Markdown links</label>
+        <textarea id="markdown-output" class="output" readonly></textarea>
+        <div class="toolbar">
+          <button id="copy-button">Copy Markdown</button>
+          <button id="clear-button" class="secondary">Clear input</button>
+          <span id="copy-status" class="status"></span>
+        </div>
+      </section>
+
+      <section id="log-section" class="panel">
+        <label>Fetch log</label>
+        <div class="log">
+          <ul id="log-list"></ul>
+          <div id="log-empty" class="empty">No fetch errors yet.</div>
+        </div>
+        <div class="toolbar">
+          <button id="clear-log" class="secondary">Clear log</button>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const storageKey = "tool.urlMarkdownLinks.input";
+      const inputEl = document.getElementById("raw-input");
+      const urlListEl = document.getElementById("url-list");
+      const urlCountEl = document.getElementById("url-count");
+      const outputEl = document.getElementById("markdown-output");
+      const copyButton = document.getElementById("copy-button");
+      const copyStatus = document.getElementById("copy-status");
+      const clearButton = document.getElementById("clear-button");
+      const clearLogButton = document.getElementById("clear-log");
+      const logList = document.getElementById("log-list");
+      const logEmpty = document.getElementById("log-empty");
+      const linkTextOptions = document.querySelectorAll("input[name='link-text']");
+      const optionNewTab = document.getElementById("option-newtab");
+      const optionList = document.getElementById("option-list");
+      const optionCheckbox = document.getElementById("option-checkbox");
+
+      const titleCache = new Map();
+      const pendingTitles = new Map();
+      let urls = [];
+
+      function saveInput(value) {
+        localStorage.setItem(storageKey, value);
+      }
+
+      function loadInput() {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          inputEl.value = stored;
+        }
+      }
+
+      function extractUrls(text) {
+        if (!text) return [];
+        const regex = /https?:\/\/[^\s<>'"`]+/gi;
+        const matches = text.match(regex) || [];
+        return matches.map(cleanUrl).filter(Boolean);
+      }
+
+      function cleanUrl(value) {
+        if (!value) return "";
+        let cleaned = value.trim();
+        cleaned = cleaned.replace(/[)\],.!?:;>]+$/g, "");
+        return cleaned;
+      }
+
+      function renderUrlList() {
+        urlListEl.innerHTML = "";
+        urlCountEl.textContent = urls.length.toString();
+        if (!urls.length) {
+          urlListEl.innerHTML = "<li>Paste text above to extract URLs.</li>";
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        urls.forEach((url) => {
+          const item = document.createElement("li");
+          item.textContent = url;
+          fragment.appendChild(item);
+        });
+        urlListEl.appendChild(fragment);
+      }
+
+      function currentLinkTextMode() {
+        const selected = document.querySelector("input[name='link-text']:checked");
+        return selected ? selected.value : "url";
+      }
+
+      function buildPrefix() {
+        let prefix = "";
+        if (optionList.checked || optionCheckbox.checked) {
+          prefix += "- ";
+        }
+        if (optionCheckbox.checked) {
+          prefix += "[ ] ";
+        }
+        return prefix;
+      }
+
+      function buildMarkdownLine(url) {
+        const mode = currentLinkTextMode();
+        let text = url;
+        if (mode === "link") {
+          text = "Link";
+        } else if (mode === "title") {
+          text = titleCache.get(url) || url;
+        }
+
+        const prefix = buildPrefix();
+        if (optionNewTab.checked) {
+          return `${prefix}<a href="${url}" target="_blank" rel="noopener">${escapeHtml(text)}</a>`;
+        }
+        return `${prefix}[${escapeMarkdown(text)}](${url})`;
+      }
+
+      function escapeMarkdown(value) {
+        return value.replace(/([\\`*_{}\[\]()#+\-.!])/g, "\\$1");
+      }
+
+      function escapeHtml(value) {
+        const div = document.createElement("div");
+        div.textContent = value;
+        return div.innerHTML;
+      }
+
+      function renderMarkdown() {
+        if (!urls.length) {
+          outputEl.value = "";
+          return;
+        }
+        const lines = urls.map(buildMarkdownLine);
+        outputEl.value = lines.join("\n");
+      }
+
+      function addLog(message) {
+        const item = document.createElement("li");
+        item.textContent = message;
+        logList.appendChild(item);
+        logEmpty.style.display = "none";
+      }
+
+      function clearLog() {
+        logList.innerHTML = "";
+        logEmpty.style.display = "block";
+      }
+
+      function titleProxyUrl(url) {
+        const stripped = url.replace(/^https?:\/\//i, "");
+        const scheme = url.toLowerCase().startsWith("https") ? "https" : "http";
+        return `https://r.jina.ai/${scheme}://${stripped}`;
+      }
+
+      async function fetchTitle(url) {
+        if (pendingTitles.has(url) || titleCache.has(url)) return;
+
+        const controller = new AbortController();
+        pendingTitles.set(url, controller);
+        try {
+          const response = await fetch(titleProxyUrl(url), {
+            signal: controller.signal,
+          });
+          if (!response.ok) {
+            throw new Error(`Status ${response.status}`);
+          }
+          const text = await response.text();
+          const title = extractTitle(text);
+          if (!title) {
+            throw new Error("Title not found");
+          }
+          titleCache.set(url, title.trim());
+        } catch (error) {
+          titleCache.set(url, url);
+          addLog(`Title fetch failed for ${url}: ${error.message}`);
+        } finally {
+          pendingTitles.delete(url);
+          renderMarkdown();
+        }
+      }
+
+      function extractTitle(text) {
+        if (!text) return "";
+        const htmlMatch = text.match(/<title[^>]*>([^<]+)<\/title>/i);
+        if (htmlMatch && htmlMatch[1]) {
+          return htmlMatch[1].trim();
+        }
+        const lineMatch = text.match(/^Title:\s*(.+)$/im);
+        if (lineMatch && lineMatch[1]) {
+          return lineMatch[1].trim();
+        }
+        return "";
+      }
+
+      function refresh() {
+        urls = extractUrls(inputEl.value);
+        renderUrlList();
+        renderMarkdown();
+        if (currentLinkTextMode() === "title") {
+          urls.forEach((url) => fetchTitle(url));
+        }
+      }
+
+      inputEl.addEventListener("input", () => {
+        saveInput(inputEl.value);
+        refresh();
+      });
+
+      linkTextOptions.forEach((option) => {
+        option.addEventListener("change", () => {
+          renderMarkdown();
+          if (currentLinkTextMode() === "title") {
+            urls.forEach((url) => fetchTitle(url));
+          }
+        });
+      });
+
+      [optionNewTab, optionList, optionCheckbox].forEach((option) => {
+        option.addEventListener("change", renderMarkdown);
+      });
+
+      copyButton.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(outputEl.value);
+          copyStatus.textContent = "Copied to clipboard.";
+        } catch (error) {
+          copyStatus.textContent = "Copy failed. Select and copy manually.";
+        }
+        setTimeout(() => {
+          copyStatus.textContent = "";
+        }, 1800);
+      });
+
+      clearButton.addEventListener("click", () => {
+        inputEl.value = "";
+        saveInput("");
+        titleCache.clear();
+        pendingTitles.clear();
+        refresh();
+      });
+
+      clearLogButton.addEventListener("click", clearLog);
+
+      loadInput();
+      refresh();
+    </script>
+    <script src="/analytics.js"></script>
+  </body>
+</html>
