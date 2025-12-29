@@ -353,14 +353,30 @@
         }
       }
 
+      function encodeState(state) {
+        const json = JSON.stringify(state);
+        const bytes = new TextEncoder().encode(json);
+        let binary = "";
+        bytes.forEach((value) => {
+          binary += String.fromCharCode(value);
+        });
+        return btoa(binary);
+      }
+
+      function decodeState(encoded) {
+        const binary = atob(encoded);
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+        const json = new TextDecoder().decode(bytes);
+        return JSON.parse(json);
+      }
+
       function readHashState() {
         if (!location.hash.startsWith("#state=")) {
           return null;
         }
         try {
           const raw = location.hash.slice("#state=".length);
-          const decoded = decodeURIComponent(raw);
-          return JSON.parse(decoded);
+          return decodeState(raw);
         } catch (error) {
           addLog("Failed to read URL state.", "error");
           return null;
@@ -408,7 +424,7 @@
           history.replaceState(null, "", baseUrl);
           return;
         }
-        const encoded = encodeURIComponent(JSON.stringify(state));
+        const encoded = encodeState(state);
         history.replaceState(null, "", `${baseUrl}#state=${encoded}`);
       }
 
