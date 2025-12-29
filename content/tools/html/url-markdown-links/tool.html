@@ -271,6 +271,9 @@
             <label>Extracted URLs</label>
             <div class="count"><span id="url-count">0</span> URLs found</div>
           </div>
+          <div class="option-group" style="justify-items: start;">
+            <label><input type="checkbox" id="option-dedupe" /> Dedupe URLs</label>
+          </div>
         </div>
         <ul id="url-list" class="url-list"></ul>
       </section>
@@ -336,6 +339,7 @@
       const optionNewTab = document.getElementById("option-newtab");
       const optionList = document.getElementById("option-list");
       const optionCheckbox = document.getElementById("option-checkbox");
+      const optionDedupe = document.getElementById("option-dedupe");
 
       const titleCache = new Map();
       const pendingTitles = new Map();
@@ -397,6 +401,7 @@
         optionNewTab.checked = Boolean(state.n);
         optionList.checked = Boolean(state.l);
         optionCheckbox.checked = Boolean(state.c);
+        optionDedupe.checked = Boolean(state.d);
         isApplyingState = false;
       }
 
@@ -406,7 +411,8 @@
           (state.m === "url" || !state.m) &&
           !state.n &&
           !state.l &&
-          !state.c
+          !state.c &&
+          !state.d
         );
       }
 
@@ -418,6 +424,7 @@
           n: optionNewTab.checked,
           l: optionList.checked,
           c: optionCheckbox.checked,
+          d: optionDedupe.checked,
         };
         const baseUrl = `${location.pathname}${location.search}`;
         if (isDefaultState(state)) {
@@ -572,14 +579,29 @@
       }
 
       function refresh() {
-        urls = extractUrls(inputEl.value);
-        addLog(`Extracted ${urls.length} URL${urls.length === 1 ? "" : "s"}.`);
+        const extracted = extractUrls(inputEl.value);
+        urls = optionDedupe.checked ? dedupeUrls(extracted) : extracted;
+        const removed = extracted.length - urls.length;
+        const dedupeNote =
+          optionDedupe.checked && removed > 0 ? ` (${removed} removed)` : "";
+        addLog(
+          `Extracted ${urls.length} URL${urls.length === 1 ? "" : "s"}.${dedupeNote}`,
+        );
         renderUrlList();
         renderMarkdown();
         updateHashState();
         if (currentLinkTextMode() === "title") {
           urls.forEach((url) => fetchTitle(url));
         }
+      }
+
+      function dedupeUrls(list) {
+        const seen = new Set();
+        return list.filter((url) => {
+          if (seen.has(url)) return false;
+          seen.add(url);
+          return true;
+        });
       }
 
       inputEl.addEventListener("input", () => {
@@ -604,6 +626,15 @@
           renderMarkdown();
           updateHashState();
         });
+      });
+
+      optionDedupe.addEventListener("change", () => {
+        addLog(
+          optionDedupe.checked
+            ? "Deduping extracted URLs."
+            : "Showing all extracted URLs.",
+        );
+        refresh();
       });
 
       copyButton.addEventListener("click", async () => {
