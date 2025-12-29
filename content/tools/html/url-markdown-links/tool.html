@@ -143,12 +143,41 @@
       }
 
       ul.url-list li {
-        padding: 8px 10px;
+        padding: 10px 12px;
         border: 1px dashed var(--line);
         border-radius: 10px;
         background: #fffaf6;
         overflow-wrap: anywhere;
         font-size: 0.92rem;
+        display: grid;
+        gap: 8px;
+      }
+
+      .url-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .url-text {
+        flex: 1 1 auto;
+        word-break: break-word;
+      }
+
+      .url-actions {
+        flex: 0 0 auto;
+        display: flex;
+        gap: 8px;
+      }
+
+      .url-actions a {
+        text-decoration: none;
+      }
+
+      .url-actions button {
+        padding: 6px 12px;
+        font-size: 0.85rem;
       }
 
       .count {
@@ -464,7 +493,31 @@
         const fragment = document.createDocumentFragment();
         urls.forEach((url) => {
           const item = document.createElement("li");
-          item.textContent = url;
+          const row = document.createElement("div");
+          row.className = "url-row";
+
+          const text = document.createElement("span");
+          text.className = "url-text";
+          text.textContent = url;
+
+          const actions = document.createElement("div");
+          actions.className = "url-actions";
+
+          const inspectLink = document.createElement("a");
+          inspectLink.href = buildInspectLink(url);
+          inspectLink.target = "_blank";
+          inspectLink.rel = "noopener";
+
+          const inspectButton = document.createElement("button");
+          inspectButton.type = "button";
+          inspectButton.className = "secondary";
+          inspectButton.textContent = "Inspect & rewrite";
+          inspectLink.appendChild(inspectButton);
+
+          actions.appendChild(inspectLink);
+          row.appendChild(text);
+          row.appendChild(actions);
+          item.appendChild(row);
           fragment.appendChild(item);
         });
         urlListEl.appendChild(fragment);
@@ -500,6 +553,11 @@
           return `${prefix}<a href="${url}" target="_blank" rel="noopener">${escapeHtml(text)}</a>`;
         }
         return `${prefix}[${escapeMarkdown(text)}](${url})`;
+      }
+
+      function buildInspectLink(url) {
+        const encoded = encodeURIComponent(url);
+        return `/tools/html/url-inspect-rewrite/#url=${encoded}`;
       }
 
       function escapeMarkdown(value) {
