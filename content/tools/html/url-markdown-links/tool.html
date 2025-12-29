@@ -315,9 +315,9 @@
           <div class="option-card">
             <h3>Link Text</h3>
             <div class="option-group" id="link-text-options">
-              <label><input type="radio" name="link-text" value="url" checked /> Use the URL</label>
+              <label><input type="radio" name="link-text" value="url" /> Use the URL</label>
               <label><input type="radio" name="link-text" value="link" /> Use “Link”</label>
-              <label><input type="radio" name="link-text" value="title" /> Use webpage title</label>
+              <label><input type="radio" name="link-text" value="title" checked /> Use webpage title</label>
             </div>
             <div class="helper">Titles fetch in the background. If unavailable, URLs are used.</div>
           </div>
@@ -378,6 +378,7 @@
       const pendingTitles = new Map();
       let urls = [];
       let isApplyingState = false;
+      const settingsKey = "tool.urlMarkdownLinks.settings";
 
       function saveInput(value) {
         localStorage.setItem(storageKey, value);
@@ -424,7 +425,7 @@
         if (!state) return;
         isApplyingState = true;
         inputEl.value = typeof state.t === "string" ? state.t : "";
-        const mode = typeof state.m === "string" ? state.m : "url";
+        const mode = typeof state.m === "string" ? state.m : "title";
         const modeInput = document.querySelector(
           `input[name='link-text'][value='${mode}']`,
         );
@@ -441,7 +442,7 @@
       function isDefaultState(state) {
         return (
           (!state.t || state.t === "") &&
-          (state.m === "url" || !state.m) &&
+          (state.m === "title" || !state.m) &&
           !state.n &&
           !state.l &&
           !state.c &&
@@ -657,6 +658,39 @@
         }
       }
 
+      function saveSettings() {
+        const settings = {
+          m: currentLinkTextMode(),
+          n: optionNewTab.checked,
+          l: optionList.checked,
+          c: optionCheckbox.checked,
+          d: optionDedupe.checked,
+        };
+        localStorage.setItem(settingsKey, JSON.stringify(settings));
+      }
+
+      function loadSettings() {
+        const stored = localStorage.getItem(settingsKey);
+        if (!stored) return;
+        try {
+          const settings = JSON.parse(stored);
+          const mode =
+            typeof settings.m === "string" ? settings.m : currentLinkTextMode();
+          const modeInput = document.querySelector(
+            `input[name='link-text'][value='${mode}']`,
+          );
+          if (modeInput) {
+            modeInput.checked = true;
+          }
+          optionNewTab.checked = Boolean(settings.n);
+          optionList.checked = Boolean(settings.l);
+          optionCheckbox.checked = Boolean(settings.c);
+          optionDedupe.checked = Boolean(settings.d);
+        } catch (error) {
+          addLog("Failed to load saved settings.", "error");
+        }
+      }
+
       function dedupeUrls(list) {
         const seen = new Set();
         return list.filter((url) => {
@@ -676,6 +710,7 @@
           addLog(`Link text mode set to "${currentLinkTextMode()}".`);
           renderMarkdown();
           updateHashState();
+          saveSettings();
           if (currentLinkTextMode() === "title") {
             urls.forEach((url) => fetchTitle(url));
           }
@@ -687,6 +722,7 @@
           addLog("Formatting options updated.");
           renderMarkdown();
           updateHashState();
+          saveSettings();
         });
       });
 
@@ -697,6 +733,7 @@
             : "Showing all extracted URLs.",
         );
         refresh();
+        saveSettings();
       });
 
       copyButton.addEventListener("click", async () => {
@@ -727,6 +764,7 @@
 
       clearLogButton.addEventListener("click", clearLog);
 
+      loadSettings();
       const hashState = readHashState();
       if (hashState) {
         applyState(hashState);
