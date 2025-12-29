@@ -221,6 +221,14 @@
         gap: 6px;
       }
 
+      .log li.info {
+        color: #f4d9bf;
+      }
+
+      .log li.error {
+        color: #f0a28f;
+      }
+
       .log .empty {
         color: #c8b9aa;
       }
@@ -302,7 +310,7 @@
         <label>Fetch log</label>
         <div class="log">
           <ul id="log-list"></ul>
-          <div id="log-empty" class="empty">No fetch errors yet.</div>
+        <div id="log-empty" class="empty">Activity will appear here.</div>
         </div>
         <div class="toolbar">
           <button id="clear-log" class="secondary">Clear log</button>
@@ -424,9 +432,10 @@
         outputEl.value = lines.join("\n");
       }
 
-      function addLog(message) {
+      function addLog(message, type = "info") {
         const item = document.createElement("li");
         item.textContent = message;
+        item.className = type;
         logList.appendChild(item);
         logEmpty.style.display = "none";
       }
@@ -447,6 +456,7 @@
 
         const controller = new AbortController();
         pendingTitles.set(url, controller);
+        addLog(`Fetching title for ${url}...`);
         try {
           const response = await fetch(titleProxyUrl(url), {
             signal: controller.signal,
@@ -460,9 +470,10 @@
             throw new Error("Title not found");
           }
           titleCache.set(url, title.trim());
+          addLog(`Title loaded for ${url}.`);
         } catch (error) {
           titleCache.set(url, url);
-          addLog(`Title fetch failed for ${url}: ${error.message}`);
+          addLog(`Title fetch failed for ${url}: ${error.message}`, "error");
         } finally {
           pendingTitles.delete(url);
           renderMarkdown();
@@ -484,6 +495,7 @@
 
       function refresh() {
         urls = extractUrls(inputEl.value);
+        addLog(`Extracted ${urls.length} URL${urls.length === 1 ? "" : "s"}.`);
         renderUrlList();
         renderMarkdown();
         if (currentLinkTextMode() === "title") {
@@ -498,6 +510,7 @@
 
       linkTextOptions.forEach((option) => {
         option.addEventListener("change", () => {
+          addLog(`Link text mode set to "${currentLinkTextMode()}".`);
           renderMarkdown();
           if (currentLinkTextMode() === "title") {
             urls.forEach((url) => fetchTitle(url));
@@ -506,15 +519,20 @@
       });
 
       [optionNewTab, optionList, optionCheckbox].forEach((option) => {
-        option.addEventListener("change", renderMarkdown);
+        option.addEventListener("change", () => {
+          addLog("Formatting options updated.");
+          renderMarkdown();
+        });
       });
 
       copyButton.addEventListener("click", async () => {
         try {
           await navigator.clipboard.writeText(outputEl.value);
           copyStatus.textContent = "Copied to clipboard.";
+          addLog("Markdown copied to clipboard.");
         } catch (error) {
           copyStatus.textContent = "Copy failed. Select and copy manually.";
+          addLog("Clipboard copy failed.", "error");
         }
         setTimeout(() => {
           copyStatus.textContent = "";
@@ -526,6 +544,7 @@
         saveInput("");
         titleCache.clear();
         pendingTitles.clear();
+        addLog("Input cleared.");
         refresh();
       });
 
