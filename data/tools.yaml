@@ -78,7 +78,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f97c3182bd7aae8170b009bc82aba87960a4ce6d"
-        updated_commit: "90117da6f02a7a2e676bdc053717f49332ec357d"
+        updated_commit: "91ee04b27e9706baeb08397ba4080c58c2a371f7"
       tags:
         - "html"
         - "url"
