@@ -381,7 +381,7 @@
       let state = {
         url: "",
         params: [],
-        fragment: ""
+        fragmentBase: ""
       };
 
       const base64url = {
@@ -443,13 +443,26 @@
             key,
             value,
             include: !tracking,
-            tracking
+            tracking,
+            scope: "search"
+          });
+        }
+        const fragmentRaw = urlObject.hash ? urlObject.hash.slice(1) : "";
+        const fragmentParts = splitFragment(fragmentRaw);
+        for (const [key, value] of fragmentParts.params.entries()) {
+          const tracking = isTrackingParam(key);
+          params.push({
+            key,
+            value,
+            include: !tracking,
+            tracking,
+            scope: "fragment"
           });
         }
         return {
           url: urlObject.origin + urlObject.pathname,
           params,
-          fragment: urlObject.hash ? urlObject.hash.slice(1) : ""
+          fragmentBase: fragmentParts.base
         };
       }
 
@@ -503,6 +516,11 @@
             pill.textContent = "keep";
             noteCell.appendChild(pill);
           }
+          const scopePill = document.createElement("span");
+          scopePill.className = "pill";
+          scopePill.style.marginLeft = "6px";
+          scopePill.textContent = param.scope === "fragment" ? "fragment" : "query";
+          noteCell.appendChild(scopePill);
 
           row.appendChild(keepCell);
           row.appendChild(keyCell);
@@ -522,38 +540,48 @@
         const urlObject = parseUrl(state.url);
         if (!urlObject) return;
         const params = new URLSearchParams();
+        const fragmentParams = new URLSearchParams();
         state.params.forEach((param) => {
           if (param.include) {
-            params.append(param.key, param.value);
+            if (param.scope === "fragment") {
+              fragmentParams.append(param.key, param.value);
+            } else {
+              params.append(param.key, param.value);
+            }
           }
         });
         urlObject.search = params.toString() ? `?${params.toString()}` : "";
-        urlObject.hash = state.fragment ? `#${state.fragment}` : "";
+        const fragmentQuery = fragmentParams.toString();
+        const fragment =
+          state.fragmentBase || fragmentQuery ? `${state.fragmentBase}${fragmentQuery ? "?" + fragmentQuery : ""}` : "";
+        urlObject.hash = fragment ? `#${fragment}` : "";
         const rewritten = urlObject.toString();
         elements.outputUrl.value = rewritten;
         elements.openOutput.href = rewritten;
         setCyberChefLink(elements.openOutputCyberChef, elements.openOutputNote, rewritten);
-        elements.outputStatus.textContent = params.toString()
-          ? `${params.toString().split("&").length} parameter(s) included.`
+        const includedCount = [...params.keys(), ...fragmentParams.keys()].length;
+        elements.outputStatus.textContent = includedCount
+          ? `${includedCount} parameter(s) included.`
           : "No query parameters included.";
       }
 
-      function updateFragmentAnalysis(fragment) {
-        if (!fragment) {
+      function updateFragmentAnalysis(fragmentRaw, fragmentBase) {
+        if (!fragmentRaw) {
           elements.fragmentEmpty.classList.remove("hidden");
           elements.fragmentResults.classList.add("hidden");
           return;
         }
         elements.fragmentEmpty.classList.add("hidden");
         elements.fragmentResults.classList.remove("hidden");
-        elements.fragmentRaw.textContent = `Fragment: #${fragment}`;
+        elements.fragmentRaw.textContent = `Fragment: #${fragmentRaw}`;
 
         let decodedText = "";
         let decodedJson = null;
         let decodedOk = false;
+        const target = fragmentBase || fragmentRaw;
 
         try {
-          decodedText = base64url.decode(fragment);
+          decodedText = base64url.decode(target);
           decodedOk = true;
           try {
             decodedJson = JSON.parse(decodedText);
@@ -574,7 +602,7 @@
           elements.fragmentDecodedWrapper.classList.add("hidden");
           elements.fragmentLinkWrapper.classList.remove("hidden");
           elements.fragmentCyberChef.href = `https://gchq.github.io/CyberChef/#input=${encodeForCyberChef(
-            fragment
+            target
           )}`;
         }
       }
@@ -596,8 +624,8 @@
           if (!parsed || typeof parsed.url !== "string") return false;
           state = {
             url: parsed.url || "",
-            params: Array.isArray(parsed.params) ? parsed.params : [],
-            fragment: parsed.fragment || ""
+            params: normalizeParams(parsed.params),
+            fragmentBase: parsed.fragmentBase || parsed.fragment || ""
           };
           return true;
         } catch (error) {
@@ -624,7 +652,7 @@
         state = buildStateFromUrl(urlObject);
         renderParams();
         updateOutput();
-        updateFragmentAnalysis(state.fragment);
+        updateFragmentAnalysis(buildFragmentRaw(false), state.fragmentBase);
         syncHash();
       }
 
@@ -646,7 +674,7 @@
       }
 
       function clearAll() {
-        state = { url: "", params: [], fragment: "" };
+        state = { url: "", params: [], fragmentBase: "" };
         elements.inputText.value = "";
         elements.detectedUrl.value = "";
         elements.outputUrl.value = "";
@@ -655,7 +683,7 @@
         elements.outputStatus.textContent = "";
         elements.inputStatus.textContent = "Paste text to begin.";
         renderParams();
-        updateFragmentAnalysis("");
+        updateFragmentAnalysis("", "");
         syncHash();
       }
 
@@ -733,11 +761,48 @@
 
       function hydrateFromState() {
         if (!state.url) return;
-        elements.detectedUrl.value = state.url + (state.fragment ? `#${state.fragment}` : "");
+        const fragmentRaw = buildFragmentRaw();
+        elements.detectedUrl.value = state.url + (fragmentRaw ? `#${fragmentRaw}` : "");
         setCyberChefLink(elements.openDetectedCyberChef, elements.openDetectedNote, elements.detectedUrl.value);
         renderParams();
         updateOutput();
-        updateFragmentAnalysis(state.fragment);
+        updateFragmentAnalysis(buildFragmentRaw(false), state.fragmentBase);
+      }
+
+      function splitFragment(fragmentRaw) {
+        if (!fragmentRaw) {
+          return { base: "", params: new URLSearchParams() };
+        }
+        const queryIndex = fragmentRaw.indexOf("?");
+        if (queryIndex === -1) {
+          return { base: fragmentRaw, params: new URLSearchParams() };
+        }
+        const base = fragmentRaw.slice(0, queryIndex);
+        const query = fragmentRaw.slice(queryIndex + 1);
+        return { base, params: new URLSearchParams(query) };
+      }
+
+      function buildFragmentRaw(includeOnly = true) {
+        const fragmentParams = new URLSearchParams();
+        state.params.forEach((param) => {
+          if (param.scope === "fragment" && (param.include || !includeOnly)) {
+            fragmentParams.append(param.key, param.value);
+          }
+        });
+        const fragmentQuery = fragmentParams.toString();
+        if (!state.fragmentBase && !fragmentQuery) return "";
+        return `${state.fragmentBase}${fragmentQuery ? "?" + fragmentQuery : ""}`;
+      }
+
+      function normalizeParams(rawParams) {
+        if (!Array.isArray(rawParams)) return [];
+        return rawParams.map((param) => ({
+          key: param.key ?? "",
+          value: param.value ?? "",
+          include: typeof param.include === "boolean" ? param.include : true,
+          tracking: Boolean(param.tracking),
+          scope: param.scope === "fragment" ? "fragment" : "search"
+        }));
       }
 
       if (loadStateFromHash()) {
