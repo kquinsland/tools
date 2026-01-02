@@ -1,0 +1,26 @@
+# Karl's Tools
+
+> A Hugo-powered site of small, self-contained tools (mostly browser-based) for quick tasks.
+
+Tools are organized by language under `/tools/`. Each tool page embeds a single-file tool (inline JS/CSS when HTML).
+Most tools run entirely in the browser and are designed for local, private use.
+
+## Site
+
+- [Home](https://tools.karlquinsland.com/): Landing page with tool cards.
+- [Tools index](https://tools.karlquinsland.com/tools/): Browse all tools.
+- [HTML tools](https://tools.karlquinsland.com/tools/html/): HTML/JS browser tools.
+- [Python tools](https://tools.karlquinsland.com/tools/python/): Python-based tools.
+- [About](https://tools.karlquinsland.com/about/): Brief background on the site.
+- [Analytics](https://tools.karlquinsland.com/analytics/): Local-only analytics description.
+
+## Tools
+
+The full tool list is generated in a dedicated file:
+
+- [tools.txt](https://tools.karlquinsland.com/tools.txt)
+
+## Optional
+
+- [Analytics UI](https://tools.karlquinsland.com/analytics.html): View/export/clear local analytics data.
+- [Source repository](https://github.com/kquinsland/tools): Hugo source, tool files, and build scripts.

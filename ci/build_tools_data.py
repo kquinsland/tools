@@ -256,6 +256,58 @@ def _render_tools_yaml(entries: list[ToolEntry]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _load_base_url(*, repo_root: Path) -> str:
+    config_path = repo_root / "hugo.yaml"
+    if not config_path.exists():
+        return ""
+    try:
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError:
+        return ""
+    base_url = str(config.get("baseURL") or "").strip()
+    if base_url:
+        return base_url.rstrip("/") + "/"
+    return ""
+
+
+def _format_language_heading(language: str) -> str:
+    normalized = language.strip().lower()
+    if normalized == "html":
+        return "HTML"
+    if normalized == "python":
+        return "Python"
+    if not normalized:
+        return "Other"
+    return normalized.title()
+
+
+def _render_tools_txt(*, entries: list[ToolEntry], base_url: str) -> str:
+    if not entries:
+        return "# Tools\n\n_No tools available._\n"
+
+    tools_by_language: dict[str, list[ToolEntry]] = {}
+    for entry in entries:
+        tools_by_language.setdefault(entry.language, []).append(entry)
+
+    lines: list[str] = ["# Tools", ""]
+    for language in sorted(tools_by_language):
+        heading = _format_language_heading(language)
+        lines.append(f"## Tools ({heading})")
+        lines.append("")
+        for entry in sorted(tools_by_language[language], key=lambda e: e.title.lower()):
+            if base_url:
+                url = f"{base_url}tools/{entry.slug}/"
+            else:
+                url = f"/tools/{entry.slug}/"
+            if entry.description:
+                lines.append(f"- [{entry.title}]({url}): {entry.description}")
+            else:
+                lines.append(f"- [{entry.title}]({url})")
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def build_tools_yaml(*, repo_root: Path) -> str:
     tools_root = repo_root / "content" / "tools"
     entries: list[ToolEntry] = []
@@ -268,22 +320,39 @@ def build_tools_yaml(*, repo_root: Path) -> str:
     return _render_tools_yaml(entries)
 
 
+def build_tools_txt(*, repo_root: Path) -> str:
+    tools_root = repo_root / "content" / "tools"
+    entries: list[ToolEntry] = []
+    for index_md in _iter_tool_index_files(tools_root):
+        entry = _build_tool_entry(index_md, tools_root=tools_root)
+        if entry is not None:
+            entries.append(entry)
+
+    entries.sort(key=lambda e: (e.language.lower(), e.title.lower()))
+    base_url = _load_base_url(repo_root=repo_root)
+    return _render_tools_txt(entries=entries, base_url=base_url)
+
+
 def main() -> int:
     log = _configure_logging()
     repo_root = Path(__file__).resolve().parents[1]
     tools_root = repo_root / "content" / "tools"
     out_path = repo_root / "data" / "tools.yaml"
+    tools_txt_path = repo_root / "static" / "tools.txt"
 
     log.info("building tools data", tools_root=tools_root)
     try:
         yaml_text = build_tools_yaml(repo_root=repo_root)
+        tools_txt = build_tools_txt(repo_root=repo_root)
     except Exception:
         log.exception("failed to build tools data")
         raise
 
     out_path.write_text(yaml_text, encoding="utf-8")
+    tools_txt_path.write_text(tools_txt, encoding="utf-8")
     tool_count = yaml_text.count("\n  - ")
     log.info("wrote tools data", path=str(out_path), tools=tool_count)
+    log.info("wrote tools listing", path=str(tools_txt_path))
     return 0
 
 
