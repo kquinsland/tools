@@ -28,7 +28,8 @@ The entire process of creating a new tool and getting it integrated into the sit
 
 2. **Create the tool bundle**
 
-  If the `hugo` binary is available, the steps below can be automated with the command:
+    First, check if `hugo` is installed and available in the `$PATH`.
+    If the `hugo` binary is available, the steps below can be automated with the command:
 
   ```bash
   # This assumes that this will be a HTML tool; adjust `html` to `python` or other as needed

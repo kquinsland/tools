@@ -1002,7 +1002,7 @@
 
           const sources = Array.isArray(chart.latest.sources) ? chart.latest.sources : [];
           if (sources.length) {
-            meta.appendChild(buildMetaRow("Sources", sources.join(", "), true));
+            meta.appendChild(buildMetaRow("Sources", sources, true));
           }
 
           const keywords = safeText(chart.keywordText);
@@ -1090,15 +1090,26 @@
         row.appendChild(labelEl);
 
         const valueEl = document.createElement("span");
-        if (isLink && /^https?:\/\//i.test(value)) {
-          const link = document.createElement("a");
-          link.href = value;
-          link.textContent = value;
-          link.target = "_blank";
-          link.rel = "noopener";
-          valueEl.appendChild(link);
+        const values = Array.isArray(value) ? value : [value];
+        if (isLink) {
+          values.forEach((entry, index) => {
+            const textValue = safeText(entry).trim();
+            if (textValue && /^https?:\/\//i.test(textValue)) {
+              const link = document.createElement("a");
+              link.href = textValue;
+              link.textContent = textValue;
+              link.target = "_blank";
+              link.rel = "noopener";
+              valueEl.appendChild(link);
+            } else {
+              valueEl.appendChild(document.createTextNode(textValue));
+            }
+            if (index < values.length - 1) {
+              valueEl.appendChild(document.createTextNode(", "));
+            }
+          });
         } else {
-          valueEl.textContent = value;
+          valueEl.textContent = Array.isArray(value) ? values.join(", ") : value;
         }
         row.appendChild(valueEl);
         return row;
