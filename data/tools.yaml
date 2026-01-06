@@ -21,7 +21,7 @@ tools:
       description: "Record up to 30 seconds of audio and generate static waveform and spectrogram views."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
+        introduced_commit: "d4f23b11a63b2dd20360084c15abf7f3eb570427"
         updated_commit: null
       tags:
         - "html"
@@ -35,8 +35,8 @@ tools:
       description: "Run a client-side Gemini Nano session in Chrome with capability checks, streaming output, and local-only prompts."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
-        updated_commit: null
+        introduced_commit: "abfb0035989950f667bc57bd717b24fd4bf7ff29"
+        updated_commit: "f0202e7a6ccfa0dc307df6bf2ae06736959f3db2"
       tags:
         - "html"
         - "ai"
