@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gemini Nano Interface</title>
+    <link rel="stylesheet" href="/common.css" />
+    <style>
+      :root {
+        --ink: #1c2025;
+        --muted: #5d6570;
+        --paper: #f5f0ea;
+        --card: #ffffff;
+        --line: #d7cbc0;
+        --accent: #2a6f6b;
+        --accent-strong: #16524f;
+        --accent-soft: #d9ecea;
+        --warning: #b25d2b;
+        --danger: #9a2f2f;
+        --shadow: 0 16px 40px rgba(22, 32, 37, 0.12);
+        --radius: 18px;
+        --font-body: "IBM Plex Sans", "Trebuchet MS", "Segoe UI", sans-serif;
+        --font-display: "Fraunces", "Times New Roman", serif;
+      }
+
+      body {
+        background: radial-gradient(circle at top, #fffdf9 0%, var(--paper) 45%, #ece4dc 100%);
+        color: var(--ink);
+      }
+
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 28px 20px 60px;
+      }
+
+      header {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 26px;
+      }
+
+      header h1 {
+        font-family: var(--font-display);
+        font-size: clamp(2.2rem, 3vw, 3rem);
+        margin: 0;
+        letter-spacing: 0.02em;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 1.05rem;
+        max-width: 70ch;
+      }
+
+      .grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      @media (min-width: 900px) {
+        .grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      section {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: var(--shadow);
+      }
+
+      section h2 {
+        margin: 0 0 10px;
+        font-size: 1.2rem;
+        letter-spacing: 0.02em;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      .pill[data-tone="warning"] {
+        background: #f6e5db;
+        color: var(--warning);
+      }
+
+      .pill[data-tone="danger"] {
+        background: #f8dede;
+        color: var(--danger);
+      }
+
+      label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      textarea,
+      select {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        font: inherit;
+        background: #fffdfb;
+      }
+
+      textarea {
+        min-height: 160px;
+        resize: vertical;
+      }
+
+      .row {
+        display: grid;
+        gap: 12px;
+      }
+
+      @media (min-width: 720px) {
+        .row {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 18px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        background: var(--accent);
+        color: white;
+      }
+
+      button.secondary {
+        background: #e8ddd3;
+        color: #3b3530;
+      }
+
+      button.ghost {
+        background: transparent;
+        border: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .warning {
+        color: var(--warning);
+        font-weight: 600;
+      }
+
+      .response {
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: #fbf8f4;
+        padding: 12px;
+        min-height: 180px;
+        white-space: pre-wrap;
+      }
+
+      .count {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+
+      .divider {
+        height: 1px;
+        background: var(--line);
+        margin: 14px 0;
+      }
+
+      .banner {
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #f6efe7;
+        border: 1px dashed var(--line);
+        color: var(--muted);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      .stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .split {
+        display: grid;
+        gap: 14px;
+      }
+
+      @media (min-width: 900px) {
+        .split {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="badge">Local Gemini Nano Console</div>
+        <h1>Gemini Nano Interface</h1>
+        <p>
+          This interface runs entirely in your browser using Chrome's built-in Gemini Nano model. It checks
+          capability status, downloads the model if needed, and streams tokens for faster feedback.
+        </p>
+      </header>
+
+      <div class="grid">
+        <section id="section-capabilities" data-section="capabilities">
+          <h2>Capability Detection</h2>
+          <div class="status">
+            <span id="capability-pill" class="pill">Checking...</span>
+            <span id="capability-text" class="hint">Detecting Gemini Nano availability.</span>
+          </div>
+          <div class="divider"></div>
+          <div class="stack">
+            <button id="download-btn" class="secondary" type="button">Download model</button>
+            <button id="retry-btn" class="ghost" type="button">Re-check capability</button>
+            <p class="hint" id="capability-detail">This tool requires Chrome with the built-in AI API enabled.</p>
+          </div>
+        </section>
+
+        <section id="section-session" data-section="session">
+          <h2>Session Setup</h2>
+          <div class="stack">
+            <label for="system-prompt">System prompt</label>
+            <textarea id="system-prompt" placeholder="You are a concise technical editor."></textarea>
+            <div class="row">
+              <div>
+                <label for="temperature">Temperature</label>
+                <input id="temperature" type="number" min="0" max="1.5" step="0.1" />
+              </div>
+              <div>
+                <label for="topk">Top-K</label>
+                <input id="topk" type="number" min="1" step="1" />
+              </div>
+            </div>
+            <div class="actions">
+              <button id="create-session" type="button">Create session</button>
+              <button id="destroy-session" class="secondary" type="button">Destroy session</button>
+              <button id="clear-storage" class="ghost" type="button">Clear local data</button>
+            </div>
+            <p class="hint" id="session-status">No active session.</p>
+          </div>
+        </section>
+      </div>
+
+      <div class="split" style="margin-top: 18px;">
+        <section id="section-prompt" data-section="prompt">
+          <h2>Prompt</h2>
+          <label for="prompt-input">Prompt text</label>
+          <textarea id="prompt-input" placeholder="Ask Gemini Nano to summarize, rewrite, or brainstorm."></textarea>
+          <div class="count">
+            <span id="prompt-count">0 characters</span>
+            <label>
+              <input id="auto-truncate" type="checkbox" />
+              Auto-truncate long prompts
+            </label>
+          </div>
+          <p class="warning" id="prompt-warning" hidden>Prompt exceeds the recommended context window.</p>
+          <div class="actions">
+            <button id="send-btn" type="button">Stream response</button>
+            <button id="stop-btn" class="secondary" type="button">Stop</button>
+            <button id="copy-btn" class="ghost" type="button">Copy output</button>
+          </div>
+          <p class="hint">The context window is limited (roughly 1k–4k tokens). Keep prompts focused.</p>
+        </section>
+
+        <section id="section-response" data-section="response">
+          <h2>Streaming Output</h2>
+          <div id="response-output" class="response" aria-live="polite"></div>
+          <div class="actions">
+            <button id="clear-output" class="ghost" type="button">Clear output</button>
+          </div>
+          <p class="hint" id="output-status">Waiting for input.</p>
+        </section>
+      </div>
+
+      <section id="section-disclaimer" data-section="disclaimer" style="margin-top: 18px;">
+        <h2>Generative AI Disclaimer</h2>
+        <div class="banner">
+          Gemini Nano is optimized for reasoning and editing, not fact retrieval. Verify critical information and
+          treat outputs as suggestions rather than authoritative facts.
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const MAX_CHARS = 8000;
+
+      const elements = {
+        capabilityPill: document.getElementById("capability-pill"),
+        capabilityText: document.getElementById("capability-text"),
+        capabilityDetail: document.getElementById("capability-detail"),
+        downloadBtn: document.getElementById("download-btn"),
+        retryBtn: document.getElementById("retry-btn"),
+        systemPrompt: document.getElementById("system-prompt"),
+        temperature: document.getElementById("temperature"),
+        topK: document.getElementById("topk"),
+        createSession: document.getElementById("create-session"),
+        destroySession: document.getElementById("destroy-session"),
+        sessionStatus: document.getElementById("session-status"),
+        clearStorage: document.getElementById("clear-storage"),
+        promptInput: document.getElementById("prompt-input"),
+        promptCount: document.getElementById("prompt-count"),
+        promptWarning: document.getElementById("prompt-warning"),
+        autoTruncate: document.getElementById("auto-truncate"),
+        sendBtn: document.getElementById("send-btn"),
+        stopBtn: document.getElementById("stop-btn"),
+        copyBtn: document.getElementById("copy-btn"),
+        responseOutput: document.getElementById("response-output"),
+        outputStatus: document.getElementById("output-status"),
+        clearOutput: document.getElementById("clear-output"),
+      };
+
+      const state = {
+        session: null,
+        controller: null,
+        busy: false,
+        capabilities: null,
+      };
+
+      const storageKeys = {
+        systemPrompt: "geminiNano.systemPrompt",
+        temperature: "geminiNano.temperature",
+        topK: "geminiNano.topK",
+        promptDraft: "geminiNano.promptDraft",
+        autoTruncate: "geminiNano.autoTruncate",
+      };
+
+      function syncUrlParams() {
+        const params = new URLSearchParams(location.hash.slice(1));
+        const tempValue = elements.temperature.value.trim();
+        const topKValue = elements.topK.value.trim();
+        const autoValue = elements.autoTruncate.checked ? "1" : "";
+
+        if (tempValue) {
+          params.set("temp", tempValue);
+        } else {
+          params.delete("temp");
+        }
+
+        if (topKValue) {
+          params.set("topk", topKValue);
+        } else {
+          params.delete("topk");
+        }
+
+        if (autoValue) {
+          params.set("auto", autoValue);
+        } else {
+          params.delete("auto");
+        }
+
+        const hash = params.toString();
+        const nextUrl = hash ? `${location.pathname}${location.search}#${hash}` : `${location.pathname}${location.search}`;
+        history.replaceState(null, "", nextUrl);
+      }
+
+      function setPill(text, tone) {
+        elements.capabilityPill.textContent = text;
+        elements.capabilityPill.dataset.tone = tone || "";
+      }
+
+      function setBusy(isBusy) {
+        state.busy = isBusy;
+        const disabled = isBusy || !state.session;
+        elements.sendBtn.disabled = disabled;
+        elements.promptInput.disabled = isBusy || !state.session;
+        elements.systemPrompt.disabled = isBusy;
+        elements.temperature.disabled = isBusy;
+        elements.topK.disabled = isBusy;
+        elements.createSession.disabled = isBusy;
+        elements.destroySession.disabled = isBusy || !state.session;
+        elements.stopBtn.disabled = !isBusy;
+        elements.copyBtn.disabled = isBusy;
+        elements.clearOutput.disabled = isBusy;
+      }
+
+      function updatePromptCount() {
+        const length = elements.promptInput.value.length;
+        elements.promptCount.textContent = `${length} characters`;
+        const isLong = length > MAX_CHARS;
+        elements.promptWarning.hidden = !isLong;
+        if (isLong && elements.autoTruncate.checked) {
+          elements.promptInput.value = elements.promptInput.value.slice(0, MAX_CHARS);
+          elements.promptCount.textContent = `${MAX_CHARS} characters (truncated)`;
+          elements.promptWarning.hidden = true;
+        }
+        localStorage.setItem(storageKeys.promptDraft, elements.promptInput.value);
+      }
+
+      function updateSessionStatus(message) {
+        elements.sessionStatus.textContent = message;
+      }
+
+      function updateOutputStatus(message) {
+        elements.outputStatus.textContent = message;
+      }
+
+      function updateCapabilityUI(status, detail, tone) {
+        setPill(status, tone);
+        elements.capabilityText.textContent = detail;
+      }
+
+      function supportsGeminiNano() {
+        return window.ai && ai.languageModel && typeof ai.languageModel.capabilities === "function";
+      }
+
+      async function checkCapabilities() {
+        if (!supportsGeminiNano()) {
+          updateCapabilityUI("Unavailable", "Gemini Nano API not detected.", "danger");
+          elements.capabilityDetail.textContent = "Use a recent Chrome build with the built-in AI API enabled.";
+          elements.downloadBtn.disabled = true;
+          elements.retryBtn.disabled = false;
+          elements.createSession.disabled = true;
+          return;
+        }
+
+        updateCapabilityUI("Checking", "Querying model availability...", "");
+        elements.downloadBtn.disabled = true;
+        elements.retryBtn.disabled = true;
+
+        try {
+          const caps = await ai.languageModel.capabilities();
+          state.capabilities = caps;
+          const availability = caps.available;
+
+          if (availability === "no") {
+            updateCapabilityUI("Unsupported", "This device or Chrome build cannot run Gemini Nano.", "danger");
+            elements.capabilityDetail.textContent = "Hardware or browser version is incompatible.";
+            elements.createSession.disabled = true;
+            return;
+          }
+
+          if (availability === "after-download") {
+            updateCapabilityUI("Download needed", "Model supported but not yet present.", "warning");
+            elements.capabilityDetail.textContent = "Downloading the model will enable local inference.";
+            elements.downloadBtn.disabled = false;
+            elements.createSession.disabled = true;
+            await triggerDownload();
+            return;
+          }
+
+          if (availability === "readily") {
+            updateCapabilityUI("Ready", "Model available and ready to load.");
+            elements.capabilityDetail.textContent = "You can create a session immediately.";
+            elements.downloadBtn.disabled = true;
+            elements.createSession.disabled = false;
+            return;
+          }
+
+          updateCapabilityUI("Unknown", "Unexpected capability response.", "warning");
+          elements.capabilityDetail.textContent = "Please re-check capability or refresh the page.";
+          elements.createSession.disabled = true;
+        } catch (error) {
+          updateCapabilityUI("Error", "Capability check failed.", "danger");
+          elements.capabilityDetail.textContent = error?.message || "Unable to read model capabilities.";
+          elements.retryBtn.disabled = false;
+          elements.createSession.disabled = true;
+        } finally {
+          elements.retryBtn.disabled = false;
+        }
+      }
+
+      async function triggerDownload() {
+        if (!supportsGeminiNano()) {
+          return;
+        }
+        elements.downloadBtn.disabled = true;
+        updateCapabilityUI("Downloading", "Downloading Gemini Nano locally...", "warning");
+        updateOutputStatus("Downloading model... this may take a few minutes.");
+
+        try {
+          const tempSession = await ai.languageModel.create({
+            systemPrompt: "You are initializing Gemini Nano.",
+          });
+          if (typeof tempSession.destroy === "function") {
+            tempSession.destroy();
+          }
+          updateCapabilityUI("Ready", "Model downloaded and ready.");
+          elements.capabilityDetail.textContent = "You can now create a session.";
+          elements.createSession.disabled = false;
+          updateOutputStatus("Model downloaded. Ready to start.");
+        } catch (error) {
+          updateCapabilityUI("Download failed", "Could not download Gemini Nano.", "danger");
+          elements.capabilityDetail.textContent = error?.message || "Try again or check your Chrome build.";
+          elements.downloadBtn.disabled = false;
+          updateOutputStatus("Download failed.");
+        }
+      }
+
+      async function createSession() {
+        if (!supportsGeminiNano()) {
+          updateSessionStatus("Gemini Nano API not detected.");
+          return;
+        }
+        if (state.session) {
+          updateSessionStatus("Session already active.");
+          return;
+        }
+        setBusy(true);
+        updateSessionStatus("Creating session...");
+        try {
+          const options = {
+            systemPrompt: elements.systemPrompt.value.trim() || "You are a concise technical editor.",
+          };
+          const temperature = parseFloat(elements.temperature.value);
+          const topK = parseInt(elements.topK.value, 10);
+          if (!Number.isNaN(temperature)) {
+            options.temperature = temperature;
+          }
+          if (!Number.isNaN(topK)) {
+            options.topK = topK;
+          }
+
+          state.session = await ai.languageModel.create(options);
+          updateSessionStatus("Session ready. You can send a prompt.");
+          elements.destroySession.disabled = false;
+        } catch (error) {
+          updateSessionStatus(error?.message || "Failed to create session.");
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      function destroySession() {
+        if (!state.session) {
+          updateSessionStatus("No active session to destroy.");
+          return;
+        }
+        if (typeof state.session.destroy === "function") {
+          state.session.destroy();
+        }
+        state.session = null;
+        updateSessionStatus("Session destroyed.");
+        setBusy(false);
+      }
+
+      async function streamPrompt() {
+        if (!state.session || state.busy) {
+          return;
+        }
+        const prompt = elements.promptInput.value.trim();
+        if (!prompt) {
+          updateOutputStatus("Enter a prompt first.");
+          return;
+        }
+
+        const trimmedPrompt = prompt.length > MAX_CHARS ? prompt.slice(0, MAX_CHARS) : prompt;
+        if (trimmedPrompt.length !== prompt.length && !elements.autoTruncate.checked) {
+          updateOutputStatus("Prompt too long. Enable auto-truncate or shorten it.");
+          elements.promptWarning.hidden = false;
+          return;
+        }
+
+        elements.responseOutput.textContent = "";
+        updateOutputStatus("Streaming response...");
+        setBusy(true);
+        state.controller = new AbortController();
+
+        try {
+          const stream = state.session.promptStreaming(trimmedPrompt, { signal: state.controller.signal });
+          for await (const chunk of stream) {
+            elements.responseOutput.textContent += chunk;
+          }
+          updateOutputStatus("Completed.");
+        } catch (error) {
+          if (error?.name === "AbortError") {
+            updateOutputStatus("Generation stopped.");
+          } else {
+            updateOutputStatus(error?.message || "Streaming failed.");
+          }
+        } finally {
+          state.controller = null;
+          setBusy(false);
+        }
+      }
+
+      function stopStreaming() {
+        if (state.controller) {
+          state.controller.abort();
+        }
+      }
+
+      function copyOutput() {
+        const text = elements.responseOutput.textContent.trim();
+        if (!text) {
+          updateOutputStatus("Nothing to copy yet.");
+          return;
+        }
+        navigator.clipboard.writeText(text).then(
+          () => updateOutputStatus("Output copied to clipboard."),
+          () => updateOutputStatus("Copy failed.")
+        );
+      }
+
+      function clearOutput() {
+        elements.responseOutput.textContent = "";
+        updateOutputStatus("Output cleared.");
+      }
+
+      function loadStoredValues() {
+        elements.systemPrompt.value = localStorage.getItem(storageKeys.systemPrompt) || "";
+        elements.temperature.value = localStorage.getItem(storageKeys.temperature) || "";
+        elements.topK.value = localStorage.getItem(storageKeys.topK) || "";
+        elements.promptInput.value = localStorage.getItem(storageKeys.promptDraft) || "";
+        elements.autoTruncate.checked = localStorage.getItem(storageKeys.autoTruncate) === "true";
+        updatePromptCount();
+      }
+
+      function loadUrlParams() {
+        const params = new URLSearchParams(location.hash.slice(1));
+        if (params.has("temp")) {
+          elements.temperature.value = params.get("temp") || "";
+        }
+        if (params.has("topk")) {
+          elements.topK.value = params.get("topk") || "";
+        }
+        if (params.has("auto")) {
+          elements.autoTruncate.checked = params.get("auto") === "1";
+        }
+        updatePromptCount();
+      }
+
+      function saveSettings() {
+        localStorage.setItem(storageKeys.systemPrompt, elements.systemPrompt.value);
+        localStorage.setItem(storageKeys.temperature, elements.temperature.value);
+        localStorage.setItem(storageKeys.topK, elements.topK.value);
+        localStorage.setItem(storageKeys.autoTruncate, elements.autoTruncate.checked);
+        syncUrlParams();
+      }
+
+      function clearStorage() {
+        Object.values(storageKeys).forEach((key) => localStorage.removeItem(key));
+        loadStoredValues();
+        syncUrlParams();
+        updateOutputStatus("Local data cleared.");
+      }
+
+      elements.downloadBtn.addEventListener("click", triggerDownload);
+      elements.retryBtn.addEventListener("click", checkCapabilities);
+      elements.createSession.addEventListener("click", () => {
+        saveSettings();
+        createSession();
+      });
+      elements.destroySession.addEventListener("click", destroySession);
+      elements.sendBtn.addEventListener("click", streamPrompt);
+      elements.stopBtn.addEventListener("click", stopStreaming);
+      elements.copyBtn.addEventListener("click", copyOutput);
+      elements.clearOutput.addEventListener("click", clearOutput);
+      elements.promptInput.addEventListener("input", updatePromptCount);
+      elements.systemPrompt.addEventListener("input", saveSettings);
+      elements.temperature.addEventListener("input", saveSettings);
+      elements.topK.addEventListener("input", saveSettings);
+      elements.autoTruncate.addEventListener("change", saveSettings);
+      elements.clearStorage.addEventListener("click", clearStorage);
+
+      window.addEventListener("beforeunload", () => {
+        if (state.session && typeof state.session.destroy === "function") {
+          state.session.destroy();
+        }
+        if (state.controller) {
+          state.controller.abort();
+        }
+      });
+
+      loadStoredValues();
+      loadUrlParams();
+      syncUrlParams();
+      setBusy(false);
+      checkCapabilities();
+    </script>
+    <script src="/analytics.js"></script>
+  </body>
+</html>
