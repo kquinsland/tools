@@ -15,6 +15,20 @@ tools:
         - "3d"
         - "metadata"
         - "mesh"
+  - html/audio-clip-visualizer:
+      title: "Audio Clip Visualizer"
+      language: "html"
+      description: "Record up to 30 seconds of audio and generate static waveform and spectrogram views."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "html"
+        - "audio"
+        - "visualization"
+        - "waveform"
+        - "spectrogram"
   - html/gemini-nano-interface:
       title: "Gemini Nano Interface"
       language: "html"
