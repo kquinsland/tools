@@ -29,6 +29,20 @@ tools:
         - "visualization"
         - "waveform"
         - "spectrogram"
+  - html/gemini-nano-interface:
+      title: "Gemini Nano Interface"
+      language: "html"
+      description: "Run a client-side Gemini Nano session in Chrome with capability checks, streaming output, and local-only prompts."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "html"
+        - "ai"
+        - "gemini"
+        - "chrome"
+        - "local"
   - html/github-actions-spider:
       title: "GitHub Actions Spider"
       language: "html"
