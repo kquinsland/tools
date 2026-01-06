@@ -3,6 +3,8 @@
 ## Tools (HTML)
 
 - [3MF Inspector](https://tools.karlquinsland.com/tools/html/3mf-inspector/): Inspect 3MF metadata, thumbnails, and mesh objects directly in the browser.
+- [Audio Clip Visualizer](https://tools.karlquinsland.com/tools/html/audio-clip-visualizer/): Record up to 30 seconds of audio and generate static waveform and spectrogram views.
+- [Gemini Nano Interface](https://tools.karlquinsland.com/tools/html/gemini-nano-interface/): Run a client-side Gemini Nano session in Chrome with capability checks, streaming output, and local-only prompts.
 - [GitHub Actions Spider](https://tools.karlquinsland.com/tools/html/github-actions-spider/): Crawl repositories and extract GitHub Actions uses-steps from workflow files.
 - [Hello, World](https://tools.karlquinsland.com/tools/html/hello-world/): This is the first tool description here.
 - [Helm Chart Discovery](https://tools.karlquinsland.com/tools/html/helm-chart-discovery/): Fetch a Helm repository index.yaml or OCI chart reference to explore chart metadata with search and filters.

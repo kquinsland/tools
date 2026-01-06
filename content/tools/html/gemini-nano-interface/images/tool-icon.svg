@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Gemini Nano interface icon">
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6f0ea" />
+      <stop offset="1" stop-color="#efe3d8" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="#f5f0ea" />
+  <rect x="96" y="120" width="320" height="208" rx="28" fill="url(#panel)" stroke="#d7cbc0" stroke-width="12" />
+  <rect x="116" y="144" width="280" height="28" rx="14" fill="#2a6f6b" />
+  <circle cx="152" cy="158" r="8" fill="#f5f0ea" />
+  <circle cx="180" cy="158" r="8" fill="#f5f0ea" />
+  <circle cx="208" cy="158" r="8" fill="#f5f0ea" />
+  <path d="M148 230h96m-96 36h152m-152 36h120" stroke="#16524f" stroke-width="16" stroke-linecap="round" />
+  <rect x="312" y="204" width="80" height="96" rx="16" fill="#2a6f6b" />
+  <path d="M328 252h48" stroke="#f5f0ea" stroke-width="14" stroke-linecap="round" />
+  <path d="M256 360c44 0 72-10 96-30" stroke="#b9a999" stroke-width="10" stroke-linecap="round" fill="none" />
+  <path d="M256 360c-44 0-72-10-96-30" stroke="#b9a999" stroke-width="10" stroke-linecap="round" fill="none" />
+</svg>

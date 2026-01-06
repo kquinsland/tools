@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Audio Clip Visualizer</title>
+    <link rel="stylesheet" href="/common.css" />
+    <style>
+      :root {
+        --bg: #f6f3ee;
+        --panel: #fffaf3;
+        --ink: #1f1b16;
+        --muted: #6a5f52;
+        --accent: #9b5c2e;
+        --accent-strong: #6d3d1e;
+        --border: #dbcbb7;
+        --focus: rgba(155, 92, 46, 0.25);
+        --font-body: "Bookerly", "Georgia", "Times New Roman", serif;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font-body);
+        padding: 24px;
+      }
+
+      .tool-shell {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        gap: 20px;
+      }
+
+      header h1 {
+        margin: 0 0 8px;
+        font-size: 2.2rem;
+        letter-spacing: 0.02em;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 70ch;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 8px 20px rgba(31, 24, 16, 0.08);
+      }
+
+      .control-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 18px;
+        font-size: 0.95rem;
+        background: var(--accent);
+        color: #fffaf4;
+        cursor: pointer;
+        transition: transform 0.15s ease, background 0.2s ease;
+      }
+
+      button.secondary {
+        background: #d8c6b2;
+        color: var(--ink);
+      }
+
+      button.ghost {
+        background: transparent;
+        color: var(--accent-strong);
+        border: 1px solid var(--border);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      button:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #efe3d4;
+        color: var(--ink);
+        font-size: 0.9rem;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #c2b2a0;
+      }
+
+      .status-dot.recording {
+        background: #c9482d;
+        box-shadow: 0 0 0 4px rgba(201, 72, 45, 0.2);
+      }
+
+      .status-dot.processing {
+        background: #f1a233;
+      }
+
+      .status-dot.ready {
+        background: #3f7b4d;
+      }
+
+      .timer {
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+      }
+
+      .grid-two {
+        display: grid;
+        gap: 16px;
+      }
+
+      @media (min-width: 820px) {
+        .grid-two {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      canvas {
+        width: 100%;
+        height: 220px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #fff;
+        display: block;
+      }
+
+      #waveform-canvas {
+        height: 180px;
+      }
+
+      .section-title {
+        margin: 0 0 10px;
+        font-size: 1.1rem;
+      }
+
+      .panel-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .panel-header button {
+        padding: 8px 14px;
+        font-size: 0.9rem;
+      }
+
+      .helper {
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .legend {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .legend-bar {
+        height: 10px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #000000 0%, #12285a 35%, #b4281e 70%, #ffffff 100%);
+        border: 1px solid var(--border);
+      }
+
+      .legend-labels {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tool-shell">
+      <header>
+        <h1>Audio Clip Visualizer</h1>
+        <p>
+          Record up to 30 seconds, then generate static waveform and spectrogram views. Everything stays in
+          your browser.
+        </p>
+      </header>
+
+      <section id="recording-controls" class="panel">
+        <div class="control-row">
+          <button id="record-btn">Record</button>
+          <button id="stop-btn" class="secondary" disabled>Stop</button>
+          <button id="play-btn" class="ghost" disabled>Play</button>
+          <button id="clear-btn" class="ghost" disabled>Clear</button>
+          <span class="status-chip" id="status-chip">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">Idle</span>
+          </span>
+          <span class="timer" id="timer">00:00 / 00:30</span>
+        </div>
+        <p class="helper">Allow microphone access when prompted. Recording stops automatically at 30 seconds.</p>
+      </section>
+
+      <section id="processing-state" class="panel hidden">
+        <strong>Processing audio…</strong>
+        <p class="helper">Crunching samples offline so the full clip renders at once.</p>
+      </section>
+
+      <section id="visuals" class="grid-two">
+        <div id="waveform-section" class="panel hidden">
+          <div class="panel-header">
+            <h2 class="section-title">Waveform</h2>
+            <button id="export-waveform" class="ghost" disabled>Export PNG</button>
+          </div>
+          <canvas id="waveform-canvas" aria-label="Waveform"></canvas>
+          <p class="helper">Peak-sampled amplitude across the entire clip.</p>
+        </div>
+        <div id="spectrogram-section" class="panel hidden">
+          <div class="panel-header">
+            <h2 class="section-title">Spectrogram</h2>
+            <button id="export-spectrogram" class="ghost" disabled>Export PNG</button>
+          </div>
+          <canvas id="spectrogram-canvas" aria-label="Spectrogram"></canvas>
+          <p class="helper">FFT size 1024 with a heatmap gradient.</p>
+          <div class="legend" id="spectrogram-legend">
+            <div class="legend-bar" aria-hidden="true"></div>
+            <div class="legend-labels">
+              <span>-90 dB</span>
+              <span>-20 dB</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const recordBtn = document.getElementById("record-btn");
+      const stopBtn = document.getElementById("stop-btn");
+      const playBtn = document.getElementById("play-btn");
+      const clearBtn = document.getElementById("clear-btn");
+      const statusChip = document.getElementById("status-chip");
+      const statusDot = document.getElementById("status-dot");
+      const statusText = document.getElementById("status-text");
+      const timer = document.getElementById("timer");
+      const processingState = document.getElementById("processing-state");
+      const waveformSection = document.getElementById("waveform-section");
+      const spectrogramSection = document.getElementById("spectrogram-section");
+      const waveformCanvas = document.getElementById("waveform-canvas");
+      const spectrogramCanvas = document.getElementById("spectrogram-canvas");
+      const exportWaveformBtn = document.getElementById("export-waveform");
+      const exportSpectrogramBtn = document.getElementById("export-spectrogram");
+
+      const MAX_DURATION_MS = 30000;
+      const FFT_SIZE = 1024;
+
+      let mediaRecorder = null;
+      let chunks = [];
+      let audioBlob = null;
+      let audioBuffer = null;
+      let audioContext = null;
+      let stopTimeout = null;
+      let tickInterval = null;
+      let recordingStart = null;
+      let stream = null;
+      let playbackSource = null;
+
+      const formatTime = (ms) => {
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+        const seconds = String(totalSeconds % 60).padStart(2, "0");
+        return `${minutes}:${seconds}`;
+      };
+
+      const setStatus = (label, state) => {
+        statusText.textContent = label;
+        statusDot.className = "status-dot";
+        if (state) {
+          statusDot.classList.add(state);
+        }
+      };
+
+      const updateTimer = () => {
+        if (!recordingStart) {
+          timer.textContent = "00:00 / 00:30";
+          return;
+        }
+        const elapsed = Math.min(Date.now() - recordingStart, MAX_DURATION_MS);
+        timer.textContent = `${formatTime(elapsed)} / 00:30`;
+      };
+
+      const resizeCanvasForDpi = (canvas) => {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(rect.width * ratio);
+        canvas.height = Math.floor(rect.height * ratio);
+      };
+
+      const clearVisuals = () => {
+        waveformSection.classList.add("hidden");
+        spectrogramSection.classList.add("hidden");
+        const wfCtx = waveformCanvas.getContext("2d");
+        const spCtx = spectrogramCanvas.getContext("2d");
+        wfCtx && wfCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+        spCtx && spCtx.clearRect(0, 0, spectrogramCanvas.width, spectrogramCanvas.height);
+      };
+
+      const resetState = () => {
+        chunks = [];
+        audioBlob = null;
+        audioBuffer = null;
+        clearTimeout(stopTimeout);
+        clearInterval(tickInterval);
+        stopTimeout = null;
+        tickInterval = null;
+        if (playbackSource) {
+          playbackSource.stop();
+          playbackSource.disconnect();
+          playbackSource = null;
+        }
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+        }
+        processingState.classList.add("hidden");
+        setStatus("Idle", "");
+        recordBtn.disabled = false;
+        stopBtn.disabled = true;
+        playBtn.disabled = true;
+        clearBtn.disabled = true;
+        exportWaveformBtn.disabled = true;
+        exportSpectrogramBtn.disabled = true;
+        recordingStart = null;
+        updateTimer();
+        clearVisuals();
+      };
+
+      const setupRecorder = async () => {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const options = MediaRecorder.isTypeSupported("audio/webm")
+          ? { mimeType: "audio/webm" }
+          : MediaRecorder.isTypeSupported("audio/ogg")
+            ? { mimeType: "audio/ogg" }
+            : {};
+
+        mediaRecorder = new MediaRecorder(stream, options);
+        mediaRecorder.addEventListener("dataavailable", (event) => {
+          if (event.data && event.data.size > 0) {
+            chunks.push(event.data);
+          }
+        });
+
+        mediaRecorder.addEventListener("stop", async () => {
+          try {
+            await handleRecordingStop();
+          } catch (error) {
+            console.error(error);
+            setStatus("Error processing audio", "");
+          }
+        });
+      };
+
+      const startRecording = async () => {
+        resetState();
+        try {
+          await setupRecorder();
+        } catch (error) {
+          console.error(error);
+          setStatus("Microphone access denied", "");
+          return;
+        }
+
+        chunks = [];
+        mediaRecorder.start();
+        recordingStart = Date.now();
+        updateTimer();
+        tickInterval = window.setInterval(updateTimer, 200);
+        stopTimeout = window.setTimeout(stopRecording, MAX_DURATION_MS);
+
+        setStatus("Recording", "recording");
+        recordBtn.disabled = true;
+        stopBtn.disabled = false;
+        playBtn.disabled = true;
+        clearBtn.disabled = false;
+        clearVisuals();
+      };
+
+      const stopRecording = () => {
+        if (!mediaRecorder || mediaRecorder.state !== "recording") {
+          return;
+        }
+        mediaRecorder.stop();
+        stopBtn.disabled = true;
+        recordBtn.disabled = true;
+        clearTimeout(stopTimeout);
+        clearInterval(tickInterval);
+        updateTimer();
+        setStatus("Finalizing", "processing");
+      };
+
+      const handleRecordingStop = async () => {
+        audioBlob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
+        processingState.classList.remove("hidden");
+        setStatus("Processing", "processing");
+
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        audioContext = audioContext || new AudioContext();
+        const decoded = await audioContext.decodeAudioData(arrayBuffer);
+
+        const offline = new OfflineAudioContext(decoded.numberOfChannels, decoded.length, decoded.sampleRate);
+        const source = offline.createBufferSource();
+        source.buffer = decoded;
+        source.connect(offline.destination);
+        source.start(0);
+        const renderedBuffer = await offline.startRendering();
+        audioBuffer = renderedBuffer;
+
+        await renderVisuals(renderedBuffer);
+        processingState.classList.add("hidden");
+        setStatus("Ready", "ready");
+        recordBtn.disabled = false;
+        playBtn.disabled = false;
+        clearBtn.disabled = false;
+        exportWaveformBtn.disabled = false;
+        exportSpectrogramBtn.disabled = false;
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+        }
+      };
+
+      const renderVisuals = async (buffer) => {
+        waveformSection.classList.remove("hidden");
+        spectrogramSection.classList.remove("hidden");
+        resizeCanvasForDpi(waveformCanvas);
+        resizeCanvasForDpi(spectrogramCanvas);
+
+        const channelData = buffer.getChannelData(0);
+        drawWaveform(waveformCanvas, channelData);
+        await drawSpectrogram(spectrogramCanvas, channelData, buffer.sampleRate);
+      };
+
+      const drawWaveform = (canvas, data) => {
+        const ctx = canvas.getContext("2d");
+        const { width, height } = canvas;
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, width, height);
+
+        const centerY = height / 2;
+        const samplesPerPixel = Math.max(1, Math.floor(data.length / width));
+
+        ctx.strokeStyle = "#6d3d1e";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+
+        for (let x = 0; x < width; x += 1) {
+          const start = x * samplesPerPixel;
+          let min = 1;
+          let max = -1;
+          for (let i = 0; i < samplesPerPixel; i += 1) {
+            const sample = data[start + i] || 0;
+            if (sample < min) min = sample;
+            if (sample > max) max = sample;
+          }
+          ctx.moveTo(x, centerY + min * centerY);
+          ctx.lineTo(x, centerY + max * centerY);
+        }
+        ctx.stroke();
+      };
+
+      const createHannWindow = (size) => {
+        const window = new Float32Array(size);
+        for (let i = 0; i < size; i += 1) {
+          window[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (size - 1)));
+        }
+        return window;
+      };
+
+      const buildFftTables = (size) => {
+        const cosTable = new Float32Array(size / 2);
+        const sinTable = new Float32Array(size / 2);
+        for (let i = 0; i < size / 2; i += 1) {
+          cosTable[i] = Math.cos((-2 * Math.PI * i) / size);
+          sinTable[i] = Math.sin((-2 * Math.PI * i) / size);
+        }
+        return { cosTable, sinTable };
+      };
+
+      const reverseBits = (value, bits) => {
+        let reversed = 0;
+        for (let i = 0; i < bits; i += 1) {
+          reversed = (reversed << 1) | (value & 1);
+          value >>= 1;
+        }
+        return reversed;
+      };
+
+      const fftInPlace = (real, imag, tables) => {
+        const n = real.length;
+        const levels = Math.log2(n);
+        for (let i = 0; i < n; i += 1) {
+          const j = reverseBits(i, levels);
+          if (j > i) {
+            [real[i], real[j]] = [real[j], real[i]];
+            [imag[i], imag[j]] = [imag[j], imag[i]];
+          }
+        }
+
+        for (let size = 2; size <= n; size *= 2) {
+          const halfSize = size / 2;
+          const tableStep = n / size;
+          for (let i = 0; i < n; i += size) {
+            for (let j = 0; j < halfSize; j += 1) {
+              const k = j * tableStep;
+              const tpre = real[i + j + halfSize] * tables.cosTable[k] - imag[i + j + halfSize] * tables.sinTable[k];
+              const tpim = real[i + j + halfSize] * tables.sinTable[k] + imag[i + j + halfSize] * tables.cosTable[k];
+              real[i + j + halfSize] = real[i + j] - tpre;
+              imag[i + j + halfSize] = imag[i + j] - tpim;
+              real[i + j] += tpre;
+              imag[i + j] += tpim;
+            }
+          }
+        }
+      };
+
+      const dbToColor = (db) => {
+        const minDb = -90;
+        const maxDb = -20;
+        const clamped = Math.max(minDb, Math.min(maxDb, db));
+        const t = (clamped - minDb) / (maxDb - minDb);
+
+        const stops = [
+          { t: 0, color: [0, 0, 0] },
+          { t: 0.33, color: [18, 40, 90] },
+          { t: 0.66, color: [180, 40, 30] },
+          { t: 1, color: [255, 255, 255] },
+        ];
+
+        let i = 0;
+        while (i < stops.length - 1 && t > stops[i + 1].t) {
+          i += 1;
+        }
+        const start = stops[i];
+        const end = stops[i + 1] || stops[i];
+        const localT = (t - start.t) / (end.t - start.t || 1);
+
+        const r = Math.round(start.color[0] + (end.color[0] - start.color[0]) * localT);
+        const g = Math.round(start.color[1] + (end.color[1] - start.color[1]) * localT);
+        const b = Math.round(start.color[2] + (end.color[2] - start.color[2]) * localT);
+        return [r, g, b];
+      };
+
+      const drawSpectrogram = async (canvas, data) => {
+        const ctx = canvas.getContext("2d");
+        const { width, height } = canvas;
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, width, height);
+
+        const bins = FFT_SIZE / 2;
+        const columns = width;
+        const hop = Math.max(1, Math.floor((data.length - FFT_SIZE) / columns));
+        const hannWindow = createHannWindow(FFT_SIZE);
+        const tables = buildFftTables(FFT_SIZE);
+        const binForY = new Uint16Array(height);
+        for (let y = 0; y < height; y += 1) {
+          const pct = 1 - y / (height - 1);
+          binForY[y] = Math.min(bins - 1, Math.floor(pct * (bins - 1)));
+        }
+
+        const imageData = ctx.createImageData(width, height);
+        const rowStride = width * 4;
+
+        for (let x = 0; x < columns; x += 1) {
+          const start = x * hop;
+          const real = new Float32Array(FFT_SIZE);
+          const imag = new Float32Array(FFT_SIZE);
+          for (let i = 0; i < FFT_SIZE; i += 1) {
+            real[i] = (data[start + i] || 0) * hannWindow[i];
+          }
+
+          fftInPlace(real, imag, tables);
+
+          const magnitudes = new Float32Array(bins);
+          for (let i = 0; i < bins; i += 1) {
+            const mag = Math.hypot(real[i], imag[i]) / FFT_SIZE;
+            magnitudes[i] = 20 * Math.log10(mag + 1e-12);
+          }
+
+          for (let y = 0; y < height; y += 1) {
+            const bin = binForY[y];
+            const [r, g, b] = dbToColor(magnitudes[bin]);
+            const idx = y * rowStride + x * 4;
+            imageData.data[idx] = r;
+            imageData.data[idx + 1] = g;
+            imageData.data[idx + 2] = b;
+            imageData.data[idx + 3] = 255;
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+      };
+
+      const playAudio = async () => {
+        if (!audioBuffer) return;
+        audioContext = audioContext || new AudioContext();
+        await audioContext.resume();
+        if (playbackSource) {
+          playbackSource.stop();
+          playbackSource.disconnect();
+        }
+        playbackSource = audioContext.createBufferSource();
+        playbackSource.buffer = audioBuffer;
+        playbackSource.connect(audioContext.destination);
+        playbackSource.start(0);
+        setStatus("Playing", "ready");
+        playbackSource.addEventListener("ended", () => {
+          setStatus("Ready", "ready");
+        });
+      };
+
+      const exportCanvas = (canvas, filename) => {
+        if (!canvas.width || !canvas.height) return;
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      };
+
+      const formatTimestamp = (date) => {
+        const pad = (value) => String(value).padStart(2, "0");
+        return (
+          `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-` +
+          `${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`
+        );
+      };
+
+      recordBtn.addEventListener("click", startRecording);
+      stopBtn.addEventListener("click", stopRecording);
+      playBtn.addEventListener("click", playAudio);
+      clearBtn.addEventListener("click", resetState);
+      exportWaveformBtn.addEventListener("click", () => {
+        exportCanvas(waveformCanvas, `waveform-${formatTimestamp(new Date())}.png`);
+      });
+      exportSpectrogramBtn.addEventListener("click", () => {
+        exportCanvas(spectrogramCanvas, `spectrogram-${formatTimestamp(new Date())}.png`);
+      });
+
+      window.addEventListener("resize", () => {
+        if (!audioBuffer) return;
+        resizeCanvasForDpi(waveformCanvas);
+        resizeCanvasForDpi(spectrogramCanvas);
+        drawWaveform(waveformCanvas, audioBuffer.getChannelData(0));
+        drawSpectrogram(spectrogramCanvas, audioBuffer.getChannelData(0));
+      });
+
+      resetState();
+    </script>
+    <script src="/analytics.js"></script>
+  </body>
+</html>

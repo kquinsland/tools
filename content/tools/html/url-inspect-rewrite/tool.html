@@ -4,9 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>URL Inspect & Rewrite</title>
+    <link rel="stylesheet" href="/common.css" />
     <style>
       :root {
-        color-scheme: light;
         --bg: #f7f5f0;
         --panel: #ffffff;
         --ink: #1d1d1f;
@@ -15,16 +15,10 @@
         --accent-soft: #e6f2ef;
         --border: #e2dfd8;
         --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      }
-
-      * {
-        box-sizing: border-box;
+        --font-body: "Segoe UI", "Noto Sans", system-ui, sans-serif;
       }
 
       body {
-        margin: 0;
-        font-family: "Segoe UI", "Noto Sans", system-ui, sans-serif;
-        color: var(--ink);
         background: radial-gradient(circle at top, #fefdfb 0%, var(--bg) 60%, #efe9df 100%);
       }
 
@@ -64,28 +58,6 @@
         font-size: 1.2rem;
       }
 
-      label {
-        font-weight: 600;
-        display: block;
-        margin-bottom: 6px;
-      }
-
-      textarea,
-      input[type="text"] {
-        width: 100%;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 10px 12px;
-        font-size: 0.95rem;
-        font-family: "SF Mono", "Menlo", "Consolas", monospace;
-        background: #fbfaf7;
-      }
-
-      textarea {
-        min-height: 90px;
-        resize: vertical;
-      }
-
       .row {
         display: flex;
         gap: 12px;
@@ -103,19 +75,7 @@
         flex-wrap: wrap;
       }
 
-      button {
-        border: 1px solid var(--border);
-        background: var(--accent-soft);
-        color: var(--accent);
-        padding: 8px 14px;
-        border-radius: 999px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-      }
-
       button:hover {
-        transform: translateY(-1px);
         box-shadow: 0 6px 16px rgba(31, 111, 95, 0.18);
       }
 

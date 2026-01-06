@@ -8,13 +8,41 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f78e582ac9cb67a84843a088bfaf1d1d765c6cc0"
-        updated_commit: "5d5af151bf71cf481bb06940ec7c1b8639ec725e"
+        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
       tags:
         - "html"
         - "3mf"
         - "3d"
         - "metadata"
         - "mesh"
+  - html/audio-clip-visualizer:
+      title: "Audio Clip Visualizer"
+      language: "html"
+      description: "Record up to 30 seconds of audio and generate static waveform and spectrogram views."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "html"
+        - "audio"
+        - "visualization"
+        - "waveform"
+        - "spectrogram"
+  - html/gemini-nano-interface:
+      title: "Gemini Nano Interface"
+      language: "html"
+      description: "Run a client-side Gemini Nano session in Chrome with capability checks, streaming output, and local-only prompts."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "html"
+        - "ai"
+        - "gemini"
+        - "chrome"
+        - "local"
   - html/github-actions-spider:
       title: "GitHub Actions Spider"
       language: "html"
@@ -22,7 +50,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f2085d75a899e83fbb27cfb1610e703f2c0b9815"
-        updated_commit: "5d5af151bf71cf481bb06940ec7c1b8639ec725e"
+        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
       tags:
         - "github"
         - "actions"
@@ -37,7 +65,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "dc47d301b4ad8c2b59a7d607af6b239499a3b646"
-        updated_commit: "5d5af151bf71cf481bb06940ec7c1b8639ec725e"
+        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
       tags:
         - "demo"
         - "html"
@@ -50,7 +78,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "99e68e059b2bbb2bdfe8aa758dd595054fab542a"
-        updated_commit: "0b94a1710ca7301751564fe2943f4fbeb6665451"
+        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
       tags:
         - "helm"
         - "charts"
@@ -64,7 +92,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "b16836b801ee3cc927c18127249dc0f7a5e5c11d"
-        updated_commit: "5d5af151bf71cf481bb06940ec7c1b8639ec725e"
+        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
       tags:
         - "html"
         - "logs"
@@ -78,7 +106,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f97c3182bd7aae8170b009bc82aba87960a4ce6d"
-        updated_commit: "91ee04b27e9706baeb08397ba4080c58c2a371f7"
+        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
       tags:
         - "html"
         - "url"
@@ -92,7 +120,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "eee81257ad54ff8cf9d9c21400203d238cbfbb36"
-        updated_commit: "5273ee60bec83b8e7dbb9970e79e746af3db743c"
+        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
       tags:
         - "html"
         - "url"
