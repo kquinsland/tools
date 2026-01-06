@@ -19,8 +19,10 @@ tags:
 ---
 # Gemini Nano Interface
 
-{{< tool-link link_text="Open the tool" >}}
+{{< tool-image >}}
 
 Run a local Gemini Nano session using Chrome's built-in model, with download detection, streaming responses, and configurable parameters.
 
 **Note:** This tool requires a Chrome build that supports the built-in Gemini Nano API.
+
+{{< tool-link link_text="Open the tool" >}}
