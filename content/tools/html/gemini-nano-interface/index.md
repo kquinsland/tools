@@ -7,6 +7,8 @@ description: 'Run a client-side Gemini Nano session in Chrome with capability ch
 resources:
   - name: tool-file
     src: tool.html
+  - name: tool-icon
+    src: images/tool-icon.svg
 
 tags:
   - html
