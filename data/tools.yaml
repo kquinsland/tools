@@ -8,7 +8,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f78e582ac9cb67a84843a088bfaf1d1d765c6cc0"
-        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
+        updated_commit: "ce1dbba963e062b742b3ebba46f8cb39c81b6ee6"
       tags:
         - "html"
         - "3mf"
@@ -22,7 +22,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "d4f23b11a63b2dd20360084c15abf7f3eb570427"
-        updated_commit: null
+        updated_commit: "ce1dbba963e062b742b3ebba46f8cb39c81b6ee6"
       tags:
         - "html"
         - "audio"
@@ -36,7 +36,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "abfb0035989950f667bc57bd717b24fd4bf7ff29"
-        updated_commit: "f0202e7a6ccfa0dc307df6bf2ae06736959f3db2"
+        updated_commit: "ce1dbba963e062b742b3ebba46f8cb39c81b6ee6"
       tags:
         - "html"
         - "ai"
@@ -50,7 +50,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f2085d75a899e83fbb27cfb1610e703f2c0b9815"
-        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
+        updated_commit: "ce1dbba963e062b742b3ebba46f8cb39c81b6ee6"
       tags:
         - "github"
         - "actions"
@@ -65,7 +65,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "dc47d301b4ad8c2b59a7d607af6b239499a3b646"
-        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
+        updated_commit: "ce1dbba963e062b742b3ebba46f8cb39c81b6ee6"
       tags:
         - "demo"
         - "html"
@@ -78,7 +78,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "99e68e059b2bbb2bdfe8aa758dd595054fab542a"
-        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
+        updated_commit: "ce1dbba963e062b742b3ebba46f8cb39c81b6ee6"
       tags:
         - "helm"
         - "charts"
@@ -92,7 +92,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "b16836b801ee3cc927c18127249dc0f7a5e5c11d"
-        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
+        updated_commit: "ce1dbba963e062b742b3ebba46f8cb39c81b6ee6"
       tags:
         - "html"
         - "logs"
@@ -106,7 +106,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f97c3182bd7aae8170b009bc82aba87960a4ce6d"
-        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
+        updated_commit: "ce1dbba963e062b742b3ebba46f8cb39c81b6ee6"
       tags:
         - "html"
         - "url"
@@ -120,7 +120,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "eee81257ad54ff8cf9d9c21400203d238cbfbb36"
-        updated_commit: "4bbc684f62966b84407cb46381cc615cfed2be7b"
+        updated_commit: "ce1dbba963e062b742b3ebba46f8cb39c81b6ee6"
       tags:
         - "html"
         - "url"
