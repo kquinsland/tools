@@ -15,7 +15,45 @@
         --accent-strong: #6d3d1e;
         --border: #dbcbb7;
         --focus: rgba(155, 92, 46, 0.25);
+        --button-secondary-bg: #d8c6b2;
+        --button-secondary-ink: var(--ink);
+        --status-chip-bg: #efe3d4;
+        --status-dot: #c2b2a0;
+        --status-recording: #c9482d;
+        --status-recording-glow: rgba(201, 72, 45, 0.2);
+        --status-processing: #f1a233;
+        --status-ready: #3f7b4d;
+        --canvas-bg: #ffffff;
+        --spectrogram-bg: #000000;
+        --waveform-ink: #6d3d1e;
+        --legend-gradient: linear-gradient(90deg, #000000 0%, #12285a 35%, #b4281e 70%, #ffffff 100%);
         --font-body: "Bookerly", "Georgia", "Times New Roman", serif;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #2f343a;
+          --panel: #3a4046;
+          --ink: #e9ecef;
+          --muted: #c3c9cf;
+          --accent: #d39b66;
+          --accent-strong: #f0b074;
+          --border: #596068;
+          --focus: rgba(211, 155, 102, 0.35);
+          --button-secondary-bg: #3b4147;
+          --button-secondary-ink: #e9ecef;
+          --status-chip-bg: #3b3530;
+          --status-dot: #87929c;
+          --status-recording: #f07f6a;
+          --status-recording-glow: rgba(240, 127, 106, 0.3);
+          --status-processing: #f2c46b;
+          --status-ready: #6dd087;
+          --canvas-bg: #242a30;
+          --spectrogram-bg: #0b0f14;
+          --waveform-ink: #f0b074;
+          --legend-gradient: linear-gradient(90deg, #0b0f14 0%, #27477a 35%, #9b3d2f 70%, #e9ecef 100%);
+        }
       }
 
       body {
@@ -71,8 +109,8 @@
       }
 
       button.secondary {
-        background: #d8c6b2;
-        color: var(--ink);
+        background: var(--button-secondary-bg);
+        color: var(--button-secondary-ink);
       }
 
       button.ghost {
@@ -98,7 +136,7 @@
         gap: 8px;
         padding: 6px 12px;
         border-radius: 999px;
-        background: #efe3d4;
+        background: var(--status-chip-bg);
         color: var(--ink);
         font-size: 0.9rem;
       }
@@ -107,20 +145,20 @@
         width: 10px;
         height: 10px;
         border-radius: 50%;
-        background: #c2b2a0;
+        background: var(--status-dot);
       }
 
       .status-dot.recording {
-        background: #c9482d;
-        box-shadow: 0 0 0 4px rgba(201, 72, 45, 0.2);
+        background: var(--status-recording);
+        box-shadow: 0 0 0 4px var(--status-recording-glow);
       }
 
       .status-dot.processing {
-        background: #f1a233;
+        background: var(--status-processing);
       }
 
       .status-dot.ready {
-        background: #3f7b4d;
+        background: var(--status-ready);
       }
 
       .timer {
@@ -144,7 +182,7 @@
         height: 220px;
         border-radius: 12px;
         border: 1px solid var(--border);
-        background: #fff;
+        background: var(--canvas-bg);
         display: block;
       }
 
@@ -186,7 +224,7 @@
       .legend-bar {
         height: 10px;
         border-radius: 999px;
-        background: linear-gradient(90deg, #000000 0%, #12285a 35%, #b4281e 70%, #ffffff 100%);
+        background: var(--legend-gradient);
         border: 1px solid var(--border);
       }
 
@@ -287,6 +325,11 @@
       let recordingStart = null;
       let stream = null;
       let playbackSource = null;
+
+      const getCssVar = (name, fallback) => {
+        const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return value || fallback;
+      };
 
       const formatTime = (ms) => {
         const totalSeconds = Math.floor(ms / 1000);
@@ -467,13 +510,13 @@
         const ctx = canvas.getContext("2d");
         const { width, height } = canvas;
         ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = "#fff";
+        ctx.fillStyle = getCssVar("--canvas-bg", "#fff");
         ctx.fillRect(0, 0, width, height);
 
         const centerY = height / 2;
         const samplesPerPixel = Math.max(1, Math.floor(data.length / width));
 
-        ctx.strokeStyle = "#6d3d1e";
+        ctx.strokeStyle = getCssVar("--waveform-ink", "#6d3d1e");
         ctx.lineWidth = 1;
         ctx.beginPath();
 
@@ -578,7 +621,7 @@
         const ctx = canvas.getContext("2d");
         const { width, height } = canvas;
         ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = "#000";
+        ctx.fillStyle = getCssVar("--spectrogram-bg", "#000");
         ctx.fillRect(0, 0, width, height);
 
         const bins = FFT_SIZE / 2;
