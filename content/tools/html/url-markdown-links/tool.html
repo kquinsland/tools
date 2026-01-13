@@ -10,6 +10,8 @@
         --ink: #1e2a32;
         --muted: #5e6b75;
         --paper: #f7f2ec;
+        --paper-top: #fff7ee;
+        --paper-bottom: #f1ece5;
         --card: #ffffff;
         --line: #d6c9bb;
         --accent: #c46b2e;
@@ -17,11 +19,45 @@
         --shadow: 0 12px 30px rgba(32, 29, 26, 0.08);
         --radius: 16px;
         --border: var(--line);
+        --input-bg: #fffdfb;
+        --option-bg: #fffaf6;
+        --output-bg: #fffdfb;
+        --url-bg: #fffaf6;
+        --log-bg: #1b1b1b;
+        --log-ink: #f8e9dc;
+        --log-info: #f4d9bf;
+        --log-error: #f0a28f;
+        --log-empty: #c8b9aa;
         --font-body: "IBM Plex Sans", "Trebuchet MS", "Segoe UI", sans-serif;
       }
 
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --ink: #e6edf3;
+          --muted: #c3c9d0;
+          --paper: #2e3339;
+          --paper-top: #3a4046;
+          --paper-bottom: #242a30;
+          --card: #3a4046;
+          --line: #596068;
+          --accent: #e2a26c;
+          --accent-soft: #3b2c22;
+          --shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+          --input-bg: #2b3036;
+          --option-bg: #32373d;
+          --output-bg: #2b3036;
+          --url-bg: #32373d;
+          --log-bg: #1a1f24;
+          --log-ink: #d8c7b7;
+          --log-info: #e2bfa1;
+          --log-error: #e39c8b;
+          --log-empty: #b4a79b;
+        }
+      }
+
       body {
-        background: radial-gradient(circle at top, #fff7ee 0%, var(--paper) 42%, #f1ece5 100%);
+        background: radial-gradient(circle at top, var(--paper-top) 0%, var(--paper) 42%, var(--paper-bottom) 100%);
       }
 
       main {
@@ -76,7 +112,7 @@
         padding: 12px;
         font-size: 0.98rem;
         line-height: 1.5;
-        background: #fffdfb;
+        background: var(--input-bg);
       }
 
       textarea:focus {
@@ -94,7 +130,7 @@
         border: 1px solid var(--line);
         border-radius: 12px;
         padding: 12px 14px;
-        background: #fffaf6;
+        background: var(--option-bg);
       }
 
       .option-card h3 {
@@ -141,7 +177,7 @@
         padding: 10px 12px;
         border: 1px dashed var(--line);
         border-radius: 10px;
-        background: #fffaf6;
+        background: var(--url-bg);
         overflow-wrap: anywhere;
         font-size: 0.92rem;
         display: grid;
@@ -220,7 +256,7 @@
         padding: 12px;
         border-radius: 12px;
         border: 1px solid var(--line);
-        background: #fffdfb;
+        background: var(--output-bg);
         font-size: 0.95rem;
         line-height: 1.4;
         resize: vertical;
@@ -228,8 +264,8 @@
       }
 
       .log {
-        background: #1b1b1b;
-        color: #f8e9dc;
+        background: var(--log-bg);
+        color: var(--log-ink);
         border-radius: 12px;
         padding: 14px;
         min-height: 80px;
@@ -248,15 +284,15 @@
       }
 
       .log li.info {
-        color: #f4d9bf;
+        color: var(--log-info);
       }
 
       .log li.error {
-        color: #f0a28f;
+        color: var(--log-error);
       }
 
       .log .empty {
-        color: #c8b9aa;
+        color: var(--log-empty);
       }
 
       @media (max-width: 720px) {

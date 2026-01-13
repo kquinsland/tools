@@ -8,6 +8,8 @@
     <style>
       :root {
         --bg: #f7f5f0;
+        --bg-top: #fefdfb;
+        --bg-bottom: #efe9df;
         --panel: #ffffff;
         --ink: #1d1d1f;
         --muted: #6b6b6f;
@@ -15,11 +17,39 @@
         --accent-soft: #e6f2ef;
         --border: #e2dfd8;
         --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        --button-secondary-bg: #ffffff;
+        --pill-info-bg: #f2dfcc;
+        --pill-info-ink: #7a4d12;
+        --pill-tracking-bg: #fde4e1;
+        --pill-tracking-ink: #a53b2a;
+        --code-bg: #f7f3ed;
         --font-body: "Segoe UI", "Noto Sans", system-ui, sans-serif;
       }
 
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #2f343a;
+          --bg-top: #3a4046;
+          --bg-bottom: #262b30;
+          --panel: #3b4147;
+          --ink: #e9ecef;
+          --muted: #c3c9cf;
+          --accent: #7bc7b6;
+          --accent-soft: #2f4a46;
+          --border: #596068;
+          --shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+          --button-secondary-bg: #2f343a;
+          --pill-info-bg: #3d3629;
+          --pill-info-ink: #f2d2a0;
+          --pill-tracking-bg: #3a2a2a;
+          --pill-tracking-ink: #f0b1a3;
+          --code-bg: #2b3036;
+        }
+      }
+
       body {
-        background: radial-gradient(circle at top, #fefdfb 0%, var(--bg) 60%, #efe9df 100%);
+        background: radial-gradient(circle at top, var(--bg-top) 0%, var(--bg) 60%, var(--bg-bottom) 100%);
       }
 
       .wrap {
@@ -80,7 +110,7 @@
       }
 
       button.secondary {
-        background: #fff;
+        background: var(--button-secondary-bg);
         color: var(--ink);
       }
 
@@ -118,13 +148,13 @@
         padding: 2px 8px;
         border-radius: 999px;
         font-size: 0.75rem;
-        background: #f2dfcc;
-        color: #7a4d12;
+        background: var(--pill-info-bg);
+        color: var(--pill-info-ink);
       }
 
       .pill.tracking {
-        background: #fde4e1;
-        color: #a53b2a;
+        background: var(--pill-tracking-bg);
+        color: var(--pill-tracking-ink);
       }
 
       .hidden {
@@ -160,7 +190,7 @@
       }
 
       pre {
-        background: #f7f3ed;
+        background: var(--code-bg);
         border-radius: 12px;
         padding: 12px;
         overflow-x: auto;
