@@ -11,6 +11,22 @@
   --radius: 14px;
   --font-body: "Noto Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: "SF Mono", "Menlo", "Consolas", monospace;
+  --input-bg: #fbfaf7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #343a40;
+    --panel: #3d4349;
+    --ink: #e9ecef;
+    --muted: #c2c7cd;
+    --border: #5c6165;
+    --accent: #84b2ff;
+    --accent-soft: #2f3a4a;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    --input-bg: #2e343a;
+  }
 }
 
 * {
@@ -64,7 +80,7 @@ select {
   padding: 10px 12px;
   font-size: 0.95rem;
   font-family: var(--font-mono);
-  background: #fbfaf7;
+  background: var(--input-bg);
   color: var(--ink);
 }
 

@@ -19,7 +19,28 @@
             --warning-bg: #fff0e6;
             --alert: #7a2417;
             --alert-bg: #ffe1dd;
+            --input-bg: #fbfbf9;
+            --button-bg: #f1efe9;
             --font-body: "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                color-scheme: dark;
+                --bg: #2f343a;
+                --panel: #3a4046;
+                --ink: #e6ecf2;
+                --muted: #c4c9cf;
+                --border: #596068;
+                --accent: #79c28b;
+                --accent-soft: #2f4234;
+                --warning: #f0b37a;
+                --warning-bg: #3a2f27;
+                --alert: #f2a29a;
+                --alert-bg: #3a2a2a;
+                --input-bg: #2b3036;
+                --button-bg: #3b4147;
+            }
         }
 
         body {
@@ -108,7 +129,7 @@
             padding: 12px 14px;
             border-radius: 12px;
             border: 1px solid var(--border);
-            background: #fbfbf9;
+            background: var(--input-bg);
             font-family: "JetBrains Mono", "Source Code Pro", "Menlo", monospace;
             font-size: 0.92rem;
             line-height: 1.45;
@@ -121,7 +142,7 @@
             padding: 12px 14px;
             border-radius: 12px;
             border: 1px solid var(--border);
-            background: #fbfbf9;
+            background: var(--input-bg);
             font-family: "JetBrains Mono", "Source Code Pro", "Menlo", monospace;
             font-size: 0.92rem;
             line-height: 1.45;
@@ -151,7 +172,7 @@
 
         button {
             border: 1px solid var(--border);
-            background: #f1efe9;
+            background: var(--button-bg);
             color: var(--ink);
             padding: 8px 14px;
             border-radius: 10px;
@@ -171,7 +192,7 @@
         }
 
         .output {
-            background: #fbfbf9;
+            background: var(--input-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 12px 14px;
@@ -200,7 +221,7 @@
             padding: 8px 12px;
             border-radius: 10px;
             border: 1px solid var(--border);
-            background: #fbfbf9;
+            background: var(--input-bg);
             font-family: "JetBrains Mono", "Source Code Pro", "Menlo", monospace;
             font-size: 0.85rem;
         }

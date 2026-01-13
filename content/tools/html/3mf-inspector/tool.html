@@ -9,7 +9,65 @@
       :root {
         --bg: #f6f1ea;
         --ink: #1d1b16;
+        --panel: #fff9f2;
+        --panel-border: #d9cbb7;
+        --panel-shadow: 0 8px 24px rgba(31, 24, 16, 0.08);
+        --surface: #ffffff;
+        --surface-border: #e1d2bf;
+        --drop-border: #b79c7a;
+        --drop-bg: #ffffff;
+        --drop-border-active: #7a5b33;
+        --drop-bg-active: #fff4e6;
+        --button-primary-bg: #7a5b33;
+        --button-primary-ink: #ffffff;
+        --button-secondary-bg: #c7b29a;
+        --button-secondary-ink: #2d241a;
+        --status-info-bg: #efe4d6;
+        --status-success-bg: #dbefda;
+        --status-error-bg: #f8d7d7;
+        --status-success-ink: #2f5b3a;
+        --status-error-ink: #7d2c2c;
+        --table-border: #eadfce;
+        --table-header-bg: #f4e9d9;
+        --chip-bg: #f2e7d6;
+        --swatch-border: #cccccc;
+        --link-bg: #2f4b3a;
+        --link-ink: #ffffff;
+        --note-ink: #4a3b2b;
         --font-body: "Bookerly", "Georgia", "Times New Roman", serif;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #2f343a;
+          --ink: #e9ecef;
+          --panel: #3a4046;
+          --panel-border: #596068;
+          --panel-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+          --surface: #32373d;
+          --surface-border: #4f565e;
+          --drop-border: #7b6a57;
+          --drop-bg: #2b3036;
+          --drop-border-active: #d39b66;
+          --drop-bg-active: #3a2f28;
+          --button-primary-bg: #d39b66;
+          --button-primary-ink: #1f1a14;
+          --button-secondary-bg: #4b443c;
+          --button-secondary-ink: #f3e7dc;
+          --status-info-bg: #3b3530;
+          --status-success-bg: #2f3b33;
+          --status-error-bg: #3a2a2a;
+          --status-success-ink: #6dd087;
+          --status-error-ink: #f07f6a;
+          --table-border: #4f565e;
+          --table-header-bg: #343a40;
+          --chip-bg: #3a3326;
+          --swatch-border: #7b828a;
+          --link-bg: #49685a;
+          --link-ink: #f7f0e8;
+          --note-ink: #d8c7b7;
+        }
       }
 
       body {
@@ -32,11 +90,11 @@
       }
 
       .panel {
-        background: #fff9f2;
-        border: 1px solid #d9cbb7;
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
         border-radius: 14px;
         padding: 16px;
-        box-shadow: 0 8px 24px rgba(31, 24, 16, 0.08);
+        box-shadow: var(--panel-shadow);
       }
 
       #file-section {
@@ -46,17 +104,17 @@
       }
 
       #drop-zone {
-        border: 2px dashed #b79c7a;
+        border: 2px dashed var(--drop-border);
         border-radius: 14px;
         padding: 24px;
         text-align: center;
-        background: #fff;
+        background: var(--drop-bg);
         transition: border-color 0.2s ease, background 0.2s ease;
       }
 
       #drop-zone.dragover {
-        border-color: #7a5b33;
-        background: #fff4e6;
+        border-color: var(--drop-border-active);
+        background: var(--drop-bg-active);
       }
 
       #file-input {
@@ -73,8 +131,8 @@
 
       button {
         border: none;
-        background: #7a5b33;
-        color: #fff;
+        background: var(--button-primary-bg);
+        color: var(--button-primary-ink);
         padding: 10px 16px;
         border-radius: 999px;
         font-size: 0.95rem;
@@ -82,8 +140,8 @@
       }
 
       button.secondary {
-        background: #c7b29a;
-        color: #2d241a;
+        background: var(--button-secondary-bg);
+        color: var(--button-secondary-ink);
       }
 
       button:disabled {
@@ -100,7 +158,17 @@
         display: inline-block;
         padding: 6px 10px;
         border-radius: 999px;
-        background: #efe4d6;
+        background: var(--status-info-bg);
+      }
+
+      #status-section span[data-tone="success"] {
+        background: var(--status-success-bg);
+        color: var(--status-success-ink);
+      }
+
+      #status-section span[data-tone="error"] {
+        background: var(--status-error-bg);
+        color: var(--status-error-ink);
       }
 
       #summary-section {
@@ -118,11 +186,11 @@
       }
 
       .thumbnail-card {
-        border: 1px solid #e1d2bf;
+        border: 1px solid var(--surface-border);
         border-radius: 12px;
         padding: 10px;
         text-align: center;
-        background: #fff;
+        background: var(--surface);
       }
 
       .thumbnail-card img {
@@ -146,12 +214,12 @@
       td {
         text-align: left;
         padding: 8px 10px;
-        border-bottom: 1px solid #eadfce;
+        border-bottom: 1px solid var(--table-border);
         font-size: 0.95rem;
       }
 
       th {
-        background: #f4e9d9;
+        background: var(--table-header-bg);
       }
 
       #objects-section {
@@ -164,10 +232,10 @@
       }
 
       .object-card {
-        border: 1px solid #d9cbb7;
+        border: 1px solid var(--panel-border);
         border-radius: 14px;
         padding: 16px;
-        background: #fff;
+        background: var(--surface);
       }
 
       .object-card h3 {
@@ -204,7 +272,7 @@
         gap: 6px;
         padding: 4px 10px;
         border-radius: 999px;
-        background: #f2e7d6;
+        background: var(--chip-bg);
         font-size: 0.85rem;
       }
 
@@ -212,7 +280,7 @@
         width: 12px;
         height: 12px;
         border-radius: 50%;
-        border: 1px solid #ccc;
+        border: 1px solid var(--swatch-border);
         display: inline-block;
       }
 
@@ -227,15 +295,15 @@
         display: inline-block;
         padding: 8px 14px;
         border-radius: 999px;
-        background: #2f4b3a;
-        color: #fff;
+        background: var(--link-bg);
+        color: var(--link-ink);
         text-decoration: none;
         font-size: 0.9rem;
       }
 
       .note {
         font-size: 0.9rem;
-        color: #4a3b2b;
+        color: var(--note-ink);
       }
 
       @media (max-width: 720px) {
@@ -338,8 +406,11 @@
       const setStatus = (message, tone = "info") => {
         const span = statusSection.querySelector("span");
         span.textContent = message;
-        span.style.background =
-          tone === "error" ? "#f8d7d7" : tone === "success" ? "#dbefda" : "#efe4d6";
+        if (tone && tone !== "info") {
+          span.dataset.tone = tone;
+        } else {
+          delete span.dataset.tone;
+        }
       };
 
       const resetUI = () => {
