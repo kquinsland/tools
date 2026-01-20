@@ -249,23 +249,65 @@
         color: #9a8f84;
       }
 
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: var(--accent-soft);
-        padding: 4px 10px;
-        border-radius: 999px;
-        color: var(--accent-strong);
-        font-weight: 600;
-        font-size: 0.85rem;
+      .status-row {
+        display: grid;
+        gap: 8px;
       }
 
-      .status-row {
+      .status-box {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: #fffdf8;
+        padding: 10px 12px;
+        max-height: 160px;
+        overflow: auto;
+        font-family: var(--mono);
+        font-size: 0.9rem;
+        resize: vertical;
+      }
+
+      .status-box .summary {
+        font-weight: 600;
+        color: var(--accent-strong);
+        margin-bottom: 6px;
+      }
+
+      .status-box .status-item {
         display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 4px 0;
+        border-bottom: 1px dashed #e2d7cb;
+      }
+
+      .status-box .status-item:last-child {
+        border-bottom: none;
+      }
+
+      .status-box .status-group {
+        margin-top: 10px;
+      }
+
+      .status-box .status-group:first-of-type {
+        margin-top: 0;
+      }
+
+      .status-box .status-heading {
+        font-weight: 700;
+        color: #6b5a4a;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.75rem;
+        margin: 6px 0;
+      }
+
+      .status-box .status-tag {
+        font-weight: 600;
+        color: #7a6a5c;
+      }
+
+      .status-box .status-tag.missing {
+        color: #b4574f;
       }
 
       @media (max-width: 720px) {
@@ -304,7 +346,12 @@
           </div>
           <div class="drop-zone" id="drop-zone">Drop a Makefile here to load it.</div>
           <div class="status-row">
-            <span class="pill" id="summary-pill">Waiting for input</span>
+            <div class="status-box" id="summary-box">
+              <div class="summary">Waiting for input</div>
+              <div class="status-item">
+                <span class="status-name">No targets parsed yet.</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -368,7 +415,7 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>
       const input = document.getElementById("makefile-text");
-      const summaryPill = document.getElementById("summary-pill");
+      const summaryBox = document.getElementById("summary-box");
       const dotRaw = document.getElementById("dot-raw");
       const mermaidRaw = document.getElementById("mermaid-raw");
       const dotRender = document.getElementById("dot-render");
@@ -686,10 +733,32 @@ install: build | deploy
       }
 
       function updateSummary(targets) {
-        const entries = Array.from(targets.entries());
+        const entries = Array.from(targets.entries()).sort((a, b) => a[0].localeCompare(b[0]));
         const total = entries.length;
-        const missing = entries.filter(([, meta]) => !meta.defined).length;
-        summaryPill.textContent = `${total} nodes, ${missing} missing definitions`;
+        const definedEntries = entries.filter(([, meta]) => meta.defined);
+        const missingEntries = entries.filter(([, meta]) => !meta.defined);
+        const missing = missingEntries.length;
+        const summary = `${total} nodes, ${missing} missing definitions`;
+        if (entries.length === 0) {
+          summaryBox.innerHTML = `<div class="summary">${summary}</div><div class="status-item"><span class="status-name">No targets parsed yet.</span></div>`;
+          return;
+        }
+        const renderGroup = (label, group, statusClass, statusLabel) => {
+          if (group.length === 0) {
+            return `<div class="status-group"><div class="status-heading">${label}</div><div class="status-item"><span class="status-name">None</span></div></div>`;
+          }
+          const items = group
+            .map(([name]) => {
+              return `<div class="status-item"><span class="status-name">${name}</span><span class="${statusClass}">${statusLabel}</span></div>`;
+            })
+            .join("");
+          return `<div class="status-group"><div class="status-heading">${label}</div>${items}</div>`;
+        };
+
+        const definedGroup = renderGroup("Defined", definedEntries, "status-tag", "defined");
+        const missingGroup = renderGroup("Missing", missingEntries, "status-tag missing", "missing");
+
+        summaryBox.innerHTML = `<div class="summary">${summary}</div>${definedGroup}${missingGroup}`;
       }
 
       let renderTimer = null;
@@ -702,7 +771,7 @@ install: build | deploy
           mermaidRaw.value = "";
           dotRender.textContent = "Waiting for input.";
           mermaidRender.textContent = "Waiting for input.";
-          summaryPill.textContent = "Waiting for input";
+          summaryBox.innerHTML = '<div class="summary">Waiting for input</div><div class="status-item"><span class="status-name">No targets parsed yet.</span></div>';
           setLog("Cleared outputs.");
           return;
         }
