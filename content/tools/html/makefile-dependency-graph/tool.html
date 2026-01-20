@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Makefile Dependency Graph</title>
+    <link rel="stylesheet" href="/common.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500;600&display=swap"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1d2124;
+        --muted: #5f5c57;
+        --paper: #f5f1ea;
+        --paper-alt: #efe7dd;
+        --surface: #ffffff;
+        --surface-elevated: #fff9f2;
+        --line: #d7cbbf;
+        --accent: #e06f3d;
+        --accent-strong: #c55b2f;
+        --accent-soft: rgba(224, 111, 61, 0.15);
+        --shadow: 0 18px 38px rgba(66, 49, 32, 0.16);
+        --radius: 18px;
+        --radius-sm: 12px;
+        --mono: "Source Code Pro", "SFMono-Regular", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        --body: "Space Grotesk", "Trebuchet MS", "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--body);
+        background: radial-gradient(circle at top, #fff6e8, var(--paper) 45%, var(--paper-alt) 100%);
+        color: var(--ink);
+      }
+
+      main {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 32px 20px 64px;
+        display: grid;
+        gap: 24px;
+      }
+
+      header {
+        display: grid;
+        gap: 10px;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: clamp(2rem, 3vw, 2.8rem);
+        letter-spacing: -0.02em;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 720px;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 20px;
+      }
+
+      .card h2 {
+        margin: 0 0 14px;
+        font-size: 1.2rem;
+      }
+
+      .input-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .input-tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .input-tools button,
+      .input-tools label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface-elevated);
+        color: var(--ink);
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .input-tools button:hover,
+      .input-tools label:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+
+      .input-tools input[type="file"] {
+        display: none;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 200px;
+        padding: 14px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--line);
+        font-family: var(--mono);
+        font-size: 0.95rem;
+        background: #fffdf9;
+      }
+
+      textarea:focus {
+        outline: 2px solid var(--accent);
+        border-color: var(--accent-strong);
+      }
+
+      .drop-zone {
+        border: 2px dashed var(--line);
+        border-radius: var(--radius-sm);
+        padding: 16px;
+        text-align: center;
+        color: var(--muted);
+        background: #fff7ed;
+      }
+
+      .drop-zone.dragover {
+        border-color: var(--accent);
+        background: #fff1e3;
+        color: var(--ink);
+      }
+
+      .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .tabs button {
+        border: 1px solid var(--line);
+        background: var(--surface-elevated);
+        padding: 10px 18px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+
+      .tabs button.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff6ee;
+      }
+
+      .tab-panel {
+        display: none;
+        gap: 16px;
+      }
+
+      .tab-panel.active {
+        display: grid;
+      }
+
+      .panel-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+      }
+
+      .sub-card {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        padding: 14px;
+        background: #fffefc;
+        display: grid;
+        gap: 10px;
+      }
+
+      .sub-card h3 {
+        margin: 0;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      .output-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .output-actions button {
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--surface-elevated);
+        padding: 6px 12px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .output-actions button:hover {
+        border-color: var(--accent);
+      }
+
+      .render-zone {
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--line);
+        background: #fffdf8;
+        min-height: 280px;
+        padding: 12px;
+        overflow: auto;
+      }
+
+      .render-zone svg {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .console {
+        background: #1a1917;
+        border-radius: var(--radius-sm);
+        padding: 12px;
+        color: #f0e5d8;
+        font-family: var(--mono);
+        min-height: 140px;
+        overflow: auto;
+        border: 1px solid #3b342c;
+      }
+
+      .console .muted {
+        color: #9a8f84;
+      }
+
+      .status-row {
+        display: grid;
+        gap: 8px;
+      }
+
+      .status-box {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: #fffdf8;
+        padding: 10px 12px;
+        max-height: 160px;
+        overflow: auto;
+        font-family: var(--mono);
+        font-size: 0.9rem;
+        resize: vertical;
+      }
+
+      .status-box .summary {
+        font-weight: 600;
+        color: var(--accent-strong);
+        margin-bottom: 6px;
+      }
+
+      .status-box .status-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 4px 0;
+        border-bottom: 1px dashed #e2d7cb;
+      }
+
+      .status-box .status-item:last-child {
+        border-bottom: none;
+      }
+
+      .status-box .status-group {
+        margin-top: 10px;
+      }
+
+      .status-box .status-group:first-of-type {
+        margin-top: 0;
+      }
+
+      .status-box .status-heading {
+        font-weight: 700;
+        color: #6b5a4a;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.75rem;
+        margin: 6px 0;
+      }
+
+      .status-box .status-tag {
+        font-weight: 600;
+        color: #7a6a5c;
+      }
+
+      .status-box .status-tag.missing {
+        color: #b4574f;
+      }
+
+      @media (max-width: 720px) {
+        .tabs {
+          gap: 6px;
+        }
+
+        .tabs button {
+          padding: 8px 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Makefile Dependency Graph</h1>
+        <p>
+          Paste a Makefile to generate dependency diagrams for each target. Switch between DOT and Mermaid
+          StateDiagram outputs, copy the raw formats, and export the rendered graphs as PNG.
+        </p>
+      </header>
+
+      <section class="card" id="makefile-input">
+        <h2>Makefile input</h2>
+        <div class="input-grid">
+          <textarea id="makefile-text" placeholder="Paste your Makefile here..."></textarea>
+          <div class="input-tools">
+            <label>
+              <span>Upload Makefile</span>
+              <input type="file" id="file-input" accept=".mk,.makefile,.make,Makefile" />
+            </label>
+            <button type="button" id="load-sample">Load sample</button>
+            <button type="button" id="clear-input">Clear</button>
+            <button type="button" id="render-now">Render</button>
+          </div>
+          <div class="drop-zone" id="drop-zone">Drop a Makefile here to load it.</div>
+          <div class="status-row">
+            <div class="status-box" id="summary-box">
+              <div class="summary">Waiting for input</div>
+              <div class="status-item">
+                <span class="status-name">No targets parsed yet.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="makefile-tabs">
+        <h2>Parsed output</h2>
+        <div class="tabs">
+          <button type="button" class="tab-button active" data-tab="dot">DOT</button>
+          <button type="button" class="tab-button" data-tab="mermaid">Mermaid StateDiagram</button>
+        </div>
+
+        <div class="tab-panel active" id="tab-dot">
+          <div class="panel-grid">
+            <div class="sub-card">
+              <h3>Raw DOT</h3>
+              <div class="output-actions">
+                <button type="button" data-copy="dot">Copy</button>
+              </div>
+              <textarea id="dot-raw" readonly></textarea>
+            </div>
+            <div class="sub-card">
+              <h3>Rendered DOT</h3>
+              <div class="output-actions">
+                <button type="button" data-download="dot">Download PNG</button>
+              </div>
+              <div class="render-zone" id="dot-render"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-mermaid">
+          <div class="panel-grid">
+            <div class="sub-card">
+              <h3>Raw Mermaid</h3>
+              <div class="output-actions">
+                <button type="button" data-copy="mermaid">Copy</button>
+              </div>
+              <textarea id="mermaid-raw" readonly></textarea>
+            </div>
+            <div class="sub-card">
+              <h3>Rendered Mermaid</h3>
+              <div class="output-actions">
+                <button type="button" data-download="mermaid">Download PNG</button>
+              </div>
+              <div class="render-zone" id="mermaid-render"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="makefile-console">
+        <h2>Status console</h2>
+        <div class="console" id="console-log">
+          <div class="muted">No events yet.</div>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+      const input = document.getElementById("makefile-text");
+      const summaryBox = document.getElementById("summary-box");
+      const dotRaw = document.getElementById("dot-raw");
+      const mermaidRaw = document.getElementById("mermaid-raw");
+      const dotRender = document.getElementById("dot-render");
+      const mermaidRender = document.getElementById("mermaid-render");
+      const consoleLog = document.getElementById("console-log");
+      const fileInput = document.getElementById("file-input");
+      const dropZone = document.getElementById("drop-zone");
+      const renderNow = document.getElementById("render-now");
+      const sampleText = `build: compile package
+compile: src/main.c src/util.c
+package: build
+clean:
+\trm -rf dist
+install: build | deploy
+`;
+
+      mermaid.initialize({ startOnLoad: false });
+
+      const logLines = [];
+      const maxLogs = 12;
+
+      const persistKey = "makefile-input";
+
+      function setLog(message, tone = "info") {
+        logLines.unshift({ message, tone });
+        while (logLines.length > maxLogs) {
+          logLines.pop();
+        }
+        renderLogs();
+      }
+
+      function renderLogs() {
+        if (logLines.length === 0) {
+          consoleLog.innerHTML = '<div class="muted">No events yet.</div>';
+          return;
+        }
+        consoleLog.innerHTML = logLines
+          .map((line) => {
+            const color = line.tone === "error" ? "#ffb3a3" : "#f0e5d8";
+            return `<div style="color:${color}">${line.message}</div>`;
+          })
+          .join("");
+      }
+
+      function saveInput(value) {
+        localStorage.setItem(persistKey, value);
+        if (value.length < 2000) {
+          const encoded = encodeBase64(value);
+          history.replaceState(null, "", `#makefileb64=${encoded}`);
+        }
+      }
+
+      function loadInitialInput() {
+        const hash = window.location.hash;
+        if (hash.startsWith("#makefileb64=")) {
+          try {
+            const decoded = decodeBase64(hash.replace("#makefileb64=", ""));
+            input.value = decoded;
+            return;
+          } catch (error) {
+            setLog("Could not parse Makefile from URL hash.", "error");
+          }
+        }
+        const stored = localStorage.getItem(persistKey);
+        if (stored) {
+          input.value = stored;
+        }
+      }
+
+      function encodeBase64(value) {
+        const utf8 = new TextEncoder().encode(value);
+        let binary = "";
+        utf8.forEach((byte) => {
+          binary += String.fromCharCode(byte);
+        });
+        return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      }
+
+      function decodeBase64(value) {
+        const padded = value.replace(/-/g, "+").replace(/_/g, "/");
+        const padding = padded.length % 4 === 0 ? "" : "=".repeat(4 - (padded.length % 4));
+        const binary = atob(`${padded}${padding}`);
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+      }
+
+      function stripComments(line) {
+        const index = line.indexOf("#");
+        if (index === -1) {
+          return line;
+        }
+        return line.slice(0, index);
+      }
+
+      function normalizeLines(text) {
+        const lines = text.replace(/\r\n/g, "\n").split("\n");
+        const combined = [];
+        let buffer = "";
+
+        for (const line of lines) {
+          if (line.startsWith("\t")) {
+            continue;
+          }
+          const cleaned = stripComments(line).trimEnd();
+          if (!cleaned.trim()) {
+            continue;
+          }
+          if (cleaned.endsWith("\\")) {
+            buffer += `${cleaned.slice(0, -1)} `;
+            continue;
+          }
+          const joined = `${buffer}${cleaned}`.trim();
+          buffer = "";
+          if (joined) {
+            combined.push(joined);
+          }
+        }
+        if (buffer.trim()) {
+          combined.push(buffer.trim());
+        }
+        return combined;
+      }
+
+      function parseMakefile(text) {
+        const targets = new Map();
+        const lines = normalizeLines(text);
+
+        for (const line of lines) {
+          const colonIndex = line.indexOf(":");
+          if (colonIndex === -1) {
+            continue;
+          }
+          const left = line.slice(0, colonIndex).trim();
+          let right = line.slice(colonIndex + 1).trim();
+          if (line[colonIndex + 1] === ":") {
+            right = line.slice(colonIndex + 2).trim();
+          }
+          if (!left || left.includes("=")) {
+            continue;
+          }
+          const targetNames = left.split(/\s+/).filter(Boolean);
+          const deps = right
+            ? right.replace(/\|/g, " ").split(/\s+/).filter(Boolean)
+            : [];
+
+          for (const name of targetNames) {
+            if (!targets.has(name)) {
+              targets.set(name, { deps: new Set(), defined: true });
+            } else {
+              targets.get(name).defined = true;
+            }
+            const target = targets.get(name);
+            deps.forEach((dep) => target.deps.add(dep));
+          }
+
+          deps.forEach((dep) => {
+            if (!targets.has(dep)) {
+              targets.set(dep, { deps: new Set(), defined: false });
+            }
+          });
+        }
+
+        return targets;
+      }
+
+      function buildDot(targets) {
+        const lines = [
+          "digraph Makefile {",
+          "  rankdir=LR;",
+          "  graph [fontname=\"Space Grotesk\"];",
+          "  node [shape=box, style=\"rounded,filled\", fillcolor=\"#f7f0e8\", color=\"#c8b8a8\", fontname=\"Space Grotesk\"];",
+          "  edge [color=\"#6b5a4a\"];",
+        ];
+        const nodes = Array.from(targets.entries());
+        const definedTargets = nodes.filter(([, meta]) => meta.defined).map(([name]) => name);
+        const missingTargets = nodes.filter(([, meta]) => !meta.defined).map(([name]) => name);
+
+        missingTargets.forEach((name) => {
+          const label = `${name} (missing)`;
+          lines.push(
+            `  ${dotQuote(name)} [label=\"${escapeLabel(label)}\", style=\"rounded,dashed,filled\", fillcolor=\"#fdebe7\", color=\"#d48b83\", fontcolor=\"#b4574f\"];`
+          );
+        });
+
+        definedTargets.forEach((name) => {
+          lines.push(`  ${dotQuote(name)};`);
+        });
+
+        nodes.forEach(([name, meta]) => {
+          meta.deps.forEach((dep) => {
+            lines.push(`  ${dotQuote(name)} -> ${dotQuote(dep)};`);
+          });
+        });
+
+        lines.push("}");
+        return lines.join("\n");
+      }
+
+      function escapeLabel(value) {
+        return value.replace(/"/g, "\\\"");
+      }
+
+      function dotQuote(value) {
+        return `"${value.replace(/"/g, "\\\"")}"`;
+      }
+
+      function buildMermaid(targets) {
+        const nodes = Array.from(targets.entries());
+        const ids = new Map();
+        let idx = 1;
+        nodes.forEach(([name]) => {
+          ids.set(name, `n${idx}`);
+          idx += 1;
+        });
+
+        const lines = [
+          "---",
+          "title: Makefile dependencies",
+          "---",
+          "stateDiagram-v2",
+        ];
+
+        if (nodes.length === 0) {
+          lines.push('    state "No targets found" as n0');
+          return lines.join("\n");
+        }
+
+        nodes.forEach(([name, meta]) => {
+          const label = meta.defined ? name : `${name} (missing)`;
+          const safeLabel = label.replace(/"/g, "'");
+          lines.push(`    state \"${safeLabel}\" as ${ids.get(name)}`);
+        });
+
+        nodes.forEach(([name, meta]) => {
+          meta.deps.forEach((dep) => {
+            if (!ids.has(dep)) {
+              return;
+            }
+            lines.push(`    ${ids.get(name)} --> ${ids.get(dep)}`);
+          });
+        });
+
+        return lines.join("\n");
+      }
+
+      async function renderDot(dotText) {
+        dotRender.innerHTML = "";
+        if (!dotText.trim()) {
+          dotRender.textContent = "No DOT output yet.";
+          return null;
+        }
+        try {
+          const viz = new Viz();
+          const svg = await viz.renderSVGElement(dotText);
+          dotRender.appendChild(svg);
+          return svg;
+        } catch (error) {
+          dotRender.textContent = "DOT render failed.";
+          setLog(`DOT render failed: ${error.message}`, "error");
+          return null;
+        }
+      }
+
+      async function renderMermaid(mermaidText) {
+        mermaidRender.innerHTML = "";
+        if (!mermaidText.trim()) {
+          mermaidRender.textContent = "No Mermaid output yet.";
+          return null;
+        }
+        try {
+          const { svg } = await mermaid.render("mermaid-diagram", mermaidText);
+          mermaidRender.innerHTML = svg;
+          return mermaidRender.querySelector("svg");
+        } catch (error) {
+          mermaidRender.textContent = "Mermaid render failed.";
+          setLog(`Mermaid render failed: ${error.message}`, "error");
+          return null;
+        }
+      }
+
+      function serializeSvg(svgElement) {
+        const serializer = new XMLSerializer();
+        return serializer.serializeToString(svgElement);
+      }
+
+      function svgToPng(svgElement, fileName) {
+        if (!svgElement) {
+          setLog("Nothing to download yet.", "error");
+          return;
+        }
+        const svgText = serializeSvg(svgElement);
+        const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+        const url = URL.createObjectURL(svgBlob);
+        const image = new Image();
+        image.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = image.width || 1200;
+          canvas.height = image.height || 800;
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(url);
+          const pngUrl = canvas.toDataURL("image/png");
+          const link = document.createElement("a");
+          link.href = pngUrl;
+          link.download = fileName;
+          link.click();
+        };
+        image.onerror = () => {
+          setLog("Failed to convert SVG to PNG.", "error");
+          URL.revokeObjectURL(url);
+        };
+        image.src = url;
+      }
+
+      function updateSummary(targets) {
+        const entries = Array.from(targets.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+        const total = entries.length;
+        const definedEntries = entries.filter(([, meta]) => meta.defined);
+        const missingEntries = entries.filter(([, meta]) => !meta.defined);
+        const missing = missingEntries.length;
+        const summary = `${total} nodes, ${missing} missing definitions`;
+        if (entries.length === 0) {
+          summaryBox.innerHTML = `<div class="summary">${summary}</div><div class="status-item"><span class="status-name">No targets parsed yet.</span></div>`;
+          return;
+        }
+        const renderGroup = (label, group, statusClass, statusLabel) => {
+          if (group.length === 0) {
+            return `<div class="status-group"><div class="status-heading">${label}</div><div class="status-item"><span class="status-name">None</span></div></div>`;
+          }
+          const items = group
+            .map(([name]) => {
+              return `<div class="status-item"><span class="status-name">${name}</span><span class="${statusClass}">${statusLabel}</span></div>`;
+            })
+            .join("");
+          return `<div class="status-group"><div class="status-heading">${label}</div>${items}</div>`;
+        };
+
+        const definedGroup = renderGroup("Defined", definedEntries, "status-tag", "defined");
+        const missingGroup = renderGroup("Missing", missingEntries, "status-tag missing", "missing");
+
+        summaryBox.innerHTML = `<div class="summary">${summary}</div>${definedGroup}${missingGroup}`;
+      }
+
+      let renderTimer = null;
+
+      async function renderAll() {
+        const text = input.value;
+        saveInput(text);
+        if (!text.trim()) {
+          dotRaw.value = "";
+          mermaidRaw.value = "";
+          dotRender.textContent = "Waiting for input.";
+          mermaidRender.textContent = "Waiting for input.";
+          summaryBox.innerHTML = '<div class="summary">Waiting for input</div><div class="status-item"><span class="status-name">No targets parsed yet.</span></div>';
+          setLog("Cleared outputs.");
+          return;
+        }
+        const targets = parseMakefile(text);
+        updateSummary(targets);
+        const dotText = buildDot(targets);
+        const mermaidText = buildMermaid(targets);
+        dotRaw.value = dotText;
+        mermaidRaw.value = mermaidText;
+        await Promise.all([renderDot(dotText), renderMermaid(mermaidText)]);
+        setLog(`Parsed ${targets.size} nodes from Makefile.`);
+      }
+
+      function scheduleRender() {
+        if (renderTimer) {
+          clearTimeout(renderTimer);
+        }
+        renderTimer = setTimeout(renderAll, 350);
+      }
+
+      document.querySelectorAll(".tab-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".tab-button").forEach((btn) => btn.classList.remove("active"));
+          document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.remove("active"));
+          button.classList.add("active");
+          document.getElementById(`tab-${button.dataset.tab}`).classList.add("active");
+        });
+      });
+
+      async function copyToClipboard(target, label) {
+        const value = target.value;
+        if (!value) {
+          setLog(`No ${label} output to copy.`, "error");
+          return;
+        }
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(value);
+        } else {
+          target.select();
+          document.execCommand("copy");
+        }
+        setLog(`Copied ${label} output.`);
+      }
+
+      document.querySelectorAll("[data-copy]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const target = button.dataset.copy === "dot" ? dotRaw : mermaidRaw;
+          await copyToClipboard(target, button.dataset.copy);
+        });
+      });
+
+      document.querySelectorAll("[data-download]").forEach((button) => {
+        button.addEventListener("click", () => {
+          if (button.dataset.download === "dot") {
+            svgToPng(dotRender.querySelector("svg"), "makefile-dot.png");
+          } else {
+            svgToPng(mermaidRender.querySelector("svg"), "makefile-mermaid.png");
+          }
+        });
+      });
+
+      input.addEventListener("input", scheduleRender);
+
+      renderNow.addEventListener("click", () => renderAll());
+
+      document.getElementById("clear-input").addEventListener("click", () => {
+        input.value = "";
+        saveInput("");
+        scheduleRender();
+      });
+
+      document.getElementById("load-sample").addEventListener("click", () => {
+        input.value = sampleText;
+        scheduleRender();
+      });
+
+      fileInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          input.value = reader.result;
+          scheduleRender();
+          setLog(`Loaded ${file.name}.`);
+        };
+        reader.readAsText(file);
+      });
+
+      dropZone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        dropZone.classList.add("dragover");
+      });
+
+      dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("dragover");
+      });
+
+      dropZone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        dropZone.classList.remove("dragover");
+        const file = event.dataTransfer.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          input.value = reader.result;
+          scheduleRender();
+          setLog(`Dropped ${file.name}.`);
+        };
+        reader.readAsText(file);
+      });
+
+      loadInitialInput();
+      if (input.value.trim()) {
+        renderAll();
+      }
+    </script>
+    <script src="/analytics.js"></script>
+  </body>
+</html>

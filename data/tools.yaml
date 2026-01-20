@@ -99,6 +99,21 @@ tools:
         - "cleanup"
         - "text"
         - "terminal"
+  - html/makefile-dependency-graph:
+      title: "Makefile Dependency Graph"
+      language: "html"
+      description: "Paste a Makefile and instantly view target dependencies as DOT and Mermaid state diagrams."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "html"
+        - "makefile"
+        - "graph"
+        - "dependencies"
+        - "mermaid"
+        - "dot"
   - html/url-inspect-rewrite:
       title: "URL Inspect & Rewrite"
       language: "html"
