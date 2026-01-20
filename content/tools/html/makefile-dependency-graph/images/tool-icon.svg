@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Makefile dependency graph icon">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff6e8" />
+      <stop offset="1" stop-color="#f0e6da" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#paper)" />
+  <rect x="112" y="92" width="176" height="228" rx="18" fill="#ffffff" stroke="#d7cbbf" stroke-width="8" />
+  <polygon points="288,92 352,156 288,156" fill="#f2e5d7" stroke="#d7cbbf" stroke-width="8" />
+  <line x1="136" y1="136" x2="248" y2="136" stroke="#c8b8a8" stroke-width="10" stroke-linecap="round" />
+  <line x1="136" y1="168" x2="232" y2="168" stroke="#c8b8a8" stroke-width="10" stroke-linecap="round" />
+  <line x1="136" y1="200" x2="212" y2="200" stroke="#c8b8a8" stroke-width="10" stroke-linecap="round" />
+  <line x1="136" y1="232" x2="214" y2="232" stroke="#c8b8a8" stroke-width="10" stroke-linecap="round" />
+  <circle cx="232" cy="232" r="6" fill="#e06f3d" />
+  <circle cx="248" cy="232" r="6" fill="#e06f3d" />
+
+  <rect x="272" y="286" width="140" height="64" rx="16" fill="#fff9f2" stroke="#c8b8a8" stroke-width="8" />
+  <rect x="80" y="318" width="150" height="64" rx="16" fill="#fff9f2" stroke="#c8b8a8" stroke-width="8" />
+  <rect x="304" y="374" width="132" height="64" rx="16" fill="#fff9f2" stroke="#c8b8a8" stroke-width="8" stroke-dasharray="10 10" />
+
+  <path d="M 216 320 C 236 320, 256 320, 272 320" fill="none" stroke="#6b5a4a" stroke-width="8" stroke-linecap="round" />
+  <path d="M 352 350 C 352 360, 352 368, 352 382" fill="none" stroke="#6b5a4a" stroke-width="8" stroke-linecap="round" />
+  <path d="M 154 350 C 200 350, 240 334, 272 320" fill="none" stroke="#6b5a4a" stroke-width="8" stroke-linecap="round" />
+
+  <polygon points="270,320 258,314 258,326" fill="#6b5a4a" />
+  <polygon points="352,382 346,370 358,370" fill="#6b5a4a" />
+  <polygon points="268,320 250,316 254,330" fill="#6b5a4a" />
+</svg>

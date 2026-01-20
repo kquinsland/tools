@@ -70,7 +70,9 @@ The entire process of creating a new tool and getting it integrated into the sit
 
 4. **Add icon/image**
    - If an icon/image was provided or created, add it to `images/` within the tool bundle.
+   - When appropriate, issue a short creative brief to guide a designer, then generate a simple SVG icon asset and add it to `images/`.
    - Reference it in front matter as `tool-icon`.
+   - Add `{{< tool-image >}}` to `index.md` so the icon renders on the page.
 
 ### Integrate the tool into the site
 
