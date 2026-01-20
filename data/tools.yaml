@@ -105,8 +105,8 @@ tools:
       description: "Paste a Makefile and instantly view target dependencies as DOT and Mermaid state diagrams."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
-        updated_commit: null
+        introduced_commit: "9caaf23a6bb4696806e9ce08105bcf668c9a1841"
+        updated_commit: "f8f8370a52deac3a27c5dc34395958fb300ab4ad"
       tags:
         - "html"
         - "makefile"
