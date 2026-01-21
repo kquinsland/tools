@@ -63,4 +63,4 @@ Using this repo's [current (as of `a693950`) GHA workflows as an example](https:
 
 Produces the following output:
 
-![Example GHA Tree](./images/example01.png)
+![Example GHA Tree](./images/example01.webp)
