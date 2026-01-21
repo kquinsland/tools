@@ -141,6 +141,21 @@ tools:
         - "url"
         - "markdown"
         - "links"
+  - python/gha-tree-builder:
+      title: "GHA Tree Builder"
+      language: "python"
+      description: "Generate DOT dependency graphs for GitHub Actions workflows, triggers, and jobs."
+      toolbox:
+        file: "gha-tree-builder.py"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "github"
+        - "actions"
+        - "workflow"
+        - "python"
+        - "graph"
+        - "dot"
   - python/hello-python:
       title: "Hello, Python"
       language: "python"
