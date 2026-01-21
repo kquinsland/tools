@@ -146,9 +146,9 @@ tools:
       language: "python"
       description: "Generate DOT dependency graphs for GitHub Actions workflows, triggers, and jobs."
       toolbox:
-        file: "gha-tree-builder.py"
-        introduced_commit: null
-        updated_commit: null
+        file: "tool.py"
+        introduced_commit: "3b09a940e1835d0f0b7be11c080224bb46b57227"
+        updated_commit: "9de50f085bfd24f24f1dec27f41aafed52017cda"
       tags:
         - "github"
         - "actions"
