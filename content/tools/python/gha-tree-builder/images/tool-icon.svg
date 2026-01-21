@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Workflow dependency graph icon">
+  <defs>
+    <style>
+      .stroke { stroke: #2f3b4a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #e8eef7; }
+      .job { fill: #e9f6ef; }
+      .trigger { fill: #f7efe0; }
+    </style>
+  </defs>
+  <rect width="128" height="128" rx="18" fill="#ffffff"/>
+
+  <path class="stroke" d="M30 38 L62 64"/>
+  <path class="stroke" d="M62 64 L96 36"/>
+  <path class="stroke" d="M62 64 L94 92"/>
+
+  <polygon class="trigger stroke" points="28,20 36,28 28,36 20,28"/>
+  <path class="stroke" d="M28 36 L30 38"/>
+
+  <circle class="node stroke" cx="30" cy="38" r="12"/>
+  <circle class="node stroke" cx="62" cy="64" r="14"/>
+  <circle class="job stroke" cx="96" cy="36" r="12"/>
+  <circle class="job stroke" cx="94" cy="92" r="12"/>
+
+  <path class="stroke" d="M92 34 L100 38"/>
+  <path class="stroke" d="M90 90 L98 94"/>
+</svg>
