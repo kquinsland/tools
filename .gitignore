@@ -13,3 +13,6 @@ hugo.linux
 /.hugo_build.lock
 
 .cache/
+
+# Any python related caches
+__pycache__
