@@ -19,3 +19,7 @@ tags:
 Drop a 3MF file to review its package metadata, thumbnails, and object list. Mesh objects can be exported as ASCII STL.
 
 {{< tool-link link_text="Open the tool" >}}.
+
+## Dependencies
+
+{{< tool-dependencies >}}

@@ -1,0 +1,59 @@
+{{- /* Shortcode: render dependencies table for the current tool from data/tools.yaml.
+     Usage: {{< tool-dependencies >}} */ -}}
+
+{{- $tools := site.Data.tools.tools -}}
+{{- $rel := .Page.RelPermalink -}}
+{{- $trimmed := strings.TrimPrefix "/tools/" $rel -}}
+{{- $slug := strings.TrimSuffix "/" $trimmed -}}
+
+{{- $tool := dict -}}
+{{- range $item := $tools -}}
+  {{- range $key, $val := $item -}}
+    {{- if eq $key $slug -}}
+      {{- $tool = $val -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $deps := slice -}}
+{{- with $tool.dependencies -}}
+  {{- $deps = . -}}
+{{- end -}}
+
+{{- if not $deps -}}
+<p class="tool-dependencies-empty">No external dependencies listed.</p>
+{{- else -}}
+<div class="tool-dependencies">
+  <table>
+    <thead>
+      <tr>
+        <th>Library</th>
+        <th>Version</th>
+        <th>Via</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{- range $dep := $deps -}}
+      {{- $package := $dep.package | default "" -}}
+      {{- $version := $dep.version | default "" -}}
+      {{- $via := $dep.via | default "" -}}
+      <tr>
+        <td>{{ $package }}</td>
+        <td>{{ if $version }}{{ $version }}{{ else }}&mdash;{{ end }}</td>
+        <td>
+          {{- if $via -}}
+            {{- $host := "" -}}
+            {{- with (urls.Parse $via) -}}
+              {{- if .Host -}}{{- $host = .Host -}}{{- end -}}
+            {{- end -}}
+            <a href="{{ $via }}">{{ if $host }}{{ $host }}{{ else }}{{ $via }}{{ end }}</a>
+          {{- else -}}
+            &mdash;
+          {{- end -}}
+        </td>
+      </tr>
+      {{- end -}}
+    </tbody>
+  </table>
+</div>
+{{- end -}}
