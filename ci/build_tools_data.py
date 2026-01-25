@@ -17,10 +17,13 @@ Rules (see PROBLEM.md):
 from __future__ import annotations
 
 import logging
+import re
 import subprocess
 from dataclasses import dataclass
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Iterable
+from urllib.parse import urlparse, urlunparse
 
 try:
     import structlog
@@ -150,6 +153,13 @@ def _yaml_quote(value: str) -> str:
 
 
 @dataclass(frozen=True)
+class Dependency:
+    package: str
+    version: str | None = None
+    via: str | None = None
+
+
+@dataclass(frozen=True)
 class ToolEntry:
     slug: str
     title: str
@@ -158,6 +168,7 @@ class ToolEntry:
     toolbox_file: str
     introduced_commit: str | None
     updated_commit: str | None
+    dependencies: tuple[Dependency, ...]
     tags: tuple[str, ...]
 
 
@@ -207,6 +218,8 @@ def _build_tool_entry(index_md: Path, *, tools_root: Path) -> ToolEntry | None:
                 break
     tags = _coerce_tags(fm.get("tags"))
 
+    tool_path = index_md.parent / toolbox_file
+    dependencies = _extract_dependencies(language=language, tool_path=tool_path)
     introduced_commit, updated_commit = _get_tool_git_commits(index_md.parent)
 
     return ToolEntry(
@@ -217,8 +230,182 @@ def _build_tool_entry(index_md: Path, *, tools_root: Path) -> ToolEntry | None:
         toolbox_file=toolbox_file,
         introduced_commit=introduced_commit,
         updated_commit=updated_commit,
+        dependencies=dependencies,
         tags=tags,
     )
+
+
+class _ScriptSrcParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.script_srcs: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() != "script":
+            return
+        for attr, value in attrs:
+            if attr.lower() == "src" and value:
+                self.script_srcs.append(value)
+
+
+def _url_without_query_fragment(url: str) -> str:
+    parsed = urlparse(url)
+    return urlunparse(parsed._replace(query="", fragment=""))
+
+
+def _parse_cdnjs_dependency(url: str) -> Dependency | None:
+    parsed = urlparse(url)
+    parts = parsed.path.strip("/").split("/")
+    if len(parts) < 4 or parts[0] != "ajax" or parts[1] != "libs":
+        return None
+    package = parts[2]
+    version = parts[3]
+    if not package or not version:
+        return None
+    return Dependency(
+        package=package,
+        version=version,
+        via=_url_without_query_fragment(url),
+    )
+
+
+def _parse_jsdelivr_dependency(url: str) -> Dependency | None:
+    parsed = urlparse(url)
+    parts = parsed.path.strip("/").split("/")
+    if len(parts) < 2 or parts[0] != "npm":
+        return None
+
+    if parts[1].startswith("@"):
+        if len(parts) < 3:
+            return None
+        scope = parts[1]
+        package_part = parts[2]
+        name, _, version = package_part.partition("@")
+        if not name or not version:
+            return None
+        package = f"{scope}/{name}"
+    else:
+        name, _, version = parts[1].partition("@")
+        if not name or not version:
+            return None
+        package = name
+
+    return Dependency(
+        package=package,
+        version=version,
+        via=_url_without_query_fragment(url),
+    )
+
+
+def _dependency_from_url(url: str) -> Dependency | None:
+    if not url.startswith(("http://", "https://")):
+        return None
+    host = urlparse(url).netloc.lower()
+    if host == "cdn.jsdelivr.net":
+        return _parse_jsdelivr_dependency(url)
+    if host == "cdnjs.cloudflare.com":
+        return _parse_cdnjs_dependency(url)
+    return None
+
+
+def _parse_html_dependencies(html_text: str) -> list[Dependency]:
+    parser = _ScriptSrcParser()
+    parser.feed(html_text)
+    dependencies: list[Dependency] = []
+    seen: set[tuple[str, str | None, str | None]] = set()
+    for src in parser.script_srcs:
+        dependency = _dependency_from_url(src)
+        if dependency is None:
+            continue
+        key = (dependency.package, dependency.version, dependency.via)
+        if key in seen:
+            continue
+        seen.add(key)
+        dependencies.append(dependency)
+    return dependencies
+
+
+def _extract_pep723_block(script_text: str) -> list[str]:
+    lines = script_text.splitlines()
+    in_block = False
+    block_lines: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped == "# /// script":
+            in_block = True
+            continue
+        if in_block and stripped == "# ///":
+            break
+        if not in_block:
+            continue
+        if not line.lstrip().startswith("#"):
+            continue
+        content = line.lstrip()[1:]
+        if content.startswith(" "):
+            content = content[1:]
+        block_lines.append(content.rstrip())
+    return block_lines
+
+
+def _parse_pep723_dependencies(script_text: str) -> list[str]:
+    block_lines = _extract_pep723_block(script_text)
+    if not block_lines:
+        return []
+
+    deps: list[str] = []
+    in_list = False
+    for line in block_lines:
+        stripped = line.strip()
+        if not in_list:
+            if not stripped.startswith("dependencies"):
+                continue
+            _, _, rest = stripped.partition("=")
+            rest = rest.strip()
+            if not rest.startswith("["):
+                continue
+            in_list = True
+            rest = rest[1:]
+        else:
+            rest = stripped
+
+        if "]" in rest:
+            before, _, _ = rest.partition("]")
+            deps.extend(re.findall(r"['\"]([^'\"]+)['\"]", before))
+            break
+        deps.extend(re.findall(r"['\"]([^'\"]+)['\"]", rest))
+    return deps
+
+
+_REQ_RE = re.compile(r"^\s*([A-Za-z0-9_.-]+)(\[[^\]]+\])?\s*(.*)$")
+
+
+def _parse_requirement(requirement: str) -> Dependency:
+    match = _REQ_RE.match(requirement)
+    if not match:
+        return Dependency(package=requirement.strip() or requirement)
+    name, extras, spec = match.groups()
+    package = f"{name}{extras or ''}"
+    version = spec.strip() or None
+    return Dependency(package=package, version=version)
+
+
+def _parse_python_dependencies(script_text: str) -> list[Dependency]:
+    requirements = _parse_pep723_dependencies(script_text)
+    return [_parse_requirement(requirement) for requirement in requirements]
+
+
+def _extract_dependencies(*, language: str, tool_path: Path) -> tuple[Dependency, ...]:
+    if not tool_path.exists():
+        return ()
+    try:
+        tool_text = tool_path.read_text(encoding="utf-8")
+    except OSError:
+        return ()
+    if language == "html":
+        return tuple(_parse_html_dependencies(tool_text))
+    if language == "python":
+        return tuple(_parse_python_dependencies(tool_text))
+    return ()
 
 
 def _render_tools_yaml(entries: list[ToolEntry]) -> str:
@@ -248,6 +435,16 @@ def _render_tools_yaml(entries: list[ToolEntry]) -> str:
             "        updated_commit: "
             + (_yaml_quote(entry.updated_commit) if entry.updated_commit else "null")
         )
+        if entry.dependencies:
+            lines.append("      dependencies:")
+            for dependency in entry.dependencies:
+                lines.append(f"        - package: {_yaml_quote(dependency.package)}")
+                if dependency.version is not None:
+                    lines.append(
+                        f"          version: {_yaml_quote(dependency.version)}"
+                    )
+                if dependency.via is not None:
+                    lines.append(f"          via: {_yaml_quote(dependency.via)}")
         if entry.tags:
             lines.append("      tags:")
             for tag in entry.tags:
@@ -331,6 +528,69 @@ def build_tools_txt(*, repo_root: Path) -> str:
     entries.sort(key=lambda e: (e.language.lower(), e.title.lower()))
     base_url = _load_base_url(repo_root=repo_root)
     return _render_tools_txt(entries=entries, base_url=base_url)
+
+
+def test_parse_jsdelivr_dependency() -> None:
+    url = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"
+    dependency = _parse_jsdelivr_dependency(url)
+    assert dependency == Dependency(
+        package="jszip",
+        version="3.10.1",
+        via="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js",
+    )
+
+
+def test_parse_cdnjs_dependency() -> None:
+    url = "https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js"
+    dependency = _parse_cdnjs_dependency(url)
+    assert dependency == Dependency(
+        package="viz.js",
+        version="2.1.2",
+        via="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js",
+    )
+
+
+def test_parse_html_dependencies_dedupes() -> None:
+    html_text = """
+    <html>
+      <head>
+        <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+      </head>
+    </html>
+    """
+    dependencies = _parse_html_dependencies(html_text)
+    assert dependencies == [
+        Dependency(
+            package="jszip",
+            version="3.10.1",
+            via="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js",
+        )
+    ]
+
+
+def test_parse_pep723_dependencies() -> None:
+    script_text = """#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "click>=8.1",
+#   "structlog>=24.0",
+#   "pyyaml>=6.0",
+# ]
+# ///
+"""
+    dependencies = _parse_python_dependencies(script_text)
+    assert dependencies == [
+        Dependency(package="click", version=">=8.1"),
+        Dependency(package="structlog", version=">=24.0"),
+        Dependency(package="pyyaml", version=">=6.0"),
+    ]
+
+
+def test_parse_requirement_with_extras() -> None:
+    dependency = _parse_requirement("requests[socks]>=2.31")
+    assert dependency == Dependency(package="requests[socks]", version=">=2.31")
 
 
 def main() -> int:

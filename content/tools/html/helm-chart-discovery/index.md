@@ -26,3 +26,7 @@ reference like `oci://registry.example.com/namespace/chart`.
 This tool fetches and parses chart metadata so you can quickly scan charts, versions, and metadata.
 
 {{< tool-link link_text="Open the tool" >}}.
+
+## Dependencies
+
+{{< tool-dependencies >}}

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="URL to Markdown Links icon">
+  <rect x="32" y="32" width="448" height="448" rx="56" fill="#f5f7fb"/>
+  <rect x="96" y="120" width="320" height="96" rx="24" fill="#ffffff" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="132" cy="168" r="10" fill="#9ca3af"/>
+  <circle cx="162" cy="168" r="10" fill="#9ca3af"/>
+  <circle cx="192" cy="168" r="10" fill="#9ca3af"/>
+  <path d="M132 276 H380" stroke="#1f2937" stroke-width="12" stroke-linecap="round"/>
+  <path d="M132 316 H332" stroke="#1f2937" stroke-width="12" stroke-linecap="round"/>
+  <rect x="132" y="256" width="84" height="36" rx="10" fill="#dbeafe"/>
+  <path d="M154 274 H194" stroke="#3b82f6" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="356" cy="308" r="42" fill="#93c5fd" stroke="#1f2937" stroke-width="12"/>
+  <path d="M336 308 H376" stroke="#1f2937" stroke-width="12" stroke-linecap="round"/>
+  <path d="M356 288 V328" stroke="#1f2937" stroke-width="12" stroke-linecap="round"/>
+</svg>

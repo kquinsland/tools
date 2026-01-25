@@ -6,6 +6,8 @@ description: 'Inspect 3MF metadata, thumbnails, and mesh objects directly in the
 resources:
   - name: tool-file
     src: tool.html
+  - name: tool-icon
+    src: images/tool-icon.svg
 
 tags:
   - html
@@ -16,6 +18,12 @@ tags:
 ---
 # 3MF Inspector
 
+{{< tool-image >}}
+
 Drop a 3MF file to review its package metadata, thumbnails, and object list. Mesh objects can be exported as ASCII STL.
 
 {{< tool-link link_text="Open the tool" >}}.
+
+## Dependencies
+
+{{< tool-dependencies >}}

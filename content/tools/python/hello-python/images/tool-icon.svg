@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hello, Python icon">
+  <rect x="32" y="32" width="448" height="448" rx="56" fill="#f5f7fb"/>
+  <rect x="96" y="120" width="320" height="240" rx="24" fill="#111827"/>
+  <rect x="96" y="120" width="320" height="44" rx="24" fill="#1f2937"/>
+  <circle cx="130" cy="142" r="8" fill="#9ca3af"/>
+  <circle cx="156" cy="142" r="8" fill="#9ca3af"/>
+  <circle cx="182" cy="142" r="8" fill="#9ca3af"/>
+  <path d="M150 248 L200 208 L150 168" fill="none" stroke="#e5e7eb" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M234 168 H304" fill="none" stroke="#60a5fa" stroke-width="16" stroke-linecap="round"/>
+  <rect x="234" y="232" width="96" height="16" rx="8" fill="#3b82f6"/>
+  <rect x="234" y="268" width="68" height="16" rx="8" fill="#93c5fd"/>
+  <circle cx="332" cy="272" r="10" fill="#fbbf24"/>
+  <circle cx="356" cy="232" r="10" fill="#f59e0b"/>
+</svg>

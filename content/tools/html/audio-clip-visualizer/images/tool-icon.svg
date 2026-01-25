@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Audio Clip Visualizer icon">
+  <rect x="32" y="32" width="448" height="448" rx="56" fill="#f5f7fb"/>
+  <rect x="110" y="160" width="32" height="192" rx="16" fill="#93c5fd"/>
+  <rect x="166" y="128" width="32" height="256" rx="16" fill="#60a5fa"/>
+  <rect x="222" y="184" width="32" height="144" rx="16" fill="#93c5fd"/>
+  <rect x="278" y="128" width="32" height="256" rx="16" fill="#60a5fa"/>
+  <rect x="334" y="160" width="32" height="192" rx="16" fill="#93c5fd"/>
+  <path d="M96 320 C144 260 192 260 240 320 C288 380 336 380 384 320" fill="none" stroke="#1f2937" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="256" cy="352" r="28" fill="#3b82f6"/>
+</svg>

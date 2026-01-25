@@ -7,10 +7,8 @@ description: 'Extract URLs from text and format them as Markdown links with opti
 resources:
   - name: tool-file
     src: tool.html
-
-    # Made available for use below
   - name: tool-icon
-    src: images/tool-image.webp
+    src: images/tool-icon.svg
 
 tags:
   - html
@@ -25,3 +23,7 @@ tags:
 Paste text containing URLs, extract them, and generate Markdown links with a few formatting options.
 
 {{< tool-link link_text="Open the tool" >}}
+
+## Dependencies
+
+{{< tool-dependencies >}}

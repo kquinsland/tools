@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="3MF Inspector icon">
+  <rect x="32" y="32" width="448" height="448" rx="56" fill="#f5f7fb"/>
+  <rect x="132" y="132" width="188" height="188" rx="20" fill="#ffffff" stroke="#1f2937" stroke-width="14"/>
+  <polygon points="132,132 232,84 320,132 220,180" fill="#e5e7eb" stroke="#1f2937" stroke-width="12" stroke-linejoin="round"/>
+  <line x1="320" y1="132" x2="320" y2="320" stroke="#1f2937" stroke-width="12"/>
+  <circle cx="344" cy="344" r="54" fill="#dbeafe" stroke="#1f2937" stroke-width="14"/>
+  <line x1="382" y1="382" x2="424" y2="424" stroke="#1f2937" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="332" cy="336" r="18" fill="#3b82f6"/>
+</svg>
