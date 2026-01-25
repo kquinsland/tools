@@ -1,5 +1,7 @@
 {{- /* Shortcode: render tool cards from data/tools.yaml inside a columns shortcode. */ -}}
 {{- $tools := site.Data.tools.tools -}}
+{{- $category := lower (default "" (.Get "category")) -}}
+{{- $has_tools := false -}}
 
 {{- if not $tools -}}
 <ul>
@@ -41,6 +43,10 @@
     {{- end -}}
 
     {{- $language := lower (default "" $tool.language) -}}
+    {{- if and $category (not (or (eq $language $category) (hasPrefix $slug (printf "%s/" $category)))) -}}
+    {{- continue -}}
+    {{- end -}}
+    {{- $has_tools = true -}}
     {{- $emoji := "" -}}
     {{- if eq $language "python" -}}
     {{- $emoji = "🐍" -}}
@@ -64,6 +70,15 @@
         </div>
     </li>
     {{- end -}}
+    {{- end -}}
+    {{- if not $has_tools -}}
+    <li>
+        <div class="book-card">
+            <div class="markdown-inner">
+                <p>No tools found{{ if $category }} in {{ $category }}{{ end }}.</p>
+            </div>
+        </div>
+    </li>
     {{- end -}}
 </ul>
 {{- end -}}
