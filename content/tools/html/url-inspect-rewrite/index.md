@@ -6,6 +6,8 @@ description: 'Parse a URL, review query parameters, and rebuild a cleaner link.'
 resources:
   - name: tool-file
     src: tool.html
+  - name: tool-icon
+    src: images/tool-icon.svg
 
 tags:
   - html
@@ -15,6 +17,8 @@ tags:
   - cleanup
 ---
 # URL Inspect & Rewrite
+
+{{< tool-image >}}
 
 Paste text containing a URL, review the detected query parameters, and rebuild a clean link.
 

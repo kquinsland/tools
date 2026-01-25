@@ -9,12 +9,10 @@ description: 'This is the first tool description here.'
 
 
 resources:
-    # Made available for use below
-    - name: tool-icon
-      src: images/tool-icon.webp
-
     - name: tool-file
       src: tool.html
+    - name: tool-icon
+      src: images/tool-icon.svg
 
 
 # HugoBook theme does not really show these anywhere but can be useful metadata for searching/filtering
@@ -26,6 +24,8 @@ tags:
 ---
 # Hello, World
 
+{{< tool-image >}}
+
 This the the first tool.
 
 This theme offers up a few different ways to link to tools.
@@ -35,10 +35,6 @@ Access it [here]({{< tool-link >}}).
 or {{< tool-link link_text="here">}}.
 
 {{<button href="tool.html">}}Open{{</button>}}
-
-{{< tool-image >}}
-
-// TODO: default scaling and sizing options for tool images?
 
 ## Dependencies
 

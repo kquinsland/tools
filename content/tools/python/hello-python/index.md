@@ -6,8 +6,16 @@ description: 'This is the first tool description here.'
 # Don't need a ToC for the single page
 bookToc: false
 
+resources:
+  - name: tool-file
+    src: tool.py
+  - name: tool-icon
+    src: images/tool-icon.svg
+
 ---
 
+
+{{< tool-image >}}
 
 Access it [here]({{< tool-link >}}).
 
