@@ -25,3 +25,7 @@ tags:
 Paste terminal-copied log lines, clean wrap artifacts, and share a sanitized view.
 
 {{< tool-link link_text="Open the tool" >}}
+
+## Dependencies
+
+{{< tool-dependencies >}}

@@ -31,3 +31,7 @@ Access it [here]({{< tool-link >}}) or {{<button href="tool.html">}}Open{{</butt
 {{< tool-image >}}
 
 //TODO: any documentation about the tool goes here
+
+## Dependencies
+
+{{< tool-dependencies >}}

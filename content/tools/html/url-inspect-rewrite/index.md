@@ -19,3 +19,7 @@ tags:
 Paste text containing a URL, review the detected query parameters, and rebuild a clean link.
 
 {{< tool-link link_text="Open the tool" >}}
+
+## Dependencies
+
+{{< tool-dependencies >}}

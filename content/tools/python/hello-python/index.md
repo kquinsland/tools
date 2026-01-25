@@ -21,3 +21,7 @@ or {{< tool-link link_text="here">}}.
 {{< py-usage >}}
 // This represents output from running the above code...
 ```
+
+## Dependencies
+
+{{< tool-dependencies >}}

@@ -42,3 +42,7 @@ Basic steps to create a PAT:
 3. Copy the token once and paste it into the tool's PAT field, then click “Save token”.
 
 Use the “Clear token” button in the tool to remove it from `localStorage`.
+
+## Dependencies
+
+{{< tool-dependencies >}}

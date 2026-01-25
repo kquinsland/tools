@@ -25,3 +25,7 @@ tags:
 Paste text containing URLs, extract them, and generate Markdown links with a few formatting options.
 
 {{< tool-link link_text="Open the tool" >}}
+
+## Dependencies
+
+{{< tool-dependencies >}}
