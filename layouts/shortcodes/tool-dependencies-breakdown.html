@@ -1,0 +1,100 @@
+{{- /* Shortcode: render dependency breakdown per tool, grouped by tool language.
+Usage: {{< tool-dependencies-breakdown >}} */ -}}
+
+{{- $tools := site.Data.tools.tools -}}
+{{- $itemHeading := .Get "item_class" | default "h3" -}}
+{{- $allowedHeadings := dict "h2" true "h3" true "h4" true "h5" true "h6" true -}}
+{{- if not (index $allowedHeadings $itemHeading) -}}
+{{- $itemHeading = "h3" -}}
+{{- end -}}
+{{- $toolList := slice -}}
+{{- range $item := $tools -}}
+{{- range $slug, $tool := $item -}}
+{{- $toolList = $toolList | append (dict
+    "slug" $slug
+    "title" $tool.title
+    "language" ($tool.language | default "unknown")
+    "dependencies" ($tool.dependencies | default (slice))
+) -}}
+{{- end -}}
+{{- end -}}
+
+{{- $byLanguage := dict -}}
+{{- range $tool := $toolList -}}
+{{- $lang := $tool.language -}}
+{{- $list := index $byLanguage $lang | default (slice) -}}
+{{- $list = $list | append $tool -}}
+{{- $byLanguage = merge $byLanguage (dict $lang $list) -}}
+{{- end -}}
+
+{{- $languages := slice -}}
+{{- range $lang, $toolsForLang := $byLanguage -}}
+{{- $hasDeps := false -}}
+{{- range $tool := $toolsForLang -}}
+{{- if gt (len $tool.dependencies) 0 -}}
+{{- $hasDeps = true -}}
+{{- end -}}
+{{- end -}}
+{{- if $hasDeps -}}
+{{- $languages = $languages | append $lang -}}
+{{- end -}}
+{{- end -}}
+{{- $languages = sort $languages -}}
+
+<section class="tool-dependencies-breakdown">
+  {{- range $lang := $languages -}}
+  {{- $toolsForLang := index $byLanguage $lang -}}
+  {{- $toolsForLang = sort $toolsForLang "title" -}}
+  <div class="tool-dependencies-language" data-language="{{ $lang }}">
+    {{- printf "<%s class=\"tool-dependencies-language-heading\">%s</%s>" $itemHeading (title $lang) $itemHeading | safeHTML -}}
+    <div class="tool-dependencies-language-tools">
+      {{- range $tool := $toolsForLang -}}
+      {{- $deps := $tool.dependencies -}}
+      {{- if gt (len $deps) 0 -}}
+      <article class="tool-dependencies-tool" id="tool-deps-{{ $tool.slug | urlize }}">
+        <h3 class="tool-dependencies-tool-heading">
+          <a href="{{ printf "/tools/%s/" $tool.slug | relURL }}">{{ $tool.title }}</a>
+        </h3>
+        <p class="tool-dependencies-count">This tool relies on {{ len $deps }} dependencies.</p>
+        <div class="tool-dependencies">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Library</th>
+                <th>Version</th>
+                <th>Via</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{- range $idx, $dep := $deps -}}
+              {{- $package := $dep.package | default "" -}}
+              {{- $version := $dep.version | default "" -}}
+              {{- $via := $dep.via | default "" -}}
+              <tr>
+                <td>{{ add $idx 1 }}</td>
+                <td>{{ $package }}</td>
+                <td>{{ if $version }}{{ $version }}{{ else }}&mdash;{{ end }}</td>
+                <td>
+                  {{- if $via -}}
+                  {{- $host := "" -}}
+                  {{- with (urls.Parse $via) -}}
+                  {{- if .Host -}}{{- $host = .Host -}}{{- end -}}
+                  {{- end -}}
+                  <a href="{{ $via }}">{{ if $host }}{{ $host }}{{ else }}{{ $via }}{{ end }}</a>
+                  {{- else -}}
+                  &mdash;
+                  {{- end -}}
+                </td>
+              </tr>
+              {{- end -}}
+            </tbody>
+          </table>
+        </div>
+      </article>
+      {{- end -}}
+      {{- end -}}
+    </div>
+  </div>
+  {{- end -}}
+</section>
