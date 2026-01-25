@@ -171,15 +171,6 @@ tools:
         file: "tool.py"
         introduced_commit: "3b09a940e1835d0f0b7be11c080224bb46b57227"
         updated_commit: "9de50f085bfd24f24f1dec27f41aafed52017cda"
-      dependencies:
-        - package: "click"
-          version: ">=8.1"
-        - package: "structlog"
-          version: ">=24.0"
-        - package: "pyyaml"
-          version: ">=6.0"
-        - package: "pydot"
-          version: ">=2.0"
       tags:
         - "github"
         - "actions"
