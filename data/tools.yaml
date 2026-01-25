@@ -8,11 +8,11 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f78e582ac9cb67a84843a088bfaf1d1d765c6cc0"
-        updated_commit: "ce1dbba963e062b742b3ebba46f8cb39c81b6ee6"
+        updated_commit: "86f04cd733e519fdbad990931ebbce96b35003a3"
       dependencies:
         - package: "jszip"
           version: "3.10.1"
-          via: "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist"
+          via: "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"
       tags:
         - "html"
         - "3mf"
@@ -58,7 +58,7 @@ tools:
       dependencies:
         - package: "js-yaml"
           version: "4.1.0"
-          via: "https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist"
+          via: "https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"
       tags:
         - "github"
         - "actions"
@@ -90,7 +90,7 @@ tools:
       dependencies:
         - package: "js-yaml"
           version: "4.1.0"
-          via: "https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist"
+          via: "https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"
       tags:
         - "helm"
         - "charts"
@@ -122,10 +122,13 @@ tools:
       dependencies:
         - package: "viz.js"
           version: "2.1.2"
-          via: "https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2"
+          via: "https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js"
+        - package: "viz.js"
+          version: "2.1.2"
+          via: "https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js"
         - package: "mermaid"
           version: "10"
-          via: "https://cdn.jsdelivr.net/npm/mermaid@10/dist"
+          via: "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"
       tags:
         - "html"
         - "makefile"

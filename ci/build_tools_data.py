@@ -248,14 +248,9 @@ class _ScriptSrcParser(HTMLParser):
                 self.script_srcs.append(value)
 
 
-def _url_directory(url: str) -> str:
+def _url_without_query_fragment(url: str) -> str:
     parsed = urlparse(url)
-    path = parsed.path
-    if path.endswith("/"):
-        dir_path = path.rstrip("/")
-    else:
-        dir_path = path.rsplit("/", maxsplit=1)[0] if "/" in path else path
-    return urlunparse(parsed._replace(path=dir_path, query="", fragment=""))
+    return urlunparse(parsed._replace(query="", fragment=""))
 
 
 def _parse_cdnjs_dependency(url: str) -> Dependency | None:
@@ -270,7 +265,7 @@ def _parse_cdnjs_dependency(url: str) -> Dependency | None:
     return Dependency(
         package=package,
         version=version,
-        via=_url_directory(url),
+        via=_url_without_query_fragment(url),
     )
 
 
@@ -298,7 +293,7 @@ def _parse_jsdelivr_dependency(url: str) -> Dependency | None:
     return Dependency(
         package=package,
         version=version,
-        via=_url_directory(url),
+        via=_url_without_query_fragment(url),
     )
 
 
@@ -541,7 +536,7 @@ def test_parse_jsdelivr_dependency() -> None:
     assert dependency == Dependency(
         package="jszip",
         version="3.10.1",
-        via="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist",
+        via="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js",
     )
 
 
@@ -551,7 +546,7 @@ def test_parse_cdnjs_dependency() -> None:
     assert dependency == Dependency(
         package="viz.js",
         version="2.1.2",
-        via="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2",
+        via="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js",
     )
 
 
@@ -569,7 +564,7 @@ def test_parse_html_dependencies_dedupes() -> None:
         Dependency(
             package="jszip",
             version="3.10.1",
-            via="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist",
+            via="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js",
         )
     ]
 
