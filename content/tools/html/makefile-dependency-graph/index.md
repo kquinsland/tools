@@ -25,3 +25,7 @@ tags:
 Paste a Makefile to generate DOT and Mermaid state diagrams for target dependencies.
 
 {{< tool-link link_text="Open the tool" >}}
+
+## Dependencies
+
+{{< tool-dependencies >}}

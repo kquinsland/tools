@@ -39,3 +39,7 @@ or {{< tool-link link_text="here">}}.
 {{< tool-image >}}
 
 // TODO: default scaling and sizing options for tool images?
+
+## Dependencies
+
+{{< tool-dependencies >}}
