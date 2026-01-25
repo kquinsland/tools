@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hello, World icon">
+  <rect x="32" y="32" width="448" height="448" rx="56" fill="#f5f7fb"/>
+  <path d="M128 152 H384 A40 40 0 0 1 424 192 V304 A40 40 0 0 1 384 344 H248 L176 392 V344 H128 A40 40 0 0 1 88 304 V192 A40 40 0 0 1 128 152 Z" fill="#ffffff" stroke="#1f2937" stroke-width="12" stroke-linejoin="round"/>
+  <circle cx="176" cy="244" r="14" fill="#3b82f6"/>
+  <circle cx="240" cy="244" r="14" fill="#60a5fa"/>
+  <circle cx="304" cy="244" r="14" fill="#93c5fd"/>
+  <path d="M336 184 L356 164 L376 184" fill="none" stroke="#f59e0b" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

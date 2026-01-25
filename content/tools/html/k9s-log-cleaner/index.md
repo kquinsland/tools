@@ -7,10 +7,10 @@ description: 'Clean up terminal-copied log lines by removing wrap artifacts and 
 resources:
   - name: tool-file
     src: tool.html
-
-    # Made available for use below
   - name: tool-icon
-    src: images/tool-icon.webp
+    src: images/tool-icon.svg
+
+
 tags:
   - html
   - logs
