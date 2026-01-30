@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YAML ↔ JSON Convert & Compare</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f5f0;
+        --panel: #ffffff;
+        --ink: #1f1f1f;
+        --muted: #6a6a6a;
+        --accent: #1f5d50;
+        --accent-soft: #e6f1ef;
+        --border: #dedad2;
+        --danger: #a0302a;
+        --success: #1b6a36;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Georgia", "Times New Roman", serif;
+        background: linear-gradient(160deg, #f7f5f0 0%, #f0eee9 100%);
+        color: var(--ink);
+      }
+
+      .tool-wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      h1 {
+        font-size: 2rem;
+        margin: 0 0 8px;
+      }
+
+      p {
+        margin: 0 0 16px;
+        color: var(--muted);
+      }
+
+      .mode-selector {
+        display: flex;
+        gap: 8px;
+        margin: 16px 0 24px;
+      }
+
+      .mode-button {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        padding: 8px 16px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--ink);
+        transition: all 0.2s ease;
+      }
+
+      .mode-button[aria-pressed="true"] {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+        box-shadow: 0 6px 18px rgba(31, 93, 80, 0.2);
+      }
+
+      .pane-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+      }
+
+      .pane {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 520px;
+      }
+
+      .pane h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .drop-zone {
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        padding: 10px;
+        text-align: center;
+        color: var(--muted);
+        background: #faf9f6;
+      }
+
+      .drop-zone.dragover {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 260px;
+        resize: vertical;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 12px;
+        font-family: "Courier New", monospace;
+        font-size: 0.92rem;
+        background: #fcfbf9;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      button,
+      .button-link {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        padding: 6px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+
+      details {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 8px 12px;
+        background: #fcfbf9;
+      }
+
+      details summary {
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .field-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 0.85rem;
+      }
+
+      .field label {
+        font-weight: 600;
+      }
+
+      .status {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .status.error {
+        color: var(--danger);
+      }
+
+      .status.success {
+        color: var(--success);
+      }
+
+      .compare-banner {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px 16px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        margin-top: 16px;
+      }
+
+      .compare-banner strong {
+        display: inline-block;
+        margin-right: 8px;
+      }
+
+      @media (max-width: 720px) {
+        .pane {
+          min-height: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tool-wrap">
+      <h1>YAML ↔ JSON Convert & Compare</h1>
+      <p>
+        Drop or paste YAML/JSON, convert between formats, or compare two documents
+        for logical equality.
+      </p>
+
+      <section id="mode-selector" class="mode-selector" aria-label="Mode selection">
+        <button class="mode-button" type="button" data-mode="convert" aria-pressed="true">
+          Convert
+        </button>
+        <button class="mode-button" type="button" data-mode="compare" aria-pressed="false">
+          Compare
+        </button>
+      </section>
+
+      <section class="pane-grid" id="pane-grid">
+        <article class="pane" id="pane-left">
+          <h2>Left Pane</h2>
+          <div class="drop-zone" id="left-drop">
+            Drag & drop a YAML/JSON file or use the file picker.
+            <div style="margin-top: 8px;">
+              <input type="file" id="left-file" accept=".yaml,.yml,.json" />
+            </div>
+          </div>
+          <textarea id="left-text" placeholder="Paste YAML or JSON here..."></textarea>
+
+          <details id="left-formatting" open>
+            <summary>Formatting options</summary>
+            <div class="field-row">
+              <label class="field">
+                <span>Sort keys alphabetically</span>
+                <input type="checkbox" id="left-sort" />
+              </label>
+              <label class="field">
+                <span>Indent spacing</span>
+                <select id="left-indent">
+                  <option value="2">2 spaces</option>
+                  <option value="4" selected>4 spaces</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>YAML indented lists</span>
+                <input type="checkbox" id="left-yaml-indent" checked />
+              </label>
+            </div>
+          </details>
+
+          <details id="left-actions" open>
+            <summary>Actions</summary>
+            <div class="actions" style="margin-top: 8px;">
+              <button class="primary" type="button" id="left-copy">Copy</button>
+              <button type="button" id="left-save">Save to disk</button>
+              <button type="button" id="left-format">Format pane</button>
+            </div>
+            <div class="status" id="left-status"></div>
+          </details>
+        </article>
+
+        <article class="pane" id="pane-right">
+          <h2>Right Pane</h2>
+          <div class="drop-zone" id="right-drop">
+            Drag & drop a YAML/JSON file or use the file picker.
+            <div style="margin-top: 8px;">
+              <input type="file" id="right-file" accept=".yaml,.yml,.json" />
+            </div>
+          </div>
+          <textarea id="right-text" placeholder="Paste YAML or JSON here..."></textarea>
+
+          <details id="right-formatting" open>
+            <summary>Formatting options</summary>
+            <div class="field-row">
+              <label class="field">
+                <span>Sort keys alphabetically</span>
+                <input type="checkbox" id="right-sort" />
+              </label>
+              <label class="field">
+                <span>Indent spacing</span>
+                <select id="right-indent">
+                  <option value="2">2 spaces</option>
+                  <option value="4" selected>4 spaces</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>YAML indented lists</span>
+                <input type="checkbox" id="right-yaml-indent" checked />
+              </label>
+            </div>
+          </details>
+
+          <details id="right-actions" open>
+            <summary>Actions</summary>
+            <div class="actions" style="margin-top: 8px;">
+              <button class="primary" type="button" id="right-copy">Copy</button>
+              <button type="button" id="right-save">Save to disk</button>
+              <button type="button" id="right-format">Format pane</button>
+            </div>
+            <div class="status" id="right-status"></div>
+          </details>
+        </article>
+      </section>
+
+      <section class="compare-banner" id="compare-result" hidden>
+        <strong>Compare result:</strong>
+        <span id="compare-text">Waiting for input...</span>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script>
+      const modeButtons = document.querySelectorAll(".mode-button");
+      const leftText = document.getElementById("left-text");
+      const rightText = document.getElementById("right-text");
+      const compareResult = document.getElementById("compare-result");
+      const compareText = document.getElementById("compare-text");
+
+      const leftStatus = document.getElementById("left-status");
+      const rightStatus = document.getElementById("right-status");
+
+      const stateInputs = {
+        mode: "convert",
+        left: {
+          sortKeys: false,
+          indent: 4,
+          yamlIndentLists: true,
+        },
+        right: {
+          sortKeys: false,
+          indent: 4,
+          yamlIndentLists: true,
+        },
+      };
+
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+
+      function encodeState(state) {
+        const json = JSON.stringify(state);
+        const bytes = encoder.encode(json);
+        let binary = "";
+        bytes.forEach((byte) => {
+          binary += String.fromCharCode(byte);
+        });
+        return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      }
+
+      function decodeState(hash) {
+        try {
+          const base64 = hash.replace(/-/g, "+").replace(/_/g, "/");
+          const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+          const binary = atob(padded);
+          const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+          const json = decoder.decode(bytes);
+          return JSON.parse(json);
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function scheduleUrlUpdate() {
+        clearTimeout(scheduleUrlUpdate.timer);
+        scheduleUrlUpdate.timer = setTimeout(() => {
+          const payload = {
+            mode: stateInputs.mode,
+            left: stateInputs.left,
+            right: stateInputs.right,
+            leftContent: leftText.value,
+          };
+          const encoded = encodeState(payload);
+          history.replaceState(null, "", `#${encoded}`);
+        }, 250);
+      }
+
+      function setStatus(element, message, type) {
+        element.textContent = message;
+        element.className = `status${type ? " " + type : ""}`;
+      }
+
+      function detectFormat(text) {
+        const trimmed = text.trim();
+        if (!trimmed) return null;
+        if (trimmed.startsWith("{") || trimmed.startsWith("[")) return "json";
+        return "yaml";
+      }
+
+      function parseYaml(text) {
+        const docs = [];
+        jsyaml.loadAll(text, (doc) => {
+          docs.push(doc);
+        });
+        if (docs.length > 1) {
+          throw new Error("Multiple YAML documents detected. Please provide only one document.");
+        }
+        return docs[0];
+      }
+
+      function parseJson(text) {
+        return JSON.parse(text);
+      }
+
+      function sortKeysDeep(value) {
+        if (Array.isArray(value)) {
+          return value.map(sortKeysDeep);
+        }
+        if (value && typeof value === "object") {
+          return Object.keys(value)
+            .sort()
+            .reduce((acc, key) => {
+              acc[key] = sortKeysDeep(value[key]);
+              return acc;
+            }, {});
+        }
+        return value;
+      }
+
+      function formatYaml(value, options) {
+        const formattedValue = options.sortKeys ? sortKeysDeep(value) : value;
+        return jsyaml.dump(formattedValue, {
+          indent: options.indent,
+          noArrayIndent: !options.yamlIndentLists,
+          lineWidth: 120,
+          noRefs: false,
+        });
+      }
+
+      function formatJson(value, options) {
+        const formattedValue = options.sortKeys ? sortKeysDeep(value) : value;
+        return JSON.stringify(formattedValue, null, options.indent);
+      }
+
+      function parseInput(text) {
+        const format = detectFormat(text);
+        if (!format) return { format: null, value: null };
+        if (format === "json") {
+          return { format, value: parseJson(text) };
+        }
+        return { format, value: parseYaml(text) };
+      }
+
+      function deepEqual(a, b) {
+        if (a === b) return true;
+        if (typeof a !== typeof b) return false;
+        if (Array.isArray(a)) {
+          if (!Array.isArray(b) || a.length !== b.length) return false;
+          return a.every((item, index) => deepEqual(item, b[index]));
+        }
+        if (a && typeof a === "object") {
+          if (!b || typeof b !== "object") return false;
+          const keysA = Object.keys(a);
+          const keysB = Object.keys(b);
+          if (keysA.length !== keysB.length) return false;
+          return keysA.every((key) => deepEqual(a[key], b[key]));
+        }
+        return false;
+      }
+
+      function renderConvert() {
+        compareResult.hidden = true;
+        const leftValue = leftText.value;
+        if (!leftValue.trim()) {
+          rightText.value = "";
+          setStatus(leftStatus, "", "");
+          setStatus(rightStatus, "", "");
+          return;
+        }
+        try {
+          const { format, value } = parseInput(leftValue);
+          if (!format) return;
+          const output =
+            format === "yaml"
+              ? formatJson(value, stateInputs.right)
+              : formatYaml(value, stateInputs.right);
+          rightText.value = output;
+          setStatus(leftStatus, `Parsed as ${format.toUpperCase()}.`, "success");
+          setStatus(
+            rightStatus,
+            `Output generated as ${format === "yaml" ? "JSON" : "YAML"}.`,
+            "success"
+          );
+        } catch (error) {
+          setStatus(leftStatus, error.message, "error");
+          setStatus(rightStatus, "Conversion failed.", "error");
+        }
+      }
+
+      function renderCompare() {
+        compareResult.hidden = false;
+        let leftParsed;
+        let rightParsed;
+        try {
+          leftParsed = parseInput(leftText.value);
+          setStatus(leftStatus, leftParsed.format ? `Parsed as ${leftParsed.format.toUpperCase()}.` : "", "");
+        } catch (error) {
+          setStatus(leftStatus, error.message, "error");
+          compareText.textContent = "Left pane has errors.";
+          compareText.className = "status error";
+          return;
+        }
+
+        try {
+          rightParsed = parseInput(rightText.value);
+          setStatus(rightStatus, rightParsed.format ? `Parsed as ${rightParsed.format.toUpperCase()}.` : "", "");
+        } catch (error) {
+          setStatus(rightStatus, error.message, "error");
+          compareText.textContent = "Right pane has errors.";
+          compareText.className = "status error";
+          return;
+        }
+
+        if (!leftParsed.format || !rightParsed.format) {
+          compareText.textContent = "Waiting for input...";
+          compareText.className = "status";
+          return;
+        }
+
+        if (deepEqual(leftParsed.value, rightParsed.value)) {
+          compareText.textContent = "Documents are logically identical.";
+          compareText.className = "status success";
+        } else {
+          compareText.textContent = "Documents differ.";
+          compareText.className = "status error";
+        }
+      }
+
+      function render() {
+        if (stateInputs.mode === "convert") {
+          renderConvert();
+        } else {
+          renderCompare();
+        }
+      }
+
+      function setMode(mode) {
+        stateInputs.mode = mode;
+        modeButtons.forEach((button) => {
+          const active = button.dataset.mode === mode;
+          button.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+        if (mode === "convert") {
+          rightText.setAttribute("placeholder", "Converted output appears here...");
+        } else {
+          rightText.setAttribute("placeholder", "Paste YAML or JSON here...");
+        }
+        render();
+        scheduleUrlUpdate();
+      }
+
+      function bindFormattingOptions(prefix) {
+        const sort = document.getElementById(`${prefix}-sort`);
+        const indent = document.getElementById(`${prefix}-indent`);
+        const yamlIndent = document.getElementById(`${prefix}-yaml-indent`);
+        const formatButton = document.getElementById(`${prefix}-format`);
+        const status = document.getElementById(`${prefix}-status`);
+        const textArea = document.getElementById(`${prefix}-text`);
+
+        sort.addEventListener("change", () => {
+          stateInputs[prefix].sortKeys = sort.checked;
+          render();
+          scheduleUrlUpdate();
+        });
+
+        indent.addEventListener("change", () => {
+          stateInputs[prefix].indent = Number(indent.value);
+          render();
+          scheduleUrlUpdate();
+        });
+
+        yamlIndent.addEventListener("change", () => {
+          stateInputs[prefix].yamlIndentLists = yamlIndent.checked;
+          render();
+          scheduleUrlUpdate();
+        });
+
+        formatButton.addEventListener("click", () => {
+          if (!textArea.value.trim()) {
+            setStatus(status, "Nothing to format.", "");
+            return;
+          }
+          try {
+            const parsed = parseInput(textArea.value);
+            if (!parsed.format) return;
+            textArea.value =
+              parsed.format === "yaml"
+                ? formatYaml(parsed.value, stateInputs[prefix])
+                : formatJson(parsed.value, stateInputs[prefix]);
+            setStatus(status, "Pane formatted.", "success");
+            render();
+            scheduleUrlUpdate();
+          } catch (error) {
+            setStatus(status, error.message, "error");
+          }
+        });
+      }
+
+      function bindFileInput(prefix) {
+        const fileInput = document.getElementById(`${prefix}-file`);
+        const dropZone = document.getElementById(`${prefix}-drop`);
+        const textArea = document.getElementById(`${prefix}-text`);
+
+        function handleFile(file) {
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            textArea.value = reader.result;
+            render();
+            scheduleUrlUpdate();
+          };
+          reader.readAsText(file);
+        }
+
+        fileInput.addEventListener("change", (event) => {
+          handleFile(event.target.files[0]);
+        });
+
+        dropZone.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          dropZone.classList.add("dragover");
+        });
+
+        dropZone.addEventListener("dragleave", () => {
+          dropZone.classList.remove("dragover");
+        });
+
+        dropZone.addEventListener("drop", (event) => {
+          event.preventDefault();
+          dropZone.classList.remove("dragover");
+          handleFile(event.dataTransfer.files[0]);
+        });
+      }
+
+      function bindCopySave(prefix) {
+        const copyButton = document.getElementById(`${prefix}-copy`);
+        const saveButton = document.getElementById(`${prefix}-save`);
+        const status = document.getElementById(`${prefix}-status`);
+        const textArea = document.getElementById(`${prefix}-text`);
+
+        copyButton.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(textArea.value);
+            setStatus(status, "Copied to clipboard.", "success");
+          } catch (error) {
+            setStatus(status, "Clipboard copy failed.", "error");
+          }
+        });
+
+        saveButton.addEventListener("click", () => {
+          const content = textArea.value;
+          if (!content.trim()) {
+            setStatus(status, "Nothing to save.", "");
+            return;
+          }
+          const format = detectFormat(content) || "txt";
+          const extension =
+            prefix === "right" && stateInputs.mode === "convert"
+              ? detectFormat(leftText.value) === "yaml"
+                ? "json"
+                : "yaml"
+              : format;
+          const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = `${prefix}-pane.${extension}`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(link.href);
+        });
+      }
+
+      function hydrateFromUrl() {
+        if (!location.hash) return;
+        const decoded = decodeState(location.hash.slice(1));
+        if (!decoded) return;
+        if (decoded.mode) setMode(decoded.mode);
+        if (decoded.left) {
+          stateInputs.left = { ...stateInputs.left, ...decoded.left };
+          document.getElementById("left-sort").checked = stateInputs.left.sortKeys;
+          document.getElementById("left-indent").value = String(stateInputs.left.indent);
+          document.getElementById("left-yaml-indent").checked = stateInputs.left.yamlIndentLists;
+        }
+        if (decoded.right) {
+          stateInputs.right = { ...stateInputs.right, ...decoded.right };
+          document.getElementById("right-sort").checked = stateInputs.right.sortKeys;
+          document.getElementById("right-indent").value = String(stateInputs.right.indent);
+          document.getElementById("right-yaml-indent").checked = stateInputs.right.yamlIndentLists;
+        }
+        if (decoded.leftContent) {
+          leftText.value = decoded.leftContent;
+        }
+      }
+
+      modeButtons.forEach((button) => {
+        button.addEventListener("click", () => setMode(button.dataset.mode));
+      });
+
+      leftText.addEventListener("input", () => {
+        render();
+        scheduleUrlUpdate();
+      });
+
+      rightText.addEventListener("input", render);
+
+      bindFormattingOptions("left");
+      bindFormattingOptions("right");
+      bindFileInput("left");
+      bindFileInput("right");
+      bindCopySave("left");
+      bindCopySave("right");
+
+      hydrateFromUrl();
+      render();
+    </script>
+    <script src="/analytics.js"></script>
+  </body>
+</html>
