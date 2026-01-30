@@ -6,10 +6,10 @@
 #   "PyYAML>=6.0.0",
 # ]
 # ///
-"""Build `data/tools.yaml` by walking `content/tools/**/index.md`.
+"""Build `data/tools.yaml` by walking `content/tools/**/_index.md`.
 
 Rules (see PROBLEM.md):
-- Each `content/tools/**/index.md` is considered a tool entry unless:
+- Each `content/tools/**/_index.md` is considered a tool entry unless:
   - it has `draft: true`, or
   - front matter contains `toolbox.ignore: true`
 """
@@ -173,7 +173,10 @@ class ToolEntry:
 
 
 def _iter_tool_index_files(tools_root: Path) -> Iterable[Path]:
-    yield from sorted(tools_root.rglob("index.md"))
+    index_paths = list(tools_root.rglob("_index.md"))
+    if not index_paths:
+        index_paths = list(tools_root.rglob("index.md"))
+    yield from sorted(index_paths)
 
 
 def _coerce_tags(value: Any) -> tuple[str, ...]:
