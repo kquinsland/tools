@@ -163,6 +163,24 @@ tools:
         - "url"
         - "markdown"
         - "links"
+  - html/yaml-json-convert-compare:
+      title: "YAML ↔ JSON Convert & Compare"
+      language: "html"
+      description: "Convert YAML to JSON (and back), or compare two files for logical equality with formatting controls."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      dependencies:
+        - package: "js-yaml"
+          version: "4.1.0"
+          via: "https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"
+      tags:
+        - "html"
+        - "yaml"
+        - "json"
+        - "convert"
+        - "compare"
   - python/gha-tree-builder:
       title: "GHA Tree Builder"
       language: "python"
