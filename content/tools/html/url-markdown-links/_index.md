@@ -27,3 +27,7 @@ Paste text containing URLs, extract them, and generate Markdown links with a few
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}

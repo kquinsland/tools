@@ -30,3 +30,7 @@ Run a local Gemini Nano session using Chrome's built-in model, with download det
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}

@@ -70,20 +70,35 @@ jobs:
               run: |
                   uv run ci/build_tools_data.py
 
-            - name: Find modified tools entries
+            - name: Build tool changelogs
+              id: build_tool_changelogs
+              run: |
+                  uv run ci/build_tool_changelogs.py
+
+            - name: Find modified tools data and changelogs
               id: tools_data_changed
               run: |
-                  if git diff --quiet HEAD -- data/tools.yaml; then
-                    echo "changes=" >> $GITHUB_OUTPUT
-                  else
-                    CHANGES=$(uv run ci/detect_tools_changes.py)
-                    if [ -z "$CHANGES" ]; then
-                      CHANGES="data/tools.yaml updated"
+                  CHANGES=()
+                  if ! git diff --quiet HEAD -- data/tools.yaml; then
+                    TOOLS_CHANGES=$(uv run ci/detect_tools_changes.py)
+                    if [ -z "$TOOLS_CHANGES" ]; then
+                      TOOLS_CHANGES="data/tools.yaml updated"
                     fi
-                    echo "changes=$CHANGES" >> $GITHUB_OUTPUT
+                    CHANGES+=("$TOOLS_CHANGES")
                   fi
 
-            - name: Commit and push if tools data changed
+                  if ! git diff --quiet HEAD -- 'content/tools/**/changelog.md'; then
+                    COUNT=$(git diff --name-only HEAD -- 'content/tools/**/changelog.md' | wc -l | tr -d ' ')
+                    CHANGES+=("${COUNT} changelog(s) updated")
+                  fi
+
+                  if [ ${#CHANGES[@]} -eq 0 ]; then
+                    echo "changes=" >> $GITHUB_OUTPUT
+                  else
+                    echo "changes=$(IFS='; '; echo \"${CHANGES[*]}\")" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Commit and push if tools data or changelogs changed
               id: commit_tools_data_changes
               if: steps.tools_data_changed.outputs.changes != ''
               env:
@@ -91,8 +106,8 @@ jobs:
               run: |-
                   git config user.name "Automated"
                   git config user.email "actions@users.noreply.github.com"
-                  git add data/tools.yaml
-                  git commit -m "Updated tools.yaml: ${CHANGES}" || exit 0
+                  git add data/tools.yaml content/tools/**/changelog.md
+                  git commit -m "Updated tool data: ${CHANGES}" || exit 0
                   git push
 
             # Then use the updated tool data file to render out a new everything

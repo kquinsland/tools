@@ -10,6 +10,8 @@ ignores:
     - archetypes/*.md
     # And the entire PROBLEM.md
     - PROBLEM.md
+    # Ci/script generated changelog
+    - content/tools/**/changelog.md
 
 # Disable banner message on stdout (only valid at root)
 noBanner: true

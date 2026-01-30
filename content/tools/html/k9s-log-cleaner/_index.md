@@ -29,3 +29,7 @@ Paste terminal-copied log lines, clean wrap artifacts, and share a sanitized vie
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}

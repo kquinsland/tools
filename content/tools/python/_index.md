@@ -16,4 +16,4 @@ I am tools _index.md
 
 // TODO:> template or similar to build up a list of tools?
 
-I the mean time, for testing, you porbably want <a href="/tools/hello-world">The Hello World Tool landing page</a >
+I the mean time, for testing, you probably want <a href="/tools/hello-world">The Hello World Tool landing page</a >
