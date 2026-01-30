@@ -8,6 +8,7 @@
       :root {
         color-scheme: light;
         --bg: #f7f5f0;
+        --bg-end: #f0eee9;
         --panel: #ffffff;
         --ink: #1f1f1f;
         --muted: #6a6a6a;
@@ -16,7 +17,28 @@
         --border: #dedad2;
         --danger: #a0302a;
         --success: #1b6a36;
+        --drop-bg: #faf9f6;
+        --input-bg: #fcfbf9;
         --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #262b31;
+          --bg-end: #1f2429;
+          --panel: #333a41;
+          --ink: #e9ecef;
+          --muted: #c5cbd1;
+          --accent: #84b2ff;
+          --accent-soft: #2f3a4a;
+          --border: #4f565e;
+          --danger: #e07a7a;
+          --success: #6dd087;
+          --drop-bg: #2d3339;
+          --input-bg: #2a3036;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
       }
 
       * {
@@ -26,7 +48,7 @@
       body {
         margin: 0;
         font-family: "Georgia", "Times New Roman", serif;
-        background: linear-gradient(160deg, #f7f5f0 0%, #f0eee9 100%);
+        background: linear-gradient(160deg, var(--bg) 0%, var(--bg-end) 100%);
         color: var(--ink);
       }
 
@@ -99,7 +121,7 @@
         padding: 10px;
         text-align: center;
         color: var(--muted);
-        background: #faf9f6;
+        background: var(--drop-bg);
       }
 
       .drop-zone.dragover {
@@ -117,7 +139,8 @@
         padding: 12px;
         font-family: "Courier New", monospace;
         font-size: 0.92rem;
-        background: #fcfbf9;
+        background: var(--input-bg);
+        color: var(--ink);
       }
 
       .actions {
@@ -134,6 +157,7 @@
         border-radius: 10px;
         cursor: pointer;
         font-size: 0.9rem;
+        color: var(--ink);
       }
 
       button.primary {
@@ -146,7 +170,15 @@
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 8px 12px;
-        background: #fcfbf9;
+        background: var(--input-bg);
+      }
+
+      input,
+      select {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--input-bg);
+        color: var(--ink);
       }
 
       details summary {
