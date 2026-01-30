@@ -78,3 +78,7 @@ Produces the following output:
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}

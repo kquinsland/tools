@@ -35,3 +35,7 @@ Access it [here]({{< tool-link >}}) or {{<button href="tool.html">}}Open{{</butt
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}

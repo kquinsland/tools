@@ -16,6 +16,7 @@
             "goldmark",
             "jszip",
             "katex",
+            "markdownify",
             "Mattraks",
             "pandoc",
             "peaceiris",

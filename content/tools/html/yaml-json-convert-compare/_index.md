@@ -33,3 +33,7 @@ Convert YAML to JSON or JSON to YAML, or compare two documents for logical equal
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}

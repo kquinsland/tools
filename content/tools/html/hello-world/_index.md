@@ -39,3 +39,7 @@ or {{< tool-link link_text="here">}}.
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}
