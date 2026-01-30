@@ -27,3 +27,7 @@ Paste text containing a URL, review the detected query parameters, and rebuild a
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}

@@ -27,3 +27,7 @@ Drop a 3MF file to review its package metadata, thumbnails, and object list. Mes
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}

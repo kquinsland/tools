@@ -70,9 +70,10 @@
                 #${FOOTER_ID} {
                     margin-top: 2.5rem;
                     padding: 0.85rem 1rem;
-                    border-top: 1px solid #d9d9d9;
-                    background: #f7f7f7;
-                    color: #444;
+                    border: 1px solid var(--border);
+                    border-radius: var(--radius);
+                    background: var(--panel);
+                    color: var(--muted);
                     font-size: 0.85rem;
                     display: flex;
                     flex-wrap: wrap;
@@ -80,7 +81,7 @@
                     align-items: center;
                 }
                 #${FOOTER_ID} a {
-                    color: inherit;
+                    color: var(--accent);
                     text-decoration: underline;
                     font-weight: 600;
                 }

@@ -46,3 +46,7 @@ Use the “Clear token” button in the tool to remove it from `localStorage`.
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}

@@ -29,3 +29,7 @@ Paste a Makefile to generate DOT and Mermaid state diagrams for target dependenc
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}

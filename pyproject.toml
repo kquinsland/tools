@@ -3,6 +3,9 @@ name = "tools"
 version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
+    "click>=8.3.1",
+    "pydot>=4.0.1",
+    "pyyaml>=6.0.3",
     "structlog>=25.5.0",
 ]
 
@@ -20,5 +23,21 @@ tool-convert-page-images = [
     "types-pyyaml>=6.0.12.20250915",
 ]
 
-ci-detect-tools-changes = ["pyyaml>=6.0.3"]
+ci-detect-tools-changes = [
+    "pyyaml>=6.0.3",
+]
 tool-dev = ["playwright>=1.57.0"]
+ci-build-tools-data = [
+    "pyyaml>=6.0.3",
+    "structlog>=25.5.0",
+]
+ci-build-tool-changelogs = [
+    "pyyaml>=6.0.3",
+    "structlog>=25.5.0",
+]
+ci-convert-page-images = [
+    "pillow>=12.0.0",
+    "pyyaml>=6.0.3",
+    "structlog>=25.5.0",
+]
+ci-check-tool-analytics = []

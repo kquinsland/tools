@@ -30,3 +30,7 @@ This tool fetches and parses chart metadata so you can quickly scan charts, vers
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}

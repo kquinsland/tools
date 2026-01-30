@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import glob
 import logging
 from dataclasses import dataclass
 import hashlib
@@ -56,18 +57,47 @@ def configure_logging(verbose: bool) -> structlog.stdlib.BoundLogger:
     return structlog.get_logger()
 
 
-def list_workflow_files(root: Path) -> list[Path]:
+def resolve_globs(root: Path, globs: Iterable[str]) -> set[Path]:
+    matches: set[Path] = set()
+    for pattern in globs:
+        pattern_path = Path(pattern)
+        if pattern_path.is_absolute():
+            for match in glob.glob(pattern):
+                matches.add(Path(match))
+        else:
+            matches.update(root.glob(pattern))
+    return matches
+
+
+def list_workflow_files(
+    root: Path,
+    patterns: Iterable[str] | None = None,
+    include_globs: Iterable[str] | None = None,
+    exclude_globs: Iterable[str] | None = None,
+) -> list[Path]:
     if not root.exists():
         raise FileNotFoundError(f"Workflow root not found: {root}")
     if not root.is_dir():
         raise NotADirectoryError(f"Workflow root is not a directory: {root}")
 
-    files = [
+    candidates: list[Path]
+    if patterns:
+        candidates = sorted(resolve_globs(root, patterns))
+    else:
+        candidates = sorted(root.iterdir())
+
+    if include_globs:
+        include_matches = resolve_globs(root, include_globs)
+        candidates = [path for path in candidates if path in include_matches]
+    if exclude_globs:
+        exclude_matches = resolve_globs(root, exclude_globs)
+        candidates = [path for path in candidates if path not in exclude_matches]
+
+    return [
         path
-        for path in sorted(root.iterdir())
+        for path in candidates
         if path.is_file() and path.suffix in {".yml", ".yaml"}
     ]
-    return files
 
 
 def load_yaml(path: Path, logger: structlog.stdlib.BoundLogger) -> dict[object, Any]:
@@ -308,10 +338,19 @@ def build_workflow_map(workflows: Iterable[WorkflowInfo]) -> dict[str, str]:
 
 
 def collect_workflows(
-    root: Path, logger: structlog.stdlib.BoundLogger
+    root: Path,
+    logger: structlog.stdlib.BoundLogger,
+    patterns: Iterable[str] | None = None,
+    include_globs: Iterable[str] | None = None,
+    exclude_globs: Iterable[str] | None = None,
 ) -> list[WorkflowInfo]:
     workflows = []
-    for path in list_workflow_files(root):
+    for path in list_workflow_files(
+        root,
+        patterns=patterns,
+        include_globs=include_globs,
+        exclude_globs=exclude_globs,
+    ):
         raw = load_yaml(path, logger)
         if not raw:
             continue
@@ -328,8 +367,23 @@ def write_dot(graph: pydot.Dot, output: Path) -> None:
     output.write_text(graph.to_string(), encoding="utf-8")
 
 
-def render_png(graph: pydot.Dot, output: Path) -> None:
-    graph.write_png(str(output))
+def render_graph(graph: pydot.Dot, output: Path) -> None:
+    suffix = output.suffix.lower().lstrip(".")
+    if not suffix:
+        raise click.ClickException(
+            "Render output must include a file extension to infer the format."
+        )
+
+    format_map = {"jpg": "jpeg"}
+    fmt = format_map.get(suffix, suffix)
+    supported = {"png", "svg", "pdf", "webp", "jpeg"}
+    if fmt not in supported:
+        raise click.ClickException(f"Unsupported render format: .{suffix}")
+
+    if fmt == "png":
+        graph.write_png(str(output))
+        return
+    graph.write(str(output), format=fmt)
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
@@ -352,8 +406,37 @@ def render_png(graph: pydot.Dot, output: Path) -> None:
     type=click.Path(dir_okay=False, path_type=Path),
     default=None,
     envvar="GHA_TREE_BUILDER_RENDER",
-    help="Render PNG output (requires Graphviz in PATH).",
+    help=(
+        "Render graph output (format inferred from extension; requires Graphviz in PATH)."
+    ),
 )
+@click.option(
+    "--no-dot",
+    is_flag=True,
+    envvar="GHA_TREE_BUILDER_NO_DOT",
+    help="Skip writing the DOT output file.",
+)
+@click.option(
+    "--include-glob",
+    "include_globs",
+    multiple=True,
+    envvar="GHA_TREE_BUILDER_INCLUDE_GLOB",
+    help=(
+        "Only include workflow files matching glob(s). Mutually exclusive with "
+        "--exclude-glob and positional patterns."
+    ),
+)
+@click.option(
+    "--exclude-glob",
+    "exclude_globs",
+    multiple=True,
+    envvar="GHA_TREE_BUILDER_EXCLUDE_GLOB",
+    help=(
+        "Exclude workflow files matching glob(s). Mutually exclusive with "
+        "--include-glob and positional patterns."
+    ),
+)
+@click.argument("patterns", nargs=-1)
 @click.option(
     "--verbose",
     is_flag=True,
@@ -364,6 +447,10 @@ def main(
     workflow_root: Path | None,
     output: Path | None,
     render: Path | None,
+    no_dot: bool,
+    include_globs: tuple[str, ...],
+    exclude_globs: tuple[str, ...],
+    patterns: tuple[str, ...],
     verbose: bool,
 ) -> None:
     """Generate a DOT file describing GitHub Actions workflow dependencies."""
@@ -372,25 +459,52 @@ def main(
     root = workflow_root or Path.cwd()
     output_path = output or (Path.cwd() / "gha-tree.dot")
 
-    logger.info("building_graph", workflow_root=str(root), output=str(output_path))
+    if include_globs and exclude_globs:
+        raise click.ClickException(
+            "--include-glob and --exclude-glob cannot be used together."
+        )
+    if patterns and (include_globs or exclude_globs):
+        raise click.ClickException(
+            "Positional patterns cannot be combined with --include-glob or --exclude-glob."
+        )
 
-    workflows = collect_workflows(root, logger)
+    log_payload: dict[str, Any] = {"workflow_root": str(root)}
+    if not no_dot:
+        log_payload["output"] = str(output_path)
+    if patterns:
+        log_payload["patterns"] = list(patterns)
+    if include_globs:
+        log_payload["include_glob"] = list(include_globs)
+    if exclude_globs:
+        log_payload["exclude_glob"] = list(exclude_globs)
+    logger.info("building_graph", **log_payload)
+
+    workflows = collect_workflows(
+        root,
+        logger,
+        patterns=patterns or None,
+        include_globs=include_globs or None,
+        exclude_globs=exclude_globs or None,
+    )
     if not workflows:
         logger.warning("no_workflows_found", workflow_root=str(root))
 
     workflow_map = build_workflow_map(workflows)
     graph = build_graph(workflows, workflow_map)
 
-    try:
-        write_dot(graph, output_path)
-        logger.info("dot_written", output=str(output_path))
-    except OSError as exc:
-        raise click.ClickException(f"Failed to write DOT file: {exc}") from exc
+    if not no_dot:
+        try:
+            write_dot(graph, output_path)
+            logger.info("dot_written", output=str(output_path))
+        except OSError as exc:
+            raise click.ClickException(f"Failed to write DOT file: {exc}") from exc
+    else:
+        logger.info("dot_skipped", reason="--no-dot")
 
     if render:
         try:
             logger.info("rendering_graph", output=str(render))
-            render_png(graph, render)
+            render_graph(graph, render)
             logger.info("render_written", output=str(render))
         except (
             Exception
@@ -465,6 +579,74 @@ jobs:
 
     dot = graph.to_string()
     assert "label=needs" in dot
+
+
+def test_collect_workflows_with_patterns(tmp_path: Path) -> None:
+    workflow_a = tmp_path / "some-prefix-ci.yaml"
+    workflow_b = tmp_path / "other.yml"
+
+    workflow_a.write_text(
+        """
+name: Workflow A
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+""".strip(),
+        encoding="utf-8",
+    )
+
+    workflow_b.write_text(
+        """
+name: Workflow B
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+""".strip(),
+        encoding="utf-8",
+    )
+
+    logger = configure_logging(False)
+    workflows = collect_workflows(tmp_path, logger, patterns=("some-prefix*.yaml",))
+
+    assert [workflow.name for workflow in workflows] == ["Workflow A"]
+
+
+def test_collect_workflows_with_exclude_glob(tmp_path: Path) -> None:
+    workflow_a = tmp_path / "ci.yaml"
+    workflow_b = tmp_path / "ci-legacy.yml"
+
+    workflow_a.write_text(
+        """
+name: Workflow A
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+""".strip(),
+        encoding="utf-8",
+    )
+
+    workflow_b.write_text(
+        """
+name: Workflow B
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+""".strip(),
+        encoding="utf-8",
+    )
+
+    logger = configure_logging(False)
+    workflows = collect_workflows(
+        tmp_path,
+        logger,
+        exclude_globs=("*-legacy.yml",),
+    )
+
+    assert [workflow.name for workflow in workflows] == ["Workflow A"]
 
 
 if __name__ == "__main__":

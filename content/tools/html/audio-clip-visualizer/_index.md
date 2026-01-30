@@ -28,3 +28,7 @@ Record a short clip (up to 30 seconds) and instantly generate static waveform an
 ## Dependencies
 
 {{< tool-dependencies >}}
+
+## Changelog
+
+{{< tool-changelog >}}
