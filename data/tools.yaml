@@ -1,3 +1,239 @@
 ---
 version: 1
-tools: []
+tools:
+  - .:
+      title: "Tools"
+      language: ""
+      description: ""
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "dc47d301b4ad8c2b59a7d607af6b239499a3b646"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+  - html:
+      title: "html"
+      language: "html"
+      description: ""
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "dc47d301b4ad8c2b59a7d607af6b239499a3b646"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+  - html/3mf-inspector:
+      title: "3MF Inspector"
+      language: "html"
+      description: "Inspect 3MF metadata, thumbnails, and mesh objects directly in the browser."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "f78e582ac9cb67a84843a088bfaf1d1d765c6cc0"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+      dependencies:
+        - package: "jszip"
+          version: "3.10.1"
+          via: "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"
+      tags:
+        - "html"
+        - "3mf"
+        - "3d"
+        - "metadata"
+        - "mesh"
+  - html/audio-clip-visualizer:
+      title: "Audio Clip Visualizer"
+      language: "html"
+      description: "Record up to 30 seconds of audio and generate static waveform and spectrogram views."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "d4f23b11a63b2dd20360084c15abf7f3eb570427"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+      tags:
+        - "html"
+        - "audio"
+        - "visualization"
+        - "waveform"
+        - "spectrogram"
+  - html/gemini-nano-interface:
+      title: "Gemini Nano Interface"
+      language: "html"
+      description: "Run a client-side Gemini Nano session in Chrome with capability checks, streaming output, and local-only prompts."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "abfb0035989950f667bc57bd717b24fd4bf7ff29"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+      tags:
+        - "html"
+        - "ai"
+        - "gemini"
+        - "chrome"
+        - "local"
+  - html/github-actions-spider:
+      title: "GitHub Actions Spider"
+      language: "html"
+      description: "Crawl repositories and extract GitHub Actions uses-steps from workflow files."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "f2085d75a899e83fbb27cfb1610e703f2c0b9815"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+      dependencies:
+        - package: "js-yaml"
+          version: "4.1.0"
+          via: "https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"
+      tags:
+        - "github"
+        - "actions"
+        - "workflow"
+        - "crawl"
+        - "html"
+        - "search"
+  - html/hello-world:
+      title: "Hello, World"
+      language: "html"
+      description: "This is the first tool description here."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "dc47d301b4ad8c2b59a7d607af6b239499a3b646"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+      tags:
+        - "demo"
+        - "html"
+        - "basic"
+        - "input"
+  - html/helm-chart-discovery:
+      title: "Helm Chart Discovery"
+      language: "html"
+      description: "Fetch a Helm repository index.yaml or OCI chart reference to explore chart metadata with search and filters."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "99e68e059b2bbb2bdfe8aa758dd595054fab542a"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+      dependencies:
+        - package: "js-yaml"
+          version: "4.1.0"
+          via: "https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"
+      tags:
+        - "helm"
+        - "charts"
+        - "html"
+        - "discover"
+        - "search"
+  - html/k9s-log-cleaner:
+      title: "K9s Log Cleaner"
+      language: "html"
+      description: "Clean up terminal-copied log lines by removing wrap artifacts and border pipes."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "b16836b801ee3cc927c18127249dc0f7a5e5c11d"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+      tags:
+        - "html"
+        - "logs"
+        - "cleanup"
+        - "text"
+        - "terminal"
+  - html/makefile-dependency-graph:
+      title: "Makefile Dependency Graph"
+      language: "html"
+      description: "Paste a Makefile and instantly view target dependencies as DOT and Mermaid state diagrams."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "9caaf23a6bb4696806e9ce08105bcf668c9a1841"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+      dependencies:
+        - package: "viz.js"
+          version: "2.1.2"
+          via: "https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js"
+        - package: "viz.js"
+          version: "2.1.2"
+          via: "https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js"
+        - package: "mermaid"
+          version: "10"
+          via: "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"
+      tags:
+        - "html"
+        - "makefile"
+        - "graph"
+        - "dependencies"
+        - "mermaid"
+        - "dot"
+  - html/url-inspect-rewrite:
+      title: "URL Inspect & Rewrite"
+      language: "html"
+      description: "Parse a URL, review query parameters, and rebuild a cleaner link."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "f97c3182bd7aae8170b009bc82aba87960a4ce6d"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+      tags:
+        - "html"
+        - "url"
+        - "query"
+        - "privacy"
+        - "cleanup"
+  - html/url-markdown-links:
+      title: "URL to Markdown Links"
+      language: "html"
+      description: "Extract URLs from text and format them as Markdown links with optional list and checkbox helpers."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "eee81257ad54ff8cf9d9c21400203d238cbfbb36"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+      tags:
+        - "html"
+        - "url"
+        - "markdown"
+        - "links"
+  - html/yaml-json-convert-compare:
+      title: "YAML ↔ JSON Convert & Compare"
+      language: "html"
+      description: "Convert YAML to JSON (and back), or compare two files for logical equality with formatting controls."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "7d214109e2d24b565d7c8938436012cb6ab1ff0c"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+      dependencies:
+        - package: "js-yaml"
+          version: "4.1.0"
+          via: "https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"
+      tags:
+        - "html"
+        - "yaml"
+        - "json"
+        - "convert"
+        - "compare"
+  - python:
+      title: "python"
+      language: "python"
+      description: ""
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "dc47d301b4ad8c2b59a7d607af6b239499a3b646"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+  - python/gha-tree-builder:
+      title: "GHA Tree Builder"
+      language: "python"
+      description: "Generate DOT dependency graphs for GitHub Actions workflows, triggers, and jobs."
+      toolbox:
+        file: "tool.py"
+        introduced_commit: "3b09a940e1835d0f0b7be11c080224bb46b57227"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+      dependencies:
+        - package: "click"
+          version: ">=8.1"
+        - package: "structlog"
+          version: ">=24.0"
+        - package: "pyyaml"
+          version: ">=6.0"
+        - package: "pydot"
+          version: ">=2.0"
+      tags:
+        - "github"
+        - "actions"
+        - "workflow"
+        - "python"
+        - "graph"
+        - "dot"
+  - python/hello-python:
+      title: "Hello, Python"
+      language: "python"
+      description: "This is the first tool description here."
+      toolbox:
+        file: "tool.py"
+        introduced_commit: "dc47d301b4ad8c2b59a7d607af6b239499a3b646"
+        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
