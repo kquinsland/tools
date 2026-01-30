@@ -135,7 +135,9 @@ def _parse_front_matter(md_text: str) -> FrontMatterBlock | None:
 
 
 def _iter_index_files(root: Path) -> Iterable[Path]:
-    yield from sorted(root.rglob("index.md"))
+    index_paths = list(root.rglob("_index.md"))
+    index_paths.extend(root.rglob("index.md"))
+    yield from sorted(set(index_paths))
 
 
 def _collect_image_paths(value: Any) -> list[str]:
@@ -353,12 +355,12 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
         "--root",
         type=Path,
         default=repo_root / "content",
-        help="Root directory to search for index.md files.",
+        help="Root directory to search for _index.md/index.md files.",
     )
     group.add_argument(
         "--file",
         type=Path,
-        help="Process a single index.md file.",
+        help="Process a single _index.md or index.md file.",
     )
     parser.add_argument(
         "--quality",
