@@ -26,7 +26,7 @@ tags:
 
 Map GitHub Actions workflows into a dependency graph that includes trigger nodes, workflow nodes, and job nodes.
 The output is [DOT syntax](https://graphviz.org/doc/info/lang.html) so you can render with Graphviz or any compatible tool.
-If you have Graphviz installed and in your PATH, the tool can also render directly to PNG, SVG, or other formats.
+If you have Graphviz installed and in your PATH, the tool can also render directly to PNG, SVG, WEBP, or other formats.
 
 ## Example Usage
 
@@ -42,6 +42,9 @@ If you have Graphviz installed and in your PATH, the tool can also render direct
 # Same defaults, but also render a PNG (requires Graphviz in PATH)
 ./tool.py --render=gha-tree.png
 
+# Render WEBP and skip writing the DOT file
+./tool.py --render=gha-tree.webp --no-dot
+
 # Respect explicit CLI options
 ./tool.py --workflow-root=/mnt/some/example/.github/workflows \
   --output=/mnt/other/location/example.dot
@@ -49,6 +52,13 @@ If you have Graphviz installed and in your PATH, the tool can also render direct
 # Allow env-vars to set CLI args as well
 GHA_TREE_BUILDER_WORKFLOW_ROOT=/mnt/some/example/.github/workflows \
   ./tool.py --output=/mnt/other/location/example.dot
+
+# Limit parsing to matching workflow files
+./tool.py some-prefix*.yaml
+
+# Include or exclude specific workflow files (mutually exclusive)
+./tool.py --workflow-root=.github/workflows --include-glob='some-prefix*.yaml'
+./tool.py --workflow-root=.github/workflows --exclude-glob='*-legacy.yml'
 ```
 
 ## Example Output
