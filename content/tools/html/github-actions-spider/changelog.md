@@ -1,3 +1,7 @@
+## `6649874` - February 8, 2026 10:17
+
+- feat: support custom GitHub API base in actions spider
+
 ---
 title: Changelog - GitHub Actions Spider
 bookHidden: true
