@@ -204,8 +204,10 @@ def _build_tool_entry(index_md: Path, *, tools_root: Path) -> ToolEntry | None:
         return None
 
     rel_dir = index_md.parent.relative_to(tools_root)
+    if len(rel_dir.parts) < 2:
+        return None
     slug = rel_dir.as_posix()
-    language = rel_dir.parts[0] if rel_dir.parts else ""
+    language = rel_dir.parts[0]
 
     title = str(fm.get("title") or "")
     description = str(fm.get("description") or "")
