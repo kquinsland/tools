@@ -54,7 +54,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f2085d75a899e83fbb27cfb1610e703f2c0b9815"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "6649874841dc1f33a2de5efae6147c2cded54986"
       dependencies:
         - package: "js-yaml"
           version: "4.1.0"
