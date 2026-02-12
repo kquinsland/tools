@@ -1,0 +1,1570 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GitHub Repo File Spider</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/common.css" />
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <style>
+      :root {
+        --bg: #f4efe9;
+        --bg-top: #fff7ef;
+        --bg-bottom: #ebded2;
+        --panel: #fffdfa;
+        --ink: #1f1c17;
+        --muted: #655b4f;
+        --accent: #c45a23;
+        --accent-ink: #742d0e;
+        --accent-soft: #ffe8d8;
+        --border: #e6d7ca;
+        --shadow: 0 20px 44px rgba(38, 22, 10, 0.12);
+        --success: #1d6f3a;
+        --warning: #b65b16;
+        --error: #9a1f1f;
+        --input-bg: #fbf7f2;
+        --button-secondary-bg: #f2e9e0;
+        --status-bg: #f2ebe4;
+        --status-good-bg: #e8f6ee;
+        --status-warn-bg: #fff2e3;
+        --status-bad-bg: #fdebe9;
+        --table-head-bg: #faf3ec;
+        --raw-bg: #fffdf8;
+        --font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #2f3438;
+          --bg-top: #3a4045;
+          --bg-bottom: #25292d;
+          --panel: #383f44;
+          --ink: #ecf0f4;
+          --muted: #c2c9d2;
+          --accent: #e59d6e;
+          --accent-ink: #fbe8da;
+          --accent-soft: #3f2d23;
+          --border: #59616a;
+          --shadow: 0 22px 48px rgba(0, 0, 0, 0.36);
+          --success: #6dd58c;
+          --warning: #f1c673;
+          --error: #f08e85;
+          --input-bg: #2a3035;
+          --button-secondary-bg: #41484e;
+          --status-bg: #3d3530;
+          --status-good-bg: #2f3a32;
+          --status-warn-bg: #3b3428;
+          --status-bad-bg: #3c2a2a;
+          --table-head-bg: #30363b;
+          --raw-bg: #2a3035;
+        }
+      }
+
+      body {
+        background: radial-gradient(circle at top left, var(--bg-top) 0%, var(--bg) 55%, var(--bg-bottom) 100%);
+        min-height: 100vh;
+      }
+
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 40px 20px 84px;
+      }
+
+      header {
+        margin-bottom: 26px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        font-size: clamp(2.15rem, 4vw, 3.1rem);
+        letter-spacing: -0.02em;
+      }
+
+      p.lead {
+        margin: 0;
+        max-width: 76ch;
+        color: var(--muted);
+        font-size: 1.03rem;
+      }
+
+      section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 20px;
+        margin: 18px 0;
+        box-shadow: var(--shadow);
+      }
+
+      section h2 {
+        margin: 0 0 12px;
+        font-size: 1.15rem;
+        font-weight: 700;
+      }
+
+      label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      input[type="text"],
+      input[type="search"],
+      input[type="password"],
+      input[type="number"],
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 0.98rem;
+        font-family: "SF Mono", "Menlo", "Consolas", monospace;
+        background: var(--input-bg);
+      }
+
+      textarea {
+        min-height: 104px;
+        resize: vertical;
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin: 8px 0 0;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .field-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .inline-grid {
+        display: grid;
+        gap: 14px;
+        margin-top: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .toggle-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 14px;
+      }
+
+      .checkbox {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      .checkbox input {
+        width: auto;
+        margin: 0;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+
+      button {
+        border: 1px solid var(--border);
+        background: var(--accent-soft);
+        color: var(--accent-ink);
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(196, 90, 35, 0.26);
+      }
+
+      button.secondary {
+        background: var(--button-secondary-bg);
+        color: var(--muted);
+      }
+
+      button.ghost {
+        background: transparent;
+        border-style: dashed;
+        color: var(--muted);
+      }
+
+      button.active {
+        background: var(--accent);
+        color: #fff7f1;
+        border-color: var(--accent);
+      }
+
+      button:disabled {
+        opacity: 0.62;
+        cursor: not-allowed;
+      }
+
+      .token-actions {
+        justify-content: flex-end;
+        margin-top: 8px;
+      }
+
+      .status-bar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .status-pill {
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: var(--status-bg);
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .status-pill.good {
+        background: var(--status-good-bg);
+        color: var(--success);
+      }
+
+      .status-pill.warn {
+        background: var(--status-warn-bg);
+        color: var(--warning);
+      }
+
+      .status-pill.bad {
+        background: var(--status-bad-bg);
+        color: var(--error);
+      }
+
+      .status-pill.clickable {
+        cursor: pointer;
+      }
+
+      .status-pill.active {
+        box-shadow: inset 0 0 0 2px rgba(154, 31, 31, 0.25);
+      }
+
+      ul.log {
+        list-style: none;
+        margin: 14px 0 0;
+        padding: 0;
+        max-height: 220px;
+        overflow: auto;
+        border-top: 1px dashed var(--border);
+      }
+
+      ul.log li {
+        padding: 8px 0;
+        border-bottom: 1px dashed var(--border);
+        font-size: 0.94rem;
+      }
+
+      details.advanced-settings {
+        border: 1px dashed var(--border);
+        border-radius: 14px;
+        padding: 10px 12px;
+        margin-top: 14px;
+      }
+
+      details.advanced-settings summary,
+      details.raw-data summary {
+        cursor: pointer;
+        font-weight: 700;
+        list-style: none;
+      }
+
+      details.advanced-settings summary::-webkit-details-marker,
+      details.raw-data summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .results-toolbar {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr);
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        margin-top: 12px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px dashed var(--border);
+        vertical-align: top;
+      }
+
+      th {
+        font-size: 0.9rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        background: var(--table-head-bg);
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      tr.error-row td {
+        background: color-mix(in srgb, var(--status-bad-bg) 56%, transparent);
+      }
+
+      tr.unmatched-row td {
+        background: color-mix(in srgb, var(--status-warn-bg) 44%, transparent);
+      }
+
+      .mono {
+        font-family: "SF Mono", "Menlo", "Consolas", monospace;
+      }
+
+      details.raw-data {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 12px 16px;
+        background: var(--raw-bg);
+      }
+
+      #raw-output {
+        margin-top: 10px;
+        min-height: 220px;
+      }
+
+      @media (max-width: 860px) {
+        .field-grid,
+        .inline-grid,
+        .results-toolbar {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        section {
+          padding: 16px;
+        }
+
+        th,
+        td {
+          font-size: 0.88rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header id="spider-header">
+        <h1>GitHub Repo File Spider</h1>
+        <p class="lead">
+          Sweep a repo, user, or organization for file presence patterns. Check file paths
+          like <code>renovate.json</code> / <code>renovate.json5</code>, get per-repo findings,
+          and export the results as YAML or JSON.
+        </p>
+      </header>
+
+      <section id="status-panel">
+        <h2>Status</h2>
+        <div class="status-bar" id="status-bar">
+          <span class="status-pill" id="status-phase">Idle</span>
+        </div>
+        <div class="status-bar" style="margin-top: 8px;">
+          <span class="status-pill" id="status-rate">Rate limit: -</span>
+        </div>
+        <div class="status-bar" style="margin-top: 8px;">
+          <span class="status-pill" id="status-repos">Repos: 0/0</span>
+          <span class="status-pill" id="status-compliant">Matched: 0 (0.0%)</span>
+          <span class="status-pill" id="status-non-compliant">Unmatched: 0 (0.0%)</span>
+          <span class="status-pill" id="status-errors">Errors: 0</span>
+        </div>
+        <ul class="log" id="status-log"></ul>
+        <div class="actions" style="margin-top: 10px;">
+          <span class="status-pill clickable" id="log-filter-btn" role="button" tabindex="0">Show errors only</span>
+        </div>
+      </section>
+
+      <section id="input-panel">
+        <h2>Scan target</h2>
+        <div class="field-grid">
+          <div>
+            <label for="target-input">GitHub URL or owner[/repo]</label>
+            <input
+              id="target-input"
+              type="text"
+              placeholder="https://github.com/octo-org or octo-org/octo-repo"
+            />
+            <p class="hint">Account targets scan all accessible repos. Repo targets scan one repo.</p>
+          </div>
+          <div>
+            <label for="paths-input">Files to check</label>
+            <textarea id="paths-input" spellcheck="false">renovate.json
+renovate.json5</textarea>
+            <p class="hint">Use commas or new lines. Nested paths are supported (for example <code>.github/CODEOWNERS</code>).</p>
+          </div>
+        </div>
+
+        <div class="inline-grid">
+          <div>
+            <label for="mode-select">Match rule</label>
+            <select id="mode-select">
+              <option value="any">Any file present = matched</option>
+              <option value="all">All files required = matched</option>
+            </select>
+          </div>
+          <div>
+            <label for="concurrency-input">Concurrent repo workers</label>
+            <input id="concurrency-input" type="number" min="1" max="20" step="1" value="6" />
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <label class="checkbox" for="include-archived-input">
+            <input id="include-archived-input" type="checkbox" />
+            Include archived repos
+          </label>
+          <label class="checkbox" for="include-forks-input">
+            <input id="include-forks-input" type="checkbox" />
+            Include forks
+          </label>
+        </div>
+
+        <details class="advanced-settings">
+          <summary>Advanced settings</summary>
+          <div style="margin-top: 10px;">
+            <label for="pat-input">Personal access token (optional)</label>
+            <input id="pat-input" type="password" placeholder="ghp_..." />
+            <p class="hint">Stored in localStorage on this browser only. Use clear to remove it.</p>
+            <div class="actions token-actions">
+              <button id="save-pat-btn" class="secondary">Save token</button>
+              <button id="clear-pat-btn" class="ghost">Clear token</button>
+            </div>
+          </div>
+          <div style="margin-top: 14px;">
+            <label for="api-base-input">GitHub API base URL</label>
+            <input id="api-base-input" type="text" placeholder="https://api.github.com or https://ghe.example.com/api/v3" />
+            <p class="hint">Host-only values are normalized to <code>/api/v3</code> for GitHub Enterprise.</p>
+            <div class="actions token-actions">
+              <button id="reset-api-base-btn" class="ghost">Reset API base</button>
+            </div>
+          </div>
+        </details>
+
+        <div class="actions" style="margin-top: 14px;">
+          <button id="scan-btn">Scan repos</button>
+          <button id="reset-btn" class="secondary">Reset</button>
+        </div>
+      </section>
+
+      <section id="results-panel">
+        <h2>Results</h2>
+        <div class="results-toolbar">
+          <div>
+            <label for="search-input">Search results</label>
+            <input id="search-input" type="search" placeholder="Filter by repo, file, error message..." />
+          </div>
+          <div>
+            <label for="results-mode-select">Show</label>
+            <select id="results-mode-select">
+              <option value="all">All repos</option>
+              <option value="matched">Matched only</option>
+              <option value="unmatched">Unmatched only</option>
+              <option value="error">Errors only</option>
+            </select>
+          </div>
+        </div>
+        <p class="hint" id="results-summary">No scan data yet. Run a scan to populate results.</p>
+        <div class="table-wrap">
+          <table id="results-table">
+            <thead>
+              <tr>
+                <th>Repo</th>
+                <th>Status</th>
+                <th>Matches</th>
+                <th>Missing</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="results-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="raw-panel">
+        <h2>Raw output</h2>
+        <details class="raw-data" open>
+          <summary>Copy/paste-friendly output</summary>
+          <div class="actions" style="margin-top: 10px;">
+            <button id="yaml-btn" class="secondary active">YAML view</button>
+            <button id="json-btn" class="secondary">JSON view</button>
+            <button id="copy-output-btn" class="secondary">Copy</button>
+            <button id="download-output-btn" class="secondary">Download</button>
+          </div>
+          <textarea id="raw-output" spellcheck="false"></textarea>
+        </details>
+      </section>
+    </div>
+
+    <script>
+      const DEFAULT_API_BASE = "https://api.github.com";
+      const DEFAULT_WEB_BASE = "https://github.com";
+      const DEFAULT_CONCURRENCY = 6;
+      const PAT_KEY = "gh-repo-file-spider.pat";
+      const API_BASE_KEY = "gh-repo-file-spider.api-base";
+
+      const state = {
+        apiBase: DEFAULT_API_BASE,
+        phase: "Idle",
+        running: false,
+        rawFormat: "yaml",
+        logFilter: "all",
+        rateLimit: null,
+        total: 0,
+        scanned: 0,
+        compliant: 0,
+        nonCompliant: 0,
+        errors: 0,
+        repoResults: [],
+        patterns: [],
+      };
+
+      const statusPhase = document.getElementById("status-phase");
+      const statusRate = document.getElementById("status-rate");
+      const statusRepos = document.getElementById("status-repos");
+      const statusCompliant = document.getElementById("status-compliant");
+      const statusNonCompliant = document.getElementById("status-non-compliant");
+      const statusErrors = document.getElementById("status-errors");
+      const statusLog = document.getElementById("status-log");
+      const logFilterBtn = document.getElementById("log-filter-btn");
+
+      const targetInput = document.getElementById("target-input");
+      const pathsInput = document.getElementById("paths-input");
+      const modeSelect = document.getElementById("mode-select");
+      const concurrencyInput = document.getElementById("concurrency-input");
+      const includeArchivedInput = document.getElementById("include-archived-input");
+      const includeForksInput = document.getElementById("include-forks-input");
+      const patInput = document.getElementById("pat-input");
+      const apiBaseInput = document.getElementById("api-base-input");
+
+      const scanBtn = document.getElementById("scan-btn");
+      const resetBtn = document.getElementById("reset-btn");
+      const savePatBtn = document.getElementById("save-pat-btn");
+      const clearPatBtn = document.getElementById("clear-pat-btn");
+      const resetApiBaseBtn = document.getElementById("reset-api-base-btn");
+
+      const searchInput = document.getElementById("search-input");
+      const resultsModeSelect = document.getElementById("results-mode-select");
+      const resultsSummary = document.getElementById("results-summary");
+      const resultsBody = document.getElementById("results-body");
+
+      const rawOutput = document.getElementById("raw-output");
+      const yamlBtn = document.getElementById("yaml-btn");
+      const jsonBtn = document.getElementById("json-btn");
+      const copyOutputBtn = document.getElementById("copy-output-btn");
+      const downloadOutputBtn = document.getElementById("download-output-btn");
+
+      let urlSyncTimer = null;
+
+      function setPhase(text, level = "") {
+        state.phase = text;
+        statusPhase.textContent = text;
+        statusPhase.className = `status-pill ${level}`.trim();
+      }
+
+      function formatTimestamp(date = new Date()) {
+        return date.toLocaleTimeString("en-GB", { hour12: false });
+      }
+
+      function logStatus(message, level = "") {
+        const item = document.createElement("li");
+        item.dataset.level = level || "info";
+        item.textContent = `[${formatTimestamp()}] ${message}`;
+        if (level) {
+          item.style.color = level === "bad" ? "var(--error)" : level === "warn" ? "var(--warning)" : "var(--success)";
+        }
+        statusLog.prepend(item);
+        applyLogFilter();
+      }
+
+      function applyLogFilter() {
+        const showErrorsOnly = state.logFilter === "errors";
+        statusLog.querySelectorAll("li").forEach((item) => {
+          const isError = item.dataset.level === "bad";
+          item.hidden = showErrorsOnly && !isError;
+        });
+      }
+
+      function updateLogFilterLabel() {
+        logFilterBtn.textContent = state.logFilter === "errors" ? "Show all log entries" : "Show errors only";
+      }
+
+      function toggleLogFilter() {
+        state.logFilter = state.logFilter === "errors" ? "all" : "errors";
+        logFilterBtn.classList.toggle("active", state.logFilter === "errors");
+        updateLogFilterLabel();
+        applyLogFilter();
+      }
+
+      function updateRateLimitFromResponse(response) {
+        const limit = response.headers.get("x-ratelimit-limit");
+        const remaining = response.headers.get("x-ratelimit-remaining");
+        const reset = response.headers.get("x-ratelimit-reset");
+        if (!limit || !remaining || !reset) return;
+        state.rateLimit = {
+          limit: Number(limit),
+          remaining: Number(remaining),
+          reset: Number(reset),
+        };
+      }
+
+      function formatRateLimit() {
+        if (!state.rateLimit) return "Rate limit: -";
+        const { limit, remaining, reset } = state.rateLimit;
+        const resetMs = reset * 1000;
+        const mins = Math.max(0, Math.floor((resetMs - Date.now()) / 60000));
+        const resetTime = new Date(resetMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        return `Rate limit: ${remaining}/${limit} resets in ${mins}m (${resetTime})`;
+      }
+
+      function getMatchStats() {
+        const checked = state.compliant + state.nonCompliant;
+        const matchedPercent = checked ? ((state.compliant / checked) * 100).toFixed(1) : "0.0";
+        const unmatchedPercent = checked ? ((state.nonCompliant / checked) * 100).toFixed(1) : "0.0";
+        return { checked, matchedPercent, unmatchedPercent };
+      }
+
+      function updateStatusCounts() {
+        const stats = getMatchStats();
+        statusRepos.textContent = `Repos: ${state.scanned}/${state.total}`;
+        statusCompliant.textContent = `Matched: ${state.compliant} (${stats.matchedPercent}%)`;
+        statusNonCompliant.textContent = `Unmatched: ${state.nonCompliant} (${stats.unmatchedPercent}%)`;
+        statusErrors.textContent = `Errors: ${state.errors}`;
+
+        statusCompliant.className = `status-pill ${state.compliant ? "good" : ""}`.trim();
+        statusNonCompliant.className = `status-pill ${state.nonCompliant ? "warn" : ""}`.trim();
+        statusErrors.className = `status-pill ${state.errors ? "bad" : ""}`.trim();
+
+        statusRate.textContent = formatRateLimit();
+        if (!state.rateLimit) {
+          statusRate.className = "status-pill";
+        } else if (state.rateLimit.remaining === 0) {
+          statusRate.className = "status-pill bad";
+        } else if (state.rateLimit.remaining <= 5) {
+          statusRate.className = "status-pill warn";
+        } else {
+          statusRate.className = "status-pill good";
+        }
+      }
+
+      function resetScanState({ clearLog = true } = {}) {
+        state.total = 0;
+        state.scanned = 0;
+        state.compliant = 0;
+        state.nonCompliant = 0;
+        state.errors = 0;
+        state.rateLimit = null;
+        state.repoResults = [];
+        state.patterns = [];
+        state.logFilter = "all";
+
+        setPhase("Idle");
+        if (clearLog) {
+          statusLog.innerHTML = "";
+        }
+        resultsBody.innerHTML = "";
+        resultsSummary.textContent = "No scan data yet. Run a scan to populate results.";
+        rawOutput.value = "";
+
+        updateLogFilterLabel();
+        updateStatusCounts();
+      }
+
+      function getToken() {
+        return localStorage.getItem(PAT_KEY) || "";
+      }
+
+      function setToken(token) {
+        if (!token) return;
+        localStorage.setItem(PAT_KEY, token);
+      }
+
+      function clearToken() {
+        localStorage.removeItem(PAT_KEY);
+      }
+
+      function normalizeApiBase(value) {
+        const trimmed = (value || "").trim();
+        if (!trimmed) return DEFAULT_API_BASE;
+        const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed.replace(/^\/+/, "")}`;
+        let url;
+        try {
+          url = new URL(withScheme);
+        } catch {
+          throw new Error("API base URL is invalid.");
+        }
+
+        const path = url.pathname.replace(/\/+$/, "");
+        if (url.hostname === "github.com") return DEFAULT_API_BASE;
+        if (url.hostname === "api.github.com" && !path) return DEFAULT_API_BASE;
+        if (!path) return `${url.origin}/api/v3`;
+        return `${url.origin}${path}`;
+      }
+
+      function setApiBase(value) {
+        const normalized = normalizeApiBase(value);
+        state.apiBase = normalized;
+        apiBaseInput.value = normalized;
+        if (normalized === DEFAULT_API_BASE) {
+          localStorage.removeItem(API_BASE_KEY);
+        } else {
+          localStorage.setItem(API_BASE_KEY, normalized);
+        }
+        scheduleStateSync();
+      }
+
+      function getApiBase() {
+        return state.apiBase || DEFAULT_API_BASE;
+      }
+
+      function getWebBaseFromApiBase(apiBase) {
+        const parsed = new URL(apiBase);
+        if (apiBase === DEFAULT_API_BASE || parsed.hostname === "api.github.com") {
+          return DEFAULT_WEB_BASE;
+        }
+        const withoutSuffix = parsed.pathname.replace(/\/+$/, "").replace(/\/api\/v3$/, "");
+        return withoutSuffix ? `${parsed.origin}${withoutSuffix}` : parsed.origin;
+      }
+
+      function buildHeaders() {
+        const headers = {
+          Accept: "application/vnd.github+json",
+        };
+        const token = getToken();
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+        return headers;
+      }
+
+      async function parseError(response) {
+        const text = await response.text();
+        let message = text;
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed && parsed.message) {
+            message = parsed.message;
+          }
+        } catch {
+          // Keep raw response text.
+        }
+
+        if (response.status === 401) {
+          message = `Authentication failed: ${message}`;
+        } else if (response.status === 403 && /rate limit/i.test(message)) {
+          message = `Rate limit exceeded: ${message}`;
+        } else if (response.status === 404) {
+          message = `Not found: ${message}`;
+        }
+        return `${response.status} ${response.statusText} - ${message}`;
+      }
+
+      async function fetchJson(url) {
+        const response = await fetch(url, { headers: buildHeaders() });
+        updateRateLimitFromResponse(response);
+        updateStatusCounts();
+        if (!response.ok) {
+          throw new Error(await parseError(response));
+        }
+        return response.json();
+      }
+
+      function parseLinkHeader(header) {
+        if (!header) return {};
+        return header
+          .split(",")
+          .map((part) => part.trim())
+          .reduce((acc, part) => {
+            const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
+            if (match) {
+              acc[match[2]] = match[1];
+            }
+            return acc;
+          }, {});
+      }
+
+      async function fetchPaged(url) {
+        const all = [];
+        let nextUrl = url;
+        while (nextUrl) {
+          const response = await fetch(nextUrl, { headers: buildHeaders() });
+          updateRateLimitFromResponse(response);
+          updateStatusCounts();
+          if (!response.ok) {
+            throw new Error(await parseError(response));
+          }
+          const data = await response.json();
+          all.push(...data);
+          const links = parseLinkHeader(response.headers.get("link"));
+          nextUrl = links.next || "";
+        }
+        return all;
+      }
+
+      function normalizeUrl(value) {
+        const trimmed = (value || "").trim();
+        if (!trimmed) return "";
+        if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+        const withoutAt = trimmed.startsWith("@") ? trimmed.slice(1) : trimmed;
+        const base = getWebBaseFromApiBase(getApiBase()).replace(/\/+$/, "");
+        return `${base}/${withoutAt.replace(/^\/+/, "")}`;
+      }
+
+      function parseTarget(value) {
+        const normalized = normalizeUrl(value);
+        if (!normalized) {
+          throw new Error("Provide a GitHub target (owner, owner/repo, or full URL).");
+        }
+
+        const url = new URL(normalized);
+        const webBase = new URL(getWebBaseFromApiBase(getApiBase()));
+        if (url.hostname !== webBase.hostname) {
+          throw new Error(`Target host must match ${webBase.hostname} for the configured API base.`);
+        }
+
+        const basePath = webBase.pathname.replace(/\/+$/, "");
+        let pathname = url.pathname;
+        if (basePath) {
+          if (pathname === basePath) {
+            pathname = "/";
+          } else if (pathname.startsWith(`${basePath}/`)) {
+            pathname = pathname.slice(basePath.length);
+          } else {
+            throw new Error(`Target path must be under ${basePath}/ for the configured API base.`);
+          }
+        }
+
+        const parts = pathname.split("/").filter(Boolean);
+        if (parts.length >= 2) {
+          return { type: "repo", owner: parts[0], repo: parts[1] };
+        }
+        if (parts.length === 1) {
+          return { type: "account", owner: parts[0] };
+        }
+        throw new Error("Could not parse GitHub target. Use owner or owner/repo.");
+      }
+
+      function cleanPattern(value) {
+        return value
+          .trim()
+          .replace(/^\.\//, "")
+          .replace(/^\/+/, "")
+          .replace(/\/+$/, "");
+      }
+
+      function parsePatterns(raw) {
+        const parts = (raw || "")
+          .split(/[\n,]/)
+          .map((entry) => cleanPattern(entry))
+          .filter(Boolean);
+
+        const unique = [];
+        const seen = new Set();
+        parts.forEach((part) => {
+          if (!seen.has(part)) {
+            seen.add(part);
+            unique.push(part);
+          }
+        });
+
+        if (!unique.length) {
+          throw new Error("Enter at least one file path to check.");
+        }
+        return unique;
+      }
+
+      function getScanOptions() {
+        const concurrencyParsed = Number.parseInt(concurrencyInput.value, 10);
+        const concurrency = Number.isFinite(concurrencyParsed)
+          ? Math.min(20, Math.max(1, concurrencyParsed))
+          : DEFAULT_CONCURRENCY;
+
+        return {
+          includeArchived: includeArchivedInput.checked,
+          includeForks: includeForksInput.checked,
+          policyMode: modeSelect.value === "all" ? "all" : "any",
+          concurrency,
+        };
+      }
+
+      function buildRepoUrl(repoFullName) {
+        return `${getWebBaseFromApiBase(getApiBase())}/${repoFullName}`;
+      }
+
+      function encodeContentPath(path) {
+        return path
+          .split("/")
+          .filter(Boolean)
+          .map((part) => encodeURIComponent(part))
+          .join("/");
+      }
+
+      async function fetchRepoRootEntries(owner, repo, ref = "") {
+        let url = `${getApiBase()}/repos/${owner}/${repo}/contents`;
+        if (ref) {
+          url += `?ref=${encodeURIComponent(ref)}`;
+        }
+        const data = await fetchJson(url);
+        if (!Array.isArray(data)) {
+          throw new Error("Unexpected root content response.");
+        }
+        return data;
+      }
+
+      async function pathExists(owner, repo, path, ref = "") {
+        const encodedPath = encodeContentPath(path);
+        let url = `${getApiBase()}/repos/${owner}/${repo}/contents/${encodedPath}`;
+        if (ref) {
+          url += `?ref=${encodeURIComponent(ref)}`;
+        }
+
+        const response = await fetch(url, { headers: buildHeaders() });
+        updateRateLimitFromResponse(response);
+        updateStatusCounts();
+
+        if (response.status === 404) {
+          return false;
+        }
+        if (!response.ok) {
+          throw new Error(await parseError(response));
+        }
+        return true;
+      }
+
+      async function evaluateRepo(repo, patterns, policyMode) {
+        const [owner, repoName] = repo.full_name.split("/");
+        const ref = repo.default_branch || "";
+        const rootEntries = await fetchRepoRootEntries(owner, repoName, ref);
+        const rootFiles = new Set(
+          rootEntries.filter((entry) => entry.type === "file" && typeof entry.name === "string").map((entry) => entry.name)
+        );
+
+        const matches = [];
+        for (const pattern of patterns) {
+          let exists;
+          if (pattern.includes("/")) {
+            exists = await pathExists(owner, repoName, pattern, ref);
+          } else {
+            exists = rootFiles.has(pattern);
+          }
+          if (exists) {
+            matches.push(pattern);
+          }
+        }
+
+        const missing = patterns.filter((pattern) => !matches.includes(pattern));
+        const compliant = policyMode === "all" ? missing.length === 0 : matches.length > 0;
+        return { matches, missing, compliant };
+      }
+
+      async function listReposForAccount(owner, options) {
+        setPhase("Resolving account", "warn");
+        const account = await fetchJson(`${getApiBase()}/users/${owner}`);
+        const type = account.type === "Organization" ? "org" : "user";
+        const listUrl =
+          type === "org"
+            ? `${getApiBase()}/orgs/${owner}/repos?per_page=100&type=all&sort=updated`
+            : `${getApiBase()}/users/${owner}/repos?per_page=100&type=owner&sort=updated`;
+
+        setPhase(`Listing ${type} repos`, "warn");
+        const repos = await fetchPaged(listUrl);
+        if (!repos.length) {
+          throw new Error(`No repos found for ${owner}.`);
+        }
+
+        const filtered = repos.filter((repo) => {
+          if (!options.includeArchived && repo.archived) return false;
+          if (!options.includeForks && repo.fork) return false;
+          return true;
+        });
+
+        if (!filtered.length) {
+          throw new Error("Filters removed all repos. Adjust include options and retry.");
+        }
+
+        filtered.sort((a, b) => a.full_name.localeCompare(b.full_name));
+        logStatus(`Loaded ${repos.length} repos for ${owner}; ${filtered.length} selected by filters.`, "good");
+        return filtered;
+      }
+
+      function createBaseResult(repo, patterns) {
+        return {
+          repo: repo.full_name,
+          repoUrl: repo.html_url || buildRepoUrl(repo.full_name),
+          defaultBranch: repo.default_branch || "",
+          archived: Boolean(repo.archived),
+          fork: Boolean(repo.fork),
+          matches: [],
+          missing: [...patterns],
+          compliant: false,
+          status: "error",
+          error: "",
+        };
+      }
+
+      async function scanOneRepo(repo, patterns, policyMode) {
+        const result = createBaseResult(repo, patterns);
+        try {
+          const evaluation = await evaluateRepo(repo, patterns, policyMode);
+          result.matches = evaluation.matches;
+          result.missing = evaluation.missing;
+          result.compliant = evaluation.compliant;
+          result.status = "ok";
+          if (result.compliant) {
+            state.compliant += 1;
+            logStatus(`Matched: ${repo.full_name} (${result.matches.join(", ") || "none"})`, "good");
+          } else {
+            state.nonCompliant += 1;
+            logStatus(`Unmatched: ${repo.full_name}; missing ${result.missing.join(", ")}`, "warn");
+          }
+        } catch (error) {
+          state.errors += 1;
+          result.status = "error";
+          result.error = error.message;
+          logStatus(`Error scanning ${repo.full_name}: ${error.message}`, "bad");
+        } finally {
+          state.scanned += 1;
+          state.repoResults.push(result);
+          updateStatusCounts();
+          renderResults();
+        }
+      }
+
+      async function scanRepoCollection(repos, patterns, options) {
+        state.total = repos.length;
+        state.scanned = 0;
+        state.compliant = 0;
+        state.nonCompliant = 0;
+        state.errors = 0;
+        state.repoResults = [];
+        state.patterns = [...patterns];
+        updateStatusCounts();
+        updateRawOutput();
+
+        const workerCount = Math.min(options.concurrency, repos.length);
+        let cursor = 0;
+
+        async function worker() {
+          while (true) {
+            const index = cursor;
+            cursor += 1;
+            if (index >= repos.length) {
+              return;
+            }
+            setPhase(`Scanning ${state.scanned + 1}/${state.total}`, "warn");
+            await scanOneRepo(repos[index], patterns, options.policyMode);
+          }
+        }
+
+        await Promise.all(Array.from({ length: workerCount }, () => worker()));
+      }
+
+      function statusMeta(result) {
+        if (result.status === "error") {
+          return { label: "Error", cls: "bad" };
+        }
+        if (result.compliant) {
+          return { label: "Matched", cls: "good" };
+        }
+        return { label: "Unmatched", cls: "warn" };
+      }
+
+      function appendCodeList(cell, items) {
+        if (!items.length) {
+          cell.textContent = "-";
+          return;
+        }
+        items.forEach((item, index) => {
+          if (index > 0) {
+            cell.append(", ");
+          }
+          const code = document.createElement("code");
+          code.textContent = item;
+          cell.append(code);
+        });
+      }
+
+      function resultMatchesFilter(result, query, mode) {
+        if (mode === "matched" && !(result.status === "ok" && result.compliant)) return false;
+        if (mode === "unmatched" && !(result.status === "ok" && !result.compliant)) return false;
+        if (mode === "error" && result.status !== "error") return false;
+
+        if (!query) return true;
+
+        const haystack = [
+          result.repo,
+          result.matches.join(" "),
+          result.missing.join(" "),
+          result.error,
+          result.status,
+          result.compliant ? "matched" : "unmatched",
+          result.compliant ? "compliant" : "non-compliant",
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        return haystack.includes(query);
+      }
+
+      function renderResults() {
+        const sorted = [...state.repoResults].sort((a, b) => a.repo.localeCompare(b.repo));
+        const query = searchInput.value.trim().toLowerCase();
+        const mode = resultsModeSelect.value;
+
+        resultsBody.innerHTML = "";
+
+        const visible = sorted.filter((result) => resultMatchesFilter(result, query, mode));
+        if (!visible.length) {
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 5;
+          cell.className = "muted";
+          cell.textContent = state.repoResults.length
+            ? "No results match the current filters."
+            : "No results yet. Run a scan to populate this table.";
+          row.appendChild(cell);
+          resultsBody.appendChild(row);
+        }
+
+        visible.forEach((result) => {
+          const row = document.createElement("tr");
+          if (result.status === "error") {
+            row.classList.add("error-row");
+          } else if (!result.compliant) {
+            row.classList.add("unmatched-row");
+          }
+
+          const repoCell = document.createElement("td");
+          const link = document.createElement("a");
+          link.href = result.repoUrl;
+          link.target = "_blank";
+          link.rel = "noreferrer";
+          link.className = "mono";
+          link.textContent = result.repo;
+          repoCell.appendChild(link);
+
+          const statusCell = document.createElement("td");
+          const badge = document.createElement("span");
+          const status = statusMeta(result);
+          badge.className = `status-pill ${status.cls}`;
+          badge.textContent = status.label;
+          statusCell.appendChild(badge);
+
+          const matchesCell = document.createElement("td");
+          appendCodeList(matchesCell, result.matches);
+
+          const missingCell = document.createElement("td");
+          appendCodeList(missingCell, result.missing);
+
+          const notesCell = document.createElement("td");
+          if (result.status === "error") {
+            notesCell.textContent = result.error || "Unknown error";
+          } else {
+            const notes = [];
+            if (result.archived) notes.push("archived");
+            if (result.fork) notes.push("fork");
+            notes.push(`default: ${result.defaultBranch || "-"}`);
+            notesCell.textContent = notes.join(", ");
+          }
+
+          row.append(repoCell, statusCell, matchesCell, missingCell, notesCell);
+          resultsBody.appendChild(row);
+        });
+
+        const stats = getMatchStats();
+        resultsSummary.textContent = `Showing ${visible.length} of ${sorted.length} repos. ` +
+          `Match rate: ${state.compliant}/${stats.checked} (${stats.matchedPercent}%). Errors: ${state.errors}.`;
+
+        updateRawOutput();
+      }
+
+      function buildOutput() {
+        const sorted = [...state.repoResults].sort((a, b) => a.repo.localeCompare(b.repo));
+        const options = getScanOptions();
+        const stats = getMatchStats();
+
+        return {
+          target: targetInput.value.trim(),
+          checked_files: [...state.patterns],
+          match_mode: options.policyMode,
+          policy_mode: options.policyMode,
+          options: {
+            include_archived: options.includeArchived,
+            include_forks: options.includeForks,
+            concurrency: options.concurrency,
+            api_base: getApiBase(),
+          },
+          totals: {
+            repos_total: state.total,
+            repos_scanned: state.scanned,
+            matched: state.compliant,
+            unmatched: state.nonCompliant,
+            matched_percent: Number(stats.matchedPercent),
+            unmatched_percent: Number(stats.unmatchedPercent),
+            compliant: state.compliant,
+            non_compliant: state.nonCompliant,
+            errors: state.errors,
+          },
+          repos: sorted.map((result) => ({
+            repo: result.repo,
+            repo_url: result.repoUrl,
+            status: result.status,
+            matched: result.compliant,
+            compliant: result.compliant,
+            matches: result.matches,
+            missing: result.missing,
+            default_branch: result.defaultBranch || null,
+            archived: result.archived,
+            fork: result.fork,
+            error: result.error || null,
+          })),
+        };
+      }
+
+      function updateRawOutput() {
+        const output = buildOutput();
+        if (state.rawFormat === "json") {
+          rawOutput.value = JSON.stringify(output, null, 2);
+        } else {
+          rawOutput.value = jsyaml.dump(output, { noRefs: true, lineWidth: 120 });
+        }
+      }
+
+      function setRawFormat(format) {
+        state.rawFormat = format;
+        yamlBtn.classList.toggle("active", format === "yaml");
+        jsonBtn.classList.toggle("active", format === "json");
+        updateRawOutput();
+      }
+
+      function setBusy(isBusy) {
+        state.running = isBusy;
+        scanBtn.disabled = isBusy;
+        resetBtn.disabled = isBusy;
+        targetInput.disabled = isBusy;
+        pathsInput.disabled = isBusy;
+        modeSelect.disabled = isBusy;
+        concurrencyInput.disabled = isBusy;
+        includeArchivedInput.disabled = isBusy;
+        includeForksInput.disabled = isBusy;
+        scanBtn.textContent = isBusy ? "Scanning..." : "Scan repos";
+      }
+
+      function getTargetFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("target") || "";
+      }
+
+      function getFilesFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("files") || "";
+      }
+
+      function getModeFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("mode") || "";
+      }
+
+      function getApiBaseFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("api_base") || "";
+      }
+
+      function getIncludeArchivedFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("include_archived") === "1";
+      }
+
+      function getIncludeForksFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("include_forks") === "1";
+      }
+
+      function getConcurrencyFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("concurrency") || "";
+      }
+
+      function setStateInUrl({ target, files, mode, apiBase, includeArchived, includeForks, concurrency }) {
+        const params = new URLSearchParams(window.location.search);
+
+        if (target) params.set("target", target); else params.delete("target");
+        if (files) params.set("files", files); else params.delete("files");
+        if (mode && mode !== "any") params.set("mode", mode); else params.delete("mode");
+        if (apiBase && apiBase !== DEFAULT_API_BASE) params.set("api_base", apiBase); else params.delete("api_base");
+        if (includeArchived) params.set("include_archived", "1"); else params.delete("include_archived");
+        if (includeForks) params.set("include_forks", "1"); else params.delete("include_forks");
+        if (concurrency && Number(concurrency) !== DEFAULT_CONCURRENCY) params.set("concurrency", String(concurrency)); else params.delete("concurrency");
+
+        const query = params.toString();
+        const nextUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+        window.history.replaceState({}, "", nextUrl);
+      }
+
+      function scheduleStateSync() {
+        window.clearTimeout(urlSyncTimer);
+        urlSyncTimer = window.setTimeout(() => {
+          setStateInUrl({
+            target: targetInput.value.trim(),
+            files: pathsInput.value.trim(),
+            mode: modeSelect.value,
+            apiBase: getApiBase(),
+            includeArchived: includeArchivedInput.checked,
+            includeForks: includeForksInput.checked,
+            concurrency: Number.parseInt(concurrencyInput.value, 10),
+          });
+        }, 250);
+      }
+
+      function hydrateApiBase() {
+        const fromUrl = getApiBaseFromUrl();
+        const fromStorage = localStorage.getItem(API_BASE_KEY) || "";
+        const initial = fromUrl || fromStorage || DEFAULT_API_BASE;
+        try {
+          setApiBase(initial);
+          if (fromUrl) {
+            logStatus(`API base loaded from URL: ${getApiBase()}.`, "good");
+          } else if (fromStorage) {
+            logStatus(`API base loaded from localStorage: ${getApiBase()}.`, "good");
+          }
+        } catch (error) {
+          state.apiBase = DEFAULT_API_BASE;
+          apiBaseInput.value = DEFAULT_API_BASE;
+          localStorage.removeItem(API_BASE_KEY);
+          logStatus(`Invalid stored API base; reset to default. ${error.message}`, "warn");
+        }
+      }
+
+      function hydrateToken() {
+        const stored = getToken();
+        if (stored) {
+          patInput.value = stored;
+          logStatus("Token loaded from localStorage.", "good");
+        }
+      }
+
+      function hydrateShareableState() {
+        const target = getTargetFromUrl();
+        const files = getFilesFromUrl();
+        const mode = getModeFromUrl();
+        const concurrency = getConcurrencyFromUrl();
+
+        if (target) targetInput.value = target;
+        if (files) pathsInput.value = files;
+        if (mode === "any" || mode === "all") modeSelect.value = mode;
+        includeArchivedInput.checked = getIncludeArchivedFromUrl();
+        includeForksInput.checked = getIncludeForksFromUrl();
+
+        if (concurrency) {
+          const parsed = Number.parseInt(concurrency, 10);
+          if (Number.isFinite(parsed) && parsed >= 1 && parsed <= 20) {
+            concurrencyInput.value = String(parsed);
+          }
+        }
+      }
+
+      async function handleScan() {
+        if (state.running) return;
+
+        let parsedTarget;
+        let patterns;
+        let options;
+
+        try {
+          parsedTarget = parseTarget(targetInput.value);
+          patterns = parsePatterns(pathsInput.value);
+          options = getScanOptions();
+        } catch (error) {
+          state.errors += 1;
+          updateStatusCounts();
+          setPhase("Invalid input", "bad");
+          logStatus(error.message, "bad");
+          return;
+        }
+
+        resetScanState();
+        state.patterns = [...patterns];
+        updateRawOutput();
+        setBusy(true);
+
+        try {
+          let repos = [];
+          if (parsedTarget.type === "repo") {
+            setPhase("Loading repo metadata", "warn");
+            const repo = await fetchJson(`${getApiBase()}/repos/${parsedTarget.owner}/${parsedTarget.repo}`);
+            repos = [repo];
+            logStatus(`Loaded repo ${repo.full_name}.`, "good");
+          } else {
+            repos = await listReposForAccount(parsedTarget.owner, options);
+          }
+
+          await scanRepoCollection(repos, patterns, options);
+          if (state.errors) {
+            setPhase("Done with errors", "warn");
+          } else {
+            setPhase("Done", "good");
+          }
+          logStatus(`Scan completed for ${state.scanned} repos.`, state.errors ? "warn" : "good");
+        } catch (error) {
+          state.errors += 1;
+          updateStatusCounts();
+          setPhase("Error", "bad");
+          logStatus(error.message, "bad");
+        } finally {
+          setBusy(false);
+          updateRawOutput();
+        }
+      }
+
+      function handleReset() {
+        if (state.running) return;
+
+        targetInput.value = "";
+        pathsInput.value = "renovate.json\nrenovate.json5";
+        modeSelect.value = "any";
+        concurrencyInput.value = String(DEFAULT_CONCURRENCY);
+        includeArchivedInput.checked = false;
+        includeForksInput.checked = false;
+        searchInput.value = "";
+        resultsModeSelect.value = "all";
+
+        resetScanState();
+        updateRawOutput();
+        scheduleStateSync();
+        logStatus("Form and scan state reset.", "warn");
+      }
+
+      scanBtn.addEventListener("click", () => {
+        handleScan();
+      });
+
+      resetBtn.addEventListener("click", handleReset);
+
+      savePatBtn.addEventListener("click", () => {
+        const token = patInput.value.trim();
+        if (!token) {
+          logStatus("No token to save.", "warn");
+          return;
+        }
+        setToken(token);
+        logStatus("Token saved in localStorage.", "good");
+      });
+
+      clearPatBtn.addEventListener("click", () => {
+        clearToken();
+        patInput.value = "";
+        logStatus("Token cleared from localStorage.", "warn");
+      });
+
+      apiBaseInput.addEventListener("change", () => {
+        try {
+          setApiBase(apiBaseInput.value);
+          logStatus(`API base set to ${getApiBase()}.`, "good");
+        } catch (error) {
+          state.errors += 1;
+          updateStatusCounts();
+          setPhase("Invalid API base", "bad");
+          logStatus(error.message, "bad");
+          apiBaseInput.value = getApiBase();
+        }
+      });
+
+      resetApiBaseBtn.addEventListener("click", () => {
+        setApiBase(DEFAULT_API_BASE);
+        logStatus("API base reset to default.", "warn");
+      });
+
+      searchInput.addEventListener("input", renderResults);
+      resultsModeSelect.addEventListener("change", renderResults);
+
+      yamlBtn.addEventListener("click", () => setRawFormat("yaml"));
+      jsonBtn.addEventListener("click", () => setRawFormat("json"));
+
+      copyOutputBtn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(rawOutput.value);
+          logStatus(`${state.rawFormat.toUpperCase()} copied to clipboard.`, "good");
+        } catch {
+          logStatus("Clipboard copy failed. Use manual copy.", "warn");
+        }
+      });
+
+      downloadOutputBtn.addEventListener("click", () => {
+        const extension = state.rawFormat === "json" ? "json" : "yaml";
+        const mime = state.rawFormat === "json" ? "application/json" : "application/yaml";
+        const blob = new Blob([rawOutput.value], { type: mime });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `github-repo-file-spider.${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(link.href);
+        logStatus(`Downloaded ${extension.toUpperCase()} output.`, "good");
+      });
+
+      [targetInput, pathsInput, modeSelect, concurrencyInput, includeArchivedInput, includeForksInput].forEach((element) => {
+        element.addEventListener("input", scheduleStateSync);
+        element.addEventListener("change", scheduleStateSync);
+      });
+
+      logFilterBtn.addEventListener("click", toggleLogFilter);
+      logFilterBtn.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          toggleLogFilter();
+        }
+      });
+
+      resetScanState();
+      hydrateApiBase();
+      hydrateToken();
+      hydrateShareableState();
+      updateRawOutput();
+      scheduleStateSync();
+    </script>
+    <script src="/analytics.js"></script>
+  </body>
+</html>
