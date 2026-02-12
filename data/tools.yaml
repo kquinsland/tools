@@ -54,7 +54,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f2085d75a899e83fbb27cfb1610e703f2c0b9815"
-        updated_commit: "6649874841dc1f33a2de5efae6147c2cded54986"
+        updated_commit: "74ea88efaacd582fd193c3c78f32739b2c2fadc6"
       dependencies:
         - package: "js-yaml"
           version: "4.1.0"
@@ -66,6 +66,24 @@ tools:
         - "crawl"
         - "html"
         - "search"
+  - html/github-repo-file-spider:
+      title: "GitHub Repo File Spider"
+      language: "html"
+      description: "Scan GitHub repositories for one or more files and report match stats at org/user scale."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      dependencies:
+        - package: "js-yaml"
+          version: "4.1.0"
+          via: "https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"
+      tags:
+        - "github"
+        - "file-check"
+        - "metadata"
+        - "repository"
+        - "html"
   - html/hello-world:
       title: "Hello, World"
       language: "html"
