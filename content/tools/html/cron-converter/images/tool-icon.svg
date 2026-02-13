@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Cron timezone converter icon">
+  <rect x="28" y="28" width="456" height="456" rx="56" fill="#f6f4ee"/>
+  <rect x="84" y="104" width="344" height="304" rx="28" fill="#ffffff" stroke="#1f2937" stroke-width="12"/>
+
+  <rect x="116" y="136" width="280" height="54" rx="14" fill="#edf2ff"/>
+  <path d="M144 164h92" stroke="#1f2937" stroke-width="10" stroke-linecap="round"/>
+  <path d="M268 164h96" stroke="#1f2937" stroke-width="10" stroke-linecap="round"/>
+
+  <rect x="116" y="212" width="124" height="70" rx="14" fill="#d8efe8" stroke="#0d6b57" stroke-width="8"/>
+  <text x="178" y="255" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="26" fill="#0d6b57">PST</text>
+
+  <rect x="272" y="212" width="124" height="70" rx="14" fill="#e8eff8" stroke="#1e6db3" stroke-width="8"/>
+  <text x="334" y="255" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="26" fill="#1e6db3">UTC</text>
+
+  <path d="M250 247h12" stroke="#1f2937" stroke-width="10" stroke-linecap="round"/>
+  <path d="M248 279l16 16" stroke="#1f2937" stroke-width="10" stroke-linecap="round"/>
+
+  <rect x="116" y="306" width="280" height="70" rx="14" fill="#fff6e8" stroke="#b45200" stroke-width="8"/>
+  <text x="256" y="349" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="24" fill="#b45200">* 16-23 * * 1-5</text>
+</svg>

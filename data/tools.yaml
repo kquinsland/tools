@@ -33,6 +33,20 @@ tools:
         - "visualization"
         - "waveform"
         - "spectrogram"
+  - html/cron-converter:
+      title: "Cron Timezone Converter"
+      language: "html"
+      description: "Convert POSIX 5-field cron schedules between timezones, including day/hour wrap-around handling."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "html"
+        - "cron"
+        - "timezone"
+        - "scheduling"
+        - "convert"
   - html/gemini-nano-interface:
       title: "Gemini Nano Interface"
       language: "html"
