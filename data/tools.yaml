@@ -39,7 +39,7 @@ tools:
       description: "Convert POSIX 5-field cron schedules between timezones, including day/hour wrap-around handling."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
+        introduced_commit: "5c2c9aa8c6cde866191c8a1316111ce67acaeb17"
         updated_commit: null
       tags:
         - "html"
