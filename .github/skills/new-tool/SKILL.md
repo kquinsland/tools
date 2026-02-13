@@ -85,9 +85,14 @@ The entire process of creating a new tool and getting it integrated into the sit
    - Run `hugo server` and verify the tool page renders.
    - Confirm the tool file loads and functions per spec.
 
-3. **Generate data**
+3. **Generate changelog from git history**
+   - For new tools, initialize changelog entries with the script instead of hand-writing an `unreleased` section:
+     - `uv run ci/build_tool_changelogs.py --tool <language>/<slug> --init`
+   - This ensures the top heading matches CI expectations: `## \`<git-hash>\` - <date>`.
+
+4. **Generate data**
    - Run the [`ci/build_tools_data.py`](../../../ci/build_tools_data.py) to refresh [`data/tools.yaml`](../../../data/tools.yaml).
    - Confirm new entry is present and correct.
 
-4. **Verify landing page**
+5. **Verify landing page**
    - Check that `hugo server -D` does not return any errors.
