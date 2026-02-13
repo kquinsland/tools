@@ -2,6 +2,10 @@
 title: Changelog - GitHub Actions Spider
 bookHidden: true
 ---
+## `6649874` - February 8, 2026 10:17
+
+- feat: support custom GitHub API base in actions spider
+
 ## `ce1dbba` - January 12, 2026 17:42
 
 - feat: Dark Mode:

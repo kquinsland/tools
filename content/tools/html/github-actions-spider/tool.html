@@ -356,6 +356,23 @@
         display: none;
       }
 
+      details.advanced-settings {
+        border: 1px dashed var(--border);
+        border-radius: 14px;
+        padding: 10px 12px;
+        margin-top: 12px;
+      }
+
+      details.advanced-settings summary {
+        cursor: pointer;
+        font-weight: 700;
+        list-style: none;
+      }
+
+      details.advanced-settings summary::-webkit-details-marker {
+        display: none;
+      }
+
       .muted {
         color: var(--muted);
       }
@@ -424,6 +441,19 @@
             </div>
           </div>
         </div>
+        <details class="advanced-settings">
+          <summary>Advanced settings</summary>
+          <div style="margin-top: 10px;">
+            <label for="api-base-input">GitHub API base URL</label>
+            <input type="text" id="api-base-input" placeholder="https://api.github.com or https://ghe.example.com/api/v3" />
+            <p class="hint">
+              Supports GitHub API-compatible servers. Host-only values default to <code>/api/v3</code>.
+            </p>
+            <div class="actions token-actions">
+              <button class="ghost" id="reset-api-base-btn">Reset to default</button>
+            </div>
+          </div>
+        </details>
         <div class="actions" style="margin-top: 12px;">
           <button id="scan-btn">Analyze</button>
           <button class="secondary" id="reset-btn">Reset</button>
@@ -465,8 +495,10 @@
     </div>
 
     <script>
-      const API_BASE = "https://api.github.com";
+      const DEFAULT_API_BASE = "https://api.github.com";
+      const DEFAULT_WEB_BASE = "https://github.com";
       const PAT_KEY = "gh-actions-spider.pat";
+      const API_BASE_KEY = "gh-actions-spider.api-base";
       const state = {
         entries: [],
         repos: [],
@@ -475,6 +507,7 @@
         phase: "Idle",
         repoScanQueue: [],
         rawFormat: "yaml",
+        apiBase: DEFAULT_API_BASE,
         rateLimit: null,
         logFilter: "all",
       };
@@ -490,9 +523,11 @@
 
       const ghUrlInput = document.getElementById("gh-url");
       const patInput = document.getElementById("pat-input");
+      const apiBaseInput = document.getElementById("api-base-input");
       const scanBtn = document.getElementById("scan-btn");
       const savePatBtn = document.getElementById("save-pat-btn");
       const clearPatBtn = document.getElementById("clear-pat-btn");
+      const resetApiBaseBtn = document.getElementById("reset-api-base-btn");
       const resetBtn = document.getElementById("reset-btn");
       const repoSection = document.getElementById("repo-section");
       const repoList = document.getElementById("repo-list");
@@ -572,23 +607,84 @@
         return params.get("target") || "";
       }
 
-      function setTargetInUrl(value) {
+      function getApiBaseFromUrl() {
         const params = new URLSearchParams(window.location.search);
-        if (value) {
-          params.set("target", value);
+        return params.get("api_base") || "";
+      }
+
+      function setStateInUrl({ target, apiBase }) {
+        const params = new URLSearchParams(window.location.search);
+        if (target) {
+          params.set("target", target);
         } else {
           params.delete("target");
+        }
+        if (apiBase && apiBase !== DEFAULT_API_BASE) {
+          params.set("api_base", apiBase);
+        } else {
+          params.delete("api_base");
         }
         const query = params.toString();
         const nextUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
         window.history.replaceState({}, "", nextUrl);
       }
 
-      function scheduleTargetSync() {
+      function scheduleStateSync() {
         window.clearTimeout(urlSyncTimer);
         urlSyncTimer = window.setTimeout(() => {
-          setTargetInUrl(ghUrlInput.value.trim());
+          setStateInUrl({
+            target: ghUrlInput.value.trim(),
+            apiBase: getApiBase(),
+          });
         }, 250);
+      }
+
+      function getApiBase() {
+        return state.apiBase || DEFAULT_API_BASE;
+      }
+
+      function normalizeApiBase(value) {
+        const trimmed = (value || "").trim();
+        if (!trimmed) return DEFAULT_API_BASE;
+        const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed.replace(/^\/+/, "")}`;
+        let url;
+        try {
+          url = new URL(withScheme);
+        } catch (error) {
+          throw new Error("API base URL is invalid.");
+        }
+        const path = url.pathname.replace(/\/+$/, "");
+        if (url.hostname === "github.com") return DEFAULT_API_BASE;
+        if (url.hostname === "api.github.com" && !path) return DEFAULT_API_BASE;
+        if (!path) {
+          return `${url.origin}/api/v3`;
+        }
+        return `${url.origin}${path}`;
+      }
+
+      function getWebBaseFromApiBase(apiBase) {
+        const parsed = new URL(apiBase);
+        if (parsed.hostname === "api.github.com" || apiBase === DEFAULT_API_BASE) {
+          return DEFAULT_WEB_BASE;
+        }
+        const path = parsed.pathname.replace(/\/+$/, "");
+        const pathWithoutApiSuffix = path.replace(/\/api\/v3$/, "");
+        if (!pathWithoutApiSuffix) {
+          return parsed.origin;
+        }
+        return `${parsed.origin}${pathWithoutApiSuffix}`;
+      }
+
+      function setApiBase(value) {
+        const normalized = normalizeApiBase(value);
+        state.apiBase = normalized;
+        apiBaseInput.value = normalized;
+        if (normalized === DEFAULT_API_BASE) {
+          localStorage.removeItem(API_BASE_KEY);
+        } else {
+          localStorage.setItem(API_BASE_KEY, normalized);
+        }
+        scheduleStateSync();
       }
 
       function getToken() {
@@ -748,7 +844,8 @@
         const trimmed = value.trim();
         if (!trimmed) return "";
         if (!/^https?:\/\//i.test(trimmed)) {
-          return `https://github.com/${trimmed.replace(/^\/+/, "")}`;
+          const base = getWebBaseFromApiBase(getApiBase()).replace(/\/+$/, "");
+          return `${base}/${trimmed.replace(/^\/+/, "")}`;
         }
         return trimmed;
       }
@@ -756,8 +853,10 @@
       function parseGitHubTarget(input) {
         const normalized = normalizeUrl(input);
         const url = new URL(normalized);
-        if (!/github\.com$|raw\.githubusercontent\.com$/.test(url.hostname)) {
-          throw new Error("Only github.com URLs are supported.");
+        const webBase = new URL(getWebBaseFromApiBase(getApiBase()));
+        const supportsRawHost = webBase.hostname === "github.com";
+        if (url.hostname !== webBase.hostname && !(supportsRawHost && url.hostname === "raw.githubusercontent.com")) {
+          throw new Error(`Only ${webBase.hostname} URLs are supported for the configured API base.`);
         }
 
         const parts = url.pathname.split("/").filter(Boolean);
@@ -803,12 +902,13 @@
       }
 
       function buildFileUrl(repoFullName, filePath, ref = "") {
+        const webBase = getWebBaseFromApiBase(getApiBase());
         const safeRef = ref ? encodeURIComponent(ref) : "HEAD";
         const safePath = filePath
           .split("/")
           .map((part) => encodeURIComponent(part))
           .join("/");
-        return `https://github.com/${repoFullName}/blob/${safeRef}/${safePath}`;
+        return `${webBase}/${repoFullName}/blob/${safeRef}/${safePath}`;
       }
 
       function extractUsesEntries({ repoFullName, filePath, workflow, ref = "" }) {
@@ -847,7 +947,7 @@
 
       async function fetchWorkflowContent(owner, repo, path, ref = "") {
         const encodedPath = encodeURIComponent(path).replace(/%2F/g, "/");
-        let url = `${API_BASE}/repos/${owner}/${repo}/contents/${encodedPath}`;
+        let url = `${getApiBase()}/repos/${owner}/${repo}/contents/${encodedPath}`;
         if (ref) {
           url += `?ref=${encodeURIComponent(ref)}`;
         }
@@ -899,7 +999,7 @@
         logStatus(`Listing workflows for ${repoFullName}`);
         let files = [];
         try {
-          files = await fetchJson(`${API_BASE}/repos/${owner}/${repo}/contents/.github/workflows`);
+          files = await fetchJson(`${getApiBase()}/repos/${owner}/${repo}/contents/.github/workflows`);
         } catch (error) {
           state.errors += 1;
           updateStatusCounts();
@@ -1037,13 +1137,13 @@
 
       async function listReposForAccount(owner) {
         setPhase("Resolving account", "warn");
-        const account = await fetchJson(`${API_BASE}/users/${owner}`);
+        const account = await fetchJson(`${getApiBase()}/users/${owner}`);
         const type = account.type === "Organization" ? "org" : "user";
         setPhase(`Listing ${type} repos`, "warn");
         const listUrl =
           type === "org"
-            ? `${API_BASE}/orgs/${owner}/repos?per_page=100&sort=updated`
-            : `${API_BASE}/users/${owner}/repos?per_page=100&sort=updated`;
+            ? `${getApiBase()}/orgs/${owner}/repos?per_page=100&sort=updated`
+            : `${getApiBase()}/users/${owner}/repos?per_page=100&sort=updated`;
         const repos = await fetchPaged(listUrl);
         if (!repos.length) {
           throw new Error(`No repos found for ${owner}.`);
@@ -1135,10 +1235,31 @@
         logStatus("Token cleared from localStorage.", "warn");
       });
 
+      apiBaseInput.addEventListener("change", () => {
+        try {
+          setApiBase(apiBaseInput.value);
+          logStatus(`API base set to ${getApiBase()}.`, "good");
+        } catch (error) {
+          state.errors += 1;
+          updateStatusCounts();
+          setPhase("Invalid API base", "bad");
+          logStatus(error.message, "bad");
+          apiBaseInput.value = getApiBase();
+        }
+      });
+
+      resetApiBaseBtn.addEventListener("click", () => {
+        setApiBase(DEFAULT_API_BASE);
+        logStatus("API base reset to default (api.github.com).", "warn");
+      });
+
       resetBtn.addEventListener("click", () => {
         resetState();
         logStatus("State reset.", "warn");
-        setTargetInUrl("");
+        setStateInUrl({
+          target: "",
+          apiBase: getApiBase(),
+        });
       });
 
       selectAllBtn.addEventListener("click", () => {
@@ -1158,7 +1279,7 @@
       });
 
       searchInput.addEventListener("input", applyFilter);
-      ghUrlInput.addEventListener("input", scheduleTargetSync);
+      ghUrlInput.addEventListener("input", scheduleStateSync);
       statusErrors.addEventListener("click", toggleErrorFilter);
       statusErrors.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -1200,6 +1321,29 @@
         }
       }
 
+      function hydrateApiBase() {
+        const fromUrl = getApiBaseFromUrl();
+        const fromStorage = localStorage.getItem(API_BASE_KEY) || "";
+        const initial = fromUrl || fromStorage || DEFAULT_API_BASE;
+        try {
+          setApiBase(initial);
+          if (fromUrl) {
+            logStatus(`API base loaded from URL: ${getApiBase()}.`, "good");
+          } else if (fromStorage) {
+            logStatus(`API base loaded from localStorage: ${getApiBase()}.`, "good");
+          }
+        } catch (error) {
+          state.errors += 1;
+          updateStatusCounts();
+          state.apiBase = DEFAULT_API_BASE;
+          apiBaseInput.value = DEFAULT_API_BASE;
+          localStorage.removeItem(API_BASE_KEY);
+          scheduleStateSync();
+          logStatus(`Invalid stored API base. Reset to default. ${error.message}`, "warn");
+        }
+      }
+
+      hydrateApiBase();
       hydrateToken();
       updateStatusCounts();
       const initialTarget = getTargetFromUrl();
