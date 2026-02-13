@@ -54,7 +54,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f2085d75a899e83fbb27cfb1610e703f2c0b9815"
-        updated_commit: "74ea88efaacd582fd193c3c78f32739b2c2fadc6"
+        updated_commit: "2f3f4e7ab3ac0f4087794e4618d8d63afd3f5cf5"
       dependencies:
         - package: "js-yaml"
           version: "4.1.0"
@@ -72,8 +72,8 @@ tools:
       description: "Scan GitHub repositories for one or more files and report match stats at org/user scale."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
-        updated_commit: null
+        introduced_commit: "b1e661e247daf6c0c5b262c49838c9b290cea1f9"
+        updated_commit: "07b5d8f428df9d3d4bfdaef3852de4d69bb45872"
       dependencies:
         - package: "js-yaml"
           version: "4.1.0"
