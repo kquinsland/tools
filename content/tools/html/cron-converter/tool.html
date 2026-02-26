@@ -226,36 +226,41 @@
         overflow-x: auto;
         border: 1px solid var(--border);
         border-radius: 12px;
+        padding: 4px;
+        background: var(--panel);
+        text-align: center;
       }
 
-      #cc-calendar {
-        width: 100%;
+      #cc-calendar-grid {
+        display: inline-table;
+        width: auto;
         border-collapse: collapse;
         min-width: 760px;
+        margin: 0;
       }
 
-      #cc-calendar th,
-      #cc-calendar td {
+      #cc-calendar-grid th,
+      #cc-calendar-grid td {
         border: 1px solid var(--border);
         text-align: center;
         padding: 6px;
       }
 
-      #cc-calendar th {
+      #cc-calendar-grid th {
         font-size: 0.82rem;
         color: var(--muted);
         text-transform: uppercase;
         letter-spacing: 0.04em;
       }
 
-      #cc-calendar td.time-col {
+      #cc-calendar-grid td.time-col {
         font-family: "SF Mono", "Menlo", "Consolas", monospace;
         color: var(--muted);
         font-size: 0.84rem;
         white-space: nowrap;
       }
 
-      #cc-calendar td.slot {
+      #cc-calendar-grid td.slot {
         width: 13.2%;
         min-width: 92px;
         font-size: 0.76rem;
