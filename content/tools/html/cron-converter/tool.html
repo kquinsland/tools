@@ -1,1588 +1,1596 @@
 <!doctype html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Cron Timezone Converter</title>
     <link rel="stylesheet" href="/common.css" />
     <style>
-      :root {
-        --bg: #f7f4eb;
-        --bg-top: #fffdf7;
-        --bg-bottom: #efe8d7;
-        --panel: #ffffff;
-        --ink: #1f1b17;
-        --muted: #6e6458;
-        --accent: #0d6b57;
-        --accent-soft: #dcefe9;
-        --border: #e4ddcf;
-        --danger: #a7362f;
-        --success: #196a37;
-        --shadow: 0 10px 24px rgba(25, 18, 8, 0.09);
-        --source: #b45200;
-        --conv-1: #1e6db3;
-        --conv-2: #6b45ae;
-        --conv-3: #00807f;
-        --conv-4: #7a5d13;
-        --conv-5: #8b3b2f;
-        --font-body: "Segoe UI", "Noto Sans", system-ui, sans-serif;
-      }
-
-      @media (prefers-color-scheme: dark) {
         :root {
-          color-scheme: dark;
-          --bg: #2e332d;
-          --bg-top: #39403a;
-          --bg-bottom: #242924;
-          --panel: #37413b;
-          --ink: #ecf0ea;
-          --muted: #c8d0c6;
-          --accent: #7ac9b4;
-          --accent-soft: #295048;
-          --border: #556158;
-          --danger: #f0958d;
-          --success: #7bd49a;
-          --shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
-          --source: #ffae70;
-          --conv-1: #96cbff;
-          --conv-2: #c7a6ff;
-          --conv-3: #89d9d8;
-          --conv-4: #efd88b;
-          --conv-5: #f2b2a5;
+            --bg: #f7f4eb;
+            --bg-top: #fffdf7;
+            --bg-bottom: #efe8d7;
+            --panel: #ffffff;
+            --ink: #1f1b17;
+            --muted: #6e6458;
+            --accent: #0d6b57;
+            --accent-soft: #dcefe9;
+            --border: #e4ddcf;
+            --danger: #a7362f;
+            --success: #196a37;
+            --shadow: 0 10px 24px rgba(25, 18, 8, 0.09);
+            --source: #b45200;
+            --conv-1: #1e6db3;
+            --conv-2: #6b45ae;
+            --conv-3: #00807f;
+            --conv-4: #7a5d13;
+            --conv-5: #8b3b2f;
+            --font-body: "Segoe UI", "Noto Sans", system-ui, sans-serif;
         }
-      }
 
-      * {
-        box-sizing: border-box;
-      }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                color-scheme: dark;
+                --bg: #2e332d;
+                --bg-top: #39403a;
+                --bg-bottom: #242924;
+                --panel: #37413b;
+                --ink: #ecf0ea;
+                --muted: #c8d0c6;
+                --accent: #7ac9b4;
+                --accent-soft: #295048;
+                --border: #556158;
+                --danger: #f0958d;
+                --success: #7bd49a;
+                --shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+                --source: #ffae70;
+                --conv-1: #96cbff;
+                --conv-2: #c7a6ff;
+                --conv-3: #89d9d8;
+                --conv-4: #efd88b;
+                --conv-5: #f2b2a5;
+            }
+        }
 
-      body {
-        margin: 0;
-        color: var(--ink);
-        background: radial-gradient(circle at top, var(--bg-top) 0%, var(--bg) 58%, var(--bg-bottom) 100%);
-      }
+        * {
+            box-sizing: border-box;
+        }
 
-      .wrap {
-        max-width: 1180px;
-        margin: 0 auto;
-        padding: 28px 18px 64px;
-      }
+        body {
+            margin: 0;
+            color: var(--ink);
+            background: radial-gradient(circle at top, var(--bg-top) 0%, var(--bg) 58%, var(--bg-bottom) 100%);
+        }
 
-      h1 {
-        margin: 0 0 8px;
-        letter-spacing: -0.01em;
-        font-size: 2rem;
-      }
+        .wrap {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 28px 18px 64px;
+        }
 
-      .lead {
-        margin: 0;
-        color: var(--muted);
-        max-width: 78ch;
-      }
+        h1 {
+            margin: 0 0 8px;
+            letter-spacing: -0.01em;
+            font-size: 2rem;
+        }
 
-      .panel {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 18px;
-        margin-top: 16px;
-        box-shadow: var(--shadow);
-      }
+        .lead {
+            margin: 0;
+            color: var(--muted);
+            max-width: 78ch;
+        }
 
-      #cc-controls .grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr 1fr;
-        gap: 14px;
-      }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            margin-top: 16px;
+            box-shadow: var(--shadow);
+        }
 
-      #cc-controls .zone-card {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 12px;
-        background: color-mix(in oklab, var(--panel) 92%, var(--accent-soft) 8%);
-      }
-
-      #cc-controls .zone-card h3 {
-        margin: 0 0 8px;
-        font-size: 1rem;
-      }
-
-      label {
-        display: block;
-        font-weight: 600;
-        font-size: 0.9rem;
-        margin-bottom: 6px;
-      }
-
-      input[type="text"],
-      select {
-        width: 100%;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        background: var(--panel);
-        color: var(--ink);
-        padding: 8px 10px;
-        font: inherit;
-      }
-
-      input[type="text"] {
-        font-family: "SF Mono", "Menlo", "Consolas", monospace;
-      }
-
-      .field + .field {
-        margin-top: 10px;
-      }
-
-      .tiny {
-        margin-top: 6px;
-        font-size: 0.82rem;
-        color: var(--muted);
-      }
-
-      #cc-cron-human,
-      #cc-next-triggers {
-        margin-top: 8px;
-      }
-
-      #cc-next-triggers ul {
-        margin: 6px 0 0;
-        padding-left: 18px;
-      }
-
-      #cc-next-triggers li + li {
-        margin-top: 2px;
-      }
-
-      .toggle-row {
-        display: flex;
-        gap: 14px;
-        flex-wrap: wrap;
-        align-items: center;
-        margin-top: 14px;
-      }
-
-      .toggle {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.9rem;
-        color: var(--ink);
-      }
-
-      .actions {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-top: 14px;
-      }
-
-      button {
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        background: var(--panel);
-        color: var(--ink);
-        padding: 8px 12px;
-        font: inherit;
-        cursor: pointer;
-      }
-
-      button.primary {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: #fff;
-      }
-
-      #cc-status {
-        margin-top: 10px;
-        font-size: 0.9rem;
-        color: var(--muted);
-      }
-
-      #cc-status.error {
-        color: var(--danger);
-      }
-
-      #cc-status.success {
-        color: var(--success);
-      }
-
-      #cc-output pre {
-        margin: 0;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 12px;
-        background: color-mix(in oklab, var(--panel) 94%, var(--accent-soft) 6%);
-        min-height: 132px;
-        white-space: pre-wrap;
-      }
-
-      #cc-notes {
-        margin-top: 10px;
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-
-      #cc-calendar-wrap {
-        overflow-x: auto;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-      }
-
-      #cc-calendar {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 760px;
-      }
-
-      #cc-calendar th,
-      #cc-calendar td {
-        border: 1px solid var(--border);
-        text-align: center;
-        padding: 6px;
-      }
-
-      #cc-calendar th {
-        font-size: 0.82rem;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      #cc-calendar td.time-col {
-        font-family: "SF Mono", "Menlo", "Consolas", monospace;
-        color: var(--muted);
-        font-size: 0.84rem;
-        white-space: nowrap;
-      }
-
-      #cc-calendar td.slot {
-        width: 13.2%;
-        min-width: 92px;
-        font-size: 0.76rem;
-      }
-
-      .legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 10px;
-      }
-
-      .legend-item {
-        display: inline-flex;
-        align-items: center;
-        font-size: 0.85rem;
-      }
-
-      .legend-pill {
-        display: inline-flex;
-        align-items: center;
-        border-radius: 999px;
-        padding: 4px 10px;
-        border: 1px solid var(--border);
-        font-size: 0.82rem;
-        font-family: "SF Mono", "Menlo", "Consolas", monospace;
-        line-height: 1.2;
-      }
-
-      .warn {
-        border-left: 3px solid var(--danger);
-        padding-left: 10px;
-      }
-
-      @media (max-width: 980px) {
         #cc-controls .grid {
-          grid-template-columns: 1fr;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 14px;
         }
-      }
+
+        #cc-controls .zone-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            background: color-mix(in oklab, var(--panel) 92%, var(--accent-soft) 8%);
+        }
+
+        #cc-controls .zone-card h3 {
+            margin: 0 0 8px;
+            font-size: 1rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--panel);
+            color: var(--ink);
+            padding: 8px 10px;
+            font: inherit;
+        }
+
+        input[type="text"] {
+            font-family: "SF Mono", "Menlo", "Consolas", monospace;
+        }
+
+        .field+.field {
+            margin-top: 10px;
+        }
+
+        .tiny {
+            margin-top: 6px;
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        #cc-cron-human,
+        #cc-next-triggers {
+            margin-top: 8px;
+        }
+
+        #cc-next-triggers ul {
+            margin: 6px 0 0;
+            padding-left: 18px;
+        }
+
+        #cc-next-triggers li+li {
+            margin-top: 2px;
+        }
+
+        .toggle-row {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 14px;
+        }
+
+        .toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--ink);
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        button {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--panel);
+            color: var(--ink);
+            padding: 8px 12px;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        button.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        #cc-status {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        #cc-status.error {
+            color: var(--danger);
+        }
+
+        #cc-status.success {
+            color: var(--success);
+        }
+
+        #cc-output pre {
+            margin: 0;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            background: color-mix(in oklab, var(--panel) 94%, var(--accent-soft) 6%);
+            min-height: 132px;
+            white-space: pre-wrap;
+        }
+
+        #cc-notes {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        #cc-calendar-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 4px;
+            background: var(--panel);
+            text-align: center;
+        }
+
+        #cc-calendar-grid {
+            display: inline-table;
+            width: auto;
+            border-collapse: collapse;
+            min-width: 760px;
+            margin: 0;
+        }
+
+        #cc-calendar-grid th,
+        #cc-calendar-grid td {
+            border: 1px solid var(--border);
+            text-align: center;
+            padding: 6px;
+        }
+
+        #cc-calendar-grid th {
+            font-size: 0.82rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        #cc-calendar-grid td.time-col {
+            font-family: "SF Mono", "Menlo", "Consolas", monospace;
+            color: var(--muted);
+            font-size: 0.84rem;
+            white-space: nowrap;
+        }
+
+        #cc-calendar-grid td.slot {
+            width: 13.2%;
+            min-width: 92px;
+            font-size: 0.76rem;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+
+        .legend-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            font-size: 0.82rem;
+            font-family: "SF Mono", "Menlo", "Consolas", monospace;
+            line-height: 1.2;
+        }
+
+        .warn {
+            border-left: 3px solid var(--danger);
+            padding-left: 10px;
+        }
+
+        @media (max-width: 980px) {
+            #cc-controls .grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
-  </head>
-  <body>
+</head>
+
+<body>
     <div class="wrap">
-      <h1>Cron Timezone Converter</h1>
-      <p class="lead">
-        Convert POSIX 5-field cron expressions between timezones and inspect the result in a fixed
-        Monday-Sunday overlap calendar.
-      </p>
+        <h1>Cron Timezone Converter</h1>
+        <p class="lead">
+            Convert POSIX 5-field cron expressions between timezones and inspect the result in a fixed
+            Monday-Sunday overlap calendar.
+        </p>
 
-      <section id="cc-controls" class="panel">
-        <div class="grid">
-          <div class="field">
-            <label for="cc-cron-input">Cron expression (POSIX 5-field)</label>
-            <input id="cc-cron-input" type="text" value="* 8-20 * * 1-5" />
-            <div class="tiny">Format: <code>minute hour day-of-month month day-of-week</code></div>
-            <div class="tiny" id="cc-cron-human">Decoded: —</div>
-            <div class="tiny" id="cc-next-triggers">Next 3 triggers: —</div>
-          </div>
+        <section id="cc-controls" class="panel">
+            <div class="grid">
+                <div class="field">
+                    <label for="cc-cron-input">Cron expression (POSIX 5-field)</label>
+                    <input id="cc-cron-input" type="text" value="* 8-20 * * 1-5" />
+                    <div class="tiny">Format: <code>minute hour day-of-month month day-of-week</code></div>
+                    <div class="tiny" id="cc-cron-human">Decoded: —</div>
+                    <div class="tiny" id="cc-next-triggers">Next 3 triggers: —</div>
+                </div>
 
-          <div id="cc-source-zone" class="zone-card">
-            <h3>Source timezone</h3>
-            <div class="field">
-              <label for="cc-source-mode">Mode</label>
-              <select id="cc-source-mode">
-                <option value="fixed">Fixed offset preset</option>
-                <option value="iana">IANA timezone</option>
-              </select>
+                <div id="cc-source-zone" class="zone-card">
+                    <h3>Source timezone</h3>
+                    <div class="field">
+                        <label for="cc-source-mode">Mode</label>
+                        <select id="cc-source-mode">
+                            <option value="fixed">Fixed offset preset</option>
+                            <option value="iana">IANA timezone</option>
+                        </select>
+                    </div>
+                    <div class="field" id="cc-source-fixed-field">
+                        <label for="cc-source-fixed">Fixed offset</label>
+                        <select id="cc-source-fixed"></select>
+                    </div>
+                    <div class="field" id="cc-source-iana-field" hidden>
+                        <label for="cc-source-iana">IANA zone</label>
+                        <input id="cc-source-iana" type="text" list="cc-iana-zones" value="America/Los_Angeles" />
+                    </div>
+                    <label class="toggle" id="cc-source-dst-wrap" hidden>
+                        <input id="cc-source-dst" type="checkbox" />
+                        Use daylight offset when zone has DST
+                    </label>
+                    <div class="tiny" id="cc-source-offset">Resolved offset: UTC-08:00</div>
+                </div>
+
+                <div id="cc-target-zone" class="zone-card">
+                    <h3>Target timezone</h3>
+                    <div class="field">
+                        <label for="cc-target-mode">Mode</label>
+                        <select id="cc-target-mode">
+                            <option value="fixed">Fixed offset preset</option>
+                            <option value="iana">IANA timezone</option>
+                        </select>
+                    </div>
+                    <div class="field" id="cc-target-fixed-field">
+                        <label for="cc-target-fixed">Fixed offset</label>
+                        <select id="cc-target-fixed"></select>
+                    </div>
+                    <div class="field" id="cc-target-iana-field" hidden>
+                        <label for="cc-target-iana">IANA zone</label>
+                        <input id="cc-target-iana" type="text" list="cc-iana-zones" value="UTC" />
+                    </div>
+                    <label class="toggle" id="cc-target-dst-wrap" hidden>
+                        <input id="cc-target-dst" type="checkbox" />
+                        Use daylight offset when zone has DST
+                    </label>
+                    <div class="tiny" id="cc-target-offset">Resolved offset: UTC+00:00</div>
+                </div>
             </div>
-            <div class="field" id="cc-source-fixed-field">
-              <label for="cc-source-fixed">Fixed offset</label>
-              <select id="cc-source-fixed"></select>
+
+            <datalist id="cc-iana-zones"></datalist>
+
+            <div class="toggle-row">
+                <label class="toggle">
+                    <input id="cc-allow-wrap" type="checkbox" />
+                    Allow wrap-around hour ranges in output (example: <code>16-7</code>)
+                </label>
             </div>
-            <div class="field" id="cc-source-iana-field" hidden>
-              <label for="cc-source-iana">IANA zone</label>
-              <input id="cc-source-iana" type="text" list="cc-iana-zones" value="America/Los_Angeles" />
+
+            <div class="actions">
+                <button id="cc-convert" class="primary" type="button">Convert</button>
+                <button id="cc-swap" type="button">Swap source/target</button>
+                <button id="cc-reset" type="button">Reset</button>
+                <button id="cc-clear-saved" type="button">Clear saved state</button>
             </div>
-            <label class="toggle" id="cc-source-dst-wrap" hidden>
-              <input id="cc-source-dst" type="checkbox" />
-              Use daylight offset when zone has DST
-            </label>
-            <div class="tiny" id="cc-source-offset">Resolved offset: UTC-08:00</div>
-          </div>
 
-          <div id="cc-target-zone" class="zone-card">
-            <h3>Target timezone</h3>
-            <div class="field">
-              <label for="cc-target-mode">Mode</label>
-              <select id="cc-target-mode">
-                <option value="fixed">Fixed offset preset</option>
-                <option value="iana">IANA timezone</option>
-              </select>
+            <div id="cc-status">Ready.</div>
+        </section>
+
+        <section id="cc-output" class="panel">
+            <h2>Converted cron expression(s)</h2>
+            <pre id="cc-output-text">Run conversion to view output.</pre>
+            <div class="actions">
+                <button id="cc-copy-output" type="button">Copy output</button>
+                <button id="cc-download-output" type="button">Download .txt</button>
             </div>
-            <div class="field" id="cc-target-fixed-field">
-              <label for="cc-target-fixed">Fixed offset</label>
-              <select id="cc-target-fixed"></select>
-            </div>
-            <div class="field" id="cc-target-iana-field" hidden>
-              <label for="cc-target-iana">IANA zone</label>
-              <input id="cc-target-iana" type="text" list="cc-iana-zones" value="UTC" />
-            </div>
-            <label class="toggle" id="cc-target-dst-wrap" hidden>
-              <input id="cc-target-dst" type="checkbox" />
-              Use daylight offset when zone has DST
-            </label>
-            <div class="tiny" id="cc-target-offset">Resolved offset: UTC+00:00</div>
-          </div>
-        </div>
+            <div id="cc-notes"></div>
+        </section>
 
-        <datalist id="cc-iana-zones"></datalist>
-
-        <div class="toggle-row">
-          <label class="toggle">
-            <input id="cc-allow-wrap" type="checkbox" />
-            Allow wrap-around hour ranges in output (example: <code>16-7</code>)
-          </label>
-        </div>
-
-        <div class="actions">
-          <button id="cc-convert" class="primary" type="button">Convert</button>
-          <button id="cc-swap" type="button">Swap source/target</button>
-          <button id="cc-reset" type="button">Reset</button>
-          <button id="cc-clear-saved" type="button">Clear saved state</button>
-        </div>
-
-        <div id="cc-status">Ready.</div>
-      </section>
-
-      <section id="cc-output" class="panel">
-        <h2>Converted cron expression(s)</h2>
-        <pre id="cc-output-text">Run conversion to view output.</pre>
-        <div class="actions">
-          <button id="cc-copy-output" type="button">Copy output</button>
-          <button id="cc-download-output" type="button">Download .txt</button>
-        </div>
-        <div id="cc-notes"></div>
-      </section>
-
-      <section id="cc-calendar" class="panel">
-        <h2>Fixed Monday-Sunday overlap calendar</h2>
-        <div class="legend" id="cc-legend"></div>
-        <div id="cc-calendar-wrap"></div>
-      </section>
+        <section id="cc-calendar" class="panel">
+            <h2>Fixed Monday-Sunday overlap calendar</h2>
+            <div class="legend" id="cc-legend"></div>
+            <div id="cc-calendar-wrap"></div>
+        </section>
     </div>
 
     <script>
-      (() => {
-        const STORAGE_KEY = "cron-converter-state-v1";
-        const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        const DAY_NAMES_LONG = [
-          "Sunday",
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-        ];
-        const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const CALENDAR_DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
-        const MONTH_NAMES = {
-          jan: 1,
-          feb: 2,
-          mar: 3,
-          apr: 4,
-          may: 5,
-          jun: 6,
-          jul: 7,
-          aug: 8,
-          sep: 9,
-          oct: 10,
-          nov: 11,
-          dec: 12,
-        };
-        const DOW_NAMES = {
-          sun: 0,
-          mon: 1,
-          tue: 2,
-          wed: 3,
-          thu: 4,
-          fri: 5,
-          sat: 6,
-        };
-        const CONVERT_COLORS = [
-          "var(--conv-1)",
-          "var(--conv-2)",
-          "var(--conv-3)",
-          "var(--conv-4)",
-          "var(--conv-5)",
-        ];
-
-        const COMMON_FIXED_PRESETS = [
-          { id: "UTC", label: "UTC (UTC+00:00)", offset: 0 },
-          { id: "PST", label: "PST (UTC-08:00)", offset: -8 * 60 },
-          { id: "PDT", label: "PDT (UTC-07:00)", offset: -7 * 60 },
-          { id: "MST", label: "MST (UTC-07:00)", offset: -7 * 60 },
-          { id: "MDT", label: "MDT (UTC-06:00)", offset: -6 * 60 },
-          { id: "CST", label: "CST (UTC-06:00)", offset: -6 * 60 },
-          { id: "CDT", label: "CDT (UTC-05:00)", offset: -5 * 60 },
-          { id: "EST", label: "EST (UTC-05:00)", offset: -5 * 60 },
-          { id: "EDT", label: "EDT (UTC-04:00)", offset: -4 * 60 },
-          { id: "CET", label: "CET (UTC+01:00)", offset: 60 },
-          { id: "CEST", label: "CEST (UTC+02:00)", offset: 120 },
-          { id: "IST", label: "IST (UTC+05:30)", offset: 330 },
-          { id: "JST", label: "JST (UTC+09:00)", offset: 540 },
-          { id: "AEST", label: "AEST (UTC+10:00)", offset: 600 },
-          { id: "AEDT", label: "AEDT (UTC+11:00)", offset: 660 },
-          { id: "NZST", label: "NZST (UTC+12:00)", offset: 720 },
-          { id: "NZDT", label: "NZDT (UTC+13:00)", offset: 780 },
-        ];
-
-        const FALLBACK_IANA_ZONES = [
-          "UTC",
-          "America/Los_Angeles",
-          "America/Denver",
-          "America/Chicago",
-          "America/New_York",
-          "America/Phoenix",
-          "America/Anchorage",
-          "Pacific/Honolulu",
-          "Europe/London",
-          "Europe/Paris",
-          "Europe/Berlin",
-          "Asia/Kolkata",
-          "Asia/Tokyo",
-          "Asia/Singapore",
-          "Australia/Sydney",
-          "Pacific/Auckland",
-        ];
-
-        const offsetPresetMap = new Map();
-        const zoneOffsetCache = new Map();
-
-        const els = {
-          cronInput: document.getElementById("cc-cron-input"),
-          sourceMode: document.getElementById("cc-source-mode"),
-          sourceFixed: document.getElementById("cc-source-fixed"),
-          sourceFixedField: document.getElementById("cc-source-fixed-field"),
-          sourceIana: document.getElementById("cc-source-iana"),
-          sourceIanaField: document.getElementById("cc-source-iana-field"),
-          sourceDstWrap: document.getElementById("cc-source-dst-wrap"),
-          sourceDst: document.getElementById("cc-source-dst"),
-          sourceOffset: document.getElementById("cc-source-offset"),
-          cronHuman: document.getElementById("cc-cron-human"),
-          nextTriggers: document.getElementById("cc-next-triggers"),
-          targetMode: document.getElementById("cc-target-mode"),
-          targetFixed: document.getElementById("cc-target-fixed"),
-          targetFixedField: document.getElementById("cc-target-fixed-field"),
-          targetIana: document.getElementById("cc-target-iana"),
-          targetIanaField: document.getElementById("cc-target-iana-field"),
-          targetDstWrap: document.getElementById("cc-target-dst-wrap"),
-          targetDst: document.getElementById("cc-target-dst"),
-          targetOffset: document.getElementById("cc-target-offset"),
-          ianaList: document.getElementById("cc-iana-zones"),
-          allowWrap: document.getElementById("cc-allow-wrap"),
-          convertBtn: document.getElementById("cc-convert"),
-          swapBtn: document.getElementById("cc-swap"),
-          resetBtn: document.getElementById("cc-reset"),
-          clearSavedBtn: document.getElementById("cc-clear-saved"),
-          status: document.getElementById("cc-status"),
-          output: document.getElementById("cc-output-text"),
-          copyBtn: document.getElementById("cc-copy-output"),
-          downloadBtn: document.getElementById("cc-download-output"),
-          notes: document.getElementById("cc-notes"),
-          legend: document.getElementById("cc-legend"),
-          calendarWrap: document.getElementById("cc-calendar-wrap"),
-        };
-
-        function generateOffsetPresets() {
-          const values = [...COMMON_FIXED_PRESETS];
-          const seen = new Set(COMMON_FIXED_PRESETS.map((item) => item.offset));
-          const extraOffsets = [
-            -12 * 60,
-            -11 * 60,
-            -10 * 60,
-            -9 * 60 - 30,
-            -9 * 60,
-            -8 * 60,
-            -7 * 60,
-            -6 * 60,
-            -5 * 60,
-            -4 * 60,
-            -3 * 60 - 30,
-            -3 * 60,
-            -2 * 60,
-            -60,
-            0,
-            60,
-            2 * 60,
-            3 * 60,
-            3 * 60 + 30,
-            4 * 60,
-            4 * 60 + 30,
-            5 * 60,
-            5 * 60 + 30,
-            5 * 60 + 45,
-            6 * 60,
-            6 * 60 + 30,
-            7 * 60,
-            8 * 60,
-            8 * 60 + 45,
-            9 * 60,
-            9 * 60 + 30,
-            10 * 60,
-            10 * 60 + 30,
-            11 * 60,
-            12 * 60,
-            12 * 60 + 45,
-            13 * 60,
-            14 * 60,
-          ];
-          for (const offset of extraOffsets) {
-            if (seen.has(offset)) {
-              continue;
-            }
-            seen.add(offset);
-            values.push({
-              id: `UTC${formatOffset(offset).replace("UTC", "")}`,
-              label: `UTC offset ${formatOffset(offset)}`,
-              offset,
-            });
-          }
-          values.sort((a, b) => a.offset - b.offset || a.label.localeCompare(b.label));
-          return values;
-        }
-
-        function populateFixedOffsetSelect(selectEl) {
-          selectEl.innerHTML = "";
-          const presets = generateOffsetPresets();
-          for (const item of presets) {
-            offsetPresetMap.set(item.id, item.offset);
-            const opt = document.createElement("option");
-            opt.value = item.id;
-            opt.textContent = item.label;
-            selectEl.appendChild(opt);
-          }
-        }
-
-        function populateIanaList() {
-          const zones =
-            typeof Intl.supportedValuesOf === "function"
-              ? Intl.supportedValuesOf("timeZone")
-              : FALLBACK_IANA_ZONES;
-          els.ianaList.innerHTML = "";
-          for (const zone of zones) {
-            const opt = document.createElement("option");
-            opt.value = zone;
-            els.ianaList.appendChild(opt);
-          }
-        }
-
-        function formatOffset(offsetMinutes) {
-          const sign = offsetMinutes >= 0 ? "+" : "-";
-          const absolute = Math.abs(offsetMinutes);
-          const hours = String(Math.floor(absolute / 60)).padStart(2, "0");
-          const minutes = String(absolute % 60).padStart(2, "0");
-          return `UTC${sign}${hours}:${minutes}`;
-        }
-
-        function getTimeZoneOffsetMinutes(timeZone, utcDate) {
-          const formatter = new Intl.DateTimeFormat("en-US", {
-            timeZone,
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: false,
-          });
-          const parts = formatter.formatToParts(utcDate);
-          const map = {};
-          for (const part of parts) {
-            if (part.type !== "literal") {
-              map[part.type] = Number(part.value);
-            }
-          }
-          const asUtc = Date.UTC(map.year, map.month - 1, map.day, map.hour, map.minute, map.second);
-          return Math.round((asUtc - utcDate.getTime()) / 60000);
-        }
-
-        function getIanaZoneOffsets(zone) {
-          if (zoneOffsetCache.has(zone)) {
-            return zoneOffsetCache.get(zone);
-          }
-          try {
-            const formatter = new Intl.DateTimeFormat("en-US", { timeZone: zone });
-            formatter.format(new Date());
-          } catch (error) {
-            throw new Error(`Invalid IANA timezone: ${zone}`);
-          }
-
-          const offsets = new Set();
-          for (let month = 0; month < 12; month += 1) {
-            const probe = new Date(Date.UTC(2025, month, 1, 12, 0, 0));
-            offsets.add(getTimeZoneOffsetMinutes(zone, probe));
-          }
-          const values = [...offsets].sort((a, b) => a - b);
-          zoneOffsetCache.set(zone, values);
-          return values;
-        }
-
-        function resolveTimezone(which) {
-          const isSource = which === "source";
-          const modeEl = isSource ? els.sourceMode : els.targetMode;
-          const fixedEl = isSource ? els.sourceFixed : els.targetFixed;
-          const ianaEl = isSource ? els.sourceIana : els.targetIana;
-          const dstEl = isSource ? els.sourceDst : els.targetDst;
-
-          if (modeEl.value === "fixed") {
-            const offset = offsetPresetMap.get(fixedEl.value);
-            if (typeof offset !== "number") {
-              throw new Error(`Unknown fixed offset preset: ${fixedEl.value}`);
-            }
-            return {
-              label: fixedEl.value,
-              offset,
-              description: `Resolved offset: ${formatOffset(offset)}`,
-            };
-          }
-
-          const zone = ianaEl.value.trim();
-          if (!zone) {
-            throw new Error("IANA timezone is required.");
-          }
-          const offsets = getIanaZoneOffsets(zone);
-          const hasDst = offsets.length > 1;
-          const standardOffset = offsets[0];
-          const daylightOffset = offsets[offsets.length - 1];
-          const chosenOffset = hasDst ? (dstEl.checked ? daylightOffset : standardOffset) : standardOffset;
-          const description = hasDst
-            ? `Resolved offset: ${formatOffset(chosenOffset)} (${dstEl.checked ? "daylight" : "standard"})`
-            : `Resolved offset: ${formatOffset(chosenOffset)} (no DST shift)`;
-          return {
-            label: zone,
-            offset: chosenOffset,
-            description,
-          };
-        }
-
-        function parseValue(token, kind) {
-          const raw = token.trim().toLowerCase();
-          if (!raw) {
-            throw new Error("Empty value segment found.");
-          }
-          if (kind === "month" && MONTH_NAMES[raw]) {
-            return MONTH_NAMES[raw];
-          }
-          if (kind === "dow" && DOW_NAMES[raw] !== undefined) {
-            return DOW_NAMES[raw];
-          }
-          if (!/^\d+$/.test(raw)) {
-            throw new Error(`Invalid value: '${token}'.`);
-          }
-          const num = Number(raw);
-          return num;
-        }
-
-        function parseField(field, config) {
-          const text = field.trim();
-          const tokens = text.split(",");
-          const values = new Set();
-          const isStar = text === "*";
-
-          for (const tokenRaw of tokens) {
-            const token = tokenRaw.trim();
-            if (!token) {
-              throw new Error(`Invalid empty token in ${config.label}.`);
-            }
-
-            let [basePart, stepPart] = token.split("/");
-            if (token.includes("/") && stepPart === undefined) {
-              throw new Error(`Invalid step syntax in ${config.label}: '${token}'.`);
-            }
-
-            let step = 1;
-            if (stepPart !== undefined) {
-              if (!/^\d+$/.test(stepPart) || Number(stepPart) <= 0) {
-                throw new Error(`Step must be a positive integer in ${config.label}: '${token}'.`);
-              }
-              step = Number(stepPart);
-            }
-
-            let start;
-            let end;
-            if (basePart === "*") {
-              start = config.min;
-              end = config.max;
-            } else if (basePart.includes("-")) {
-              const [startRaw, endRaw] = basePart.split("-");
-              if (endRaw === undefined || startRaw.trim() === "" || endRaw.trim() === "") {
-                throw new Error(`Invalid range in ${config.label}: '${token}'.`);
-              }
-              start = parseValue(startRaw, config.kind);
-              end = parseValue(endRaw, config.kind);
-            } else {
-              start = parseValue(basePart, config.kind);
-              end = start;
-            }
-
-            if (
-              Number.isNaN(start) ||
-              Number.isNaN(end) ||
-              start < config.min ||
-              end > config.max ||
-              start > end
-            ) {
-              throw new Error(`Out-of-range value in ${config.label}: '${token}'.`);
-            }
-
-            for (let value = start; value <= end; value += step) {
-              const normalized = config.kind === "dow" && value === 7 ? 0 : value;
-              values.add(normalized);
-            }
-          }
-
-          if (values.size === 0) {
-            throw new Error(`${config.label} does not contain any values.`);
-          }
-
-          return {
-            text,
-            isStar,
-            values: [...values].sort((a, b) => a - b),
-          };
-        }
-
-        function parseCron(expression) {
-          const fields = expression
-            .trim()
-            .split(/\s+/)
-            .filter(Boolean);
-          if (fields.length !== 5) {
-            throw new Error("Expected exactly 5 fields: minute hour day-of-month month day-of-week.");
-          }
-
-          const minute = parseField(fields[0], { kind: "minute", min: 0, max: 59, label: "minute" });
-          const hour = parseField(fields[1], { kind: "hour", min: 0, max: 23, label: "hour" });
-          const dom = parseField(fields[2], { kind: "dom", min: 1, max: 31, label: "day-of-month" });
-          const month = parseField(fields[3], { kind: "month", min: 1, max: 12, label: "month" });
-          const dow = parseField(fields[4], { kind: "dow", min: 0, max: 7, label: "day-of-week" });
-
-          return {
-            minute,
-            hour,
-            dom,
-            month,
-            dow,
-            raw: fields,
-          };
-        }
-
-        function setEquals(values, expected) {
-          if (values.length !== expected.length) {
-            return false;
-          }
-          for (let idx = 0; idx < values.length; idx += 1) {
-            if (values[idx] !== expected[idx]) {
-              return false;
-            }
-          }
-          return true;
-        }
-
-        function hourToAmPm(hour) {
-          const period = hour >= 12 ? "pm" : "am";
-          const normalized = hour % 12 === 0 ? 12 : hour % 12;
-          return `${normalized} ${period}`;
-        }
-
-        function joinNatural(items, conjunction = "and") {
-          if (items.length === 0) {
-            return "";
-          }
-          if (items.length === 1) {
-            return items[0];
-          }
-          if (items.length === 2) {
-            return `${items[0]} ${conjunction} ${items[1]}`;
-          }
-          return `${items.slice(0, -1).join(", ")}, ${conjunction} ${items[items.length - 1]}`;
-        }
-
-        function describeDayScope(parsed) {
-          if (parsed.dom.isStar && parsed.dow.isStar) {
-            return "every day";
-          }
-          if (parsed.dom.isStar && setEquals(parsed.dow.values, [1, 2, 3, 4, 5])) {
-            return "every weekday";
-          }
-          if (parsed.dom.isStar && setEquals(parsed.dow.values, [0, 6])) {
-            return "every weekend";
-          }
-          if (parsed.dom.isStar) {
-            const days = parsed.dow.values.map((day) => DAY_NAMES_LONG[day]);
-            return `on ${joinNatural(days, "or")}`;
-          }
-          if (parsed.dow.isStar) {
-            const domText = formatValueSet(parsed.dom.values, 1, 31, false);
-            return `on day-of-month ${domText}`;
-          }
-          const domText = formatValueSet(parsed.dom.values, 1, 31, false);
-          const dowText = parsed.dow.values.map((day) => DAY_NAMES_LONG[day]).join(", ");
-          return `when day-of-month ${domText} or day-of-week (${dowText}) matches`;
-        }
-
-        function describeTimeScope(parsed) {
-          const hourRanges = collapseConsecutive(parsed.hour.values);
-          if (parsed.minute.isStar && parsed.hour.isStar) {
-            return "every minute";
-          }
-          if (parsed.minute.isStar && hourRanges.length === 1) {
-            const [start, end] = hourRanges[0];
-            if (start === end) {
-              return `every minute during ${hourToAmPm(start)}`;
-            }
-            return `from ${hourToAmPm(start)} to ${hourToAmPm(end)}`;
-          }
-          if (parsed.minute.isStar) {
-            const hours = formatValueSet(parsed.hour.values, 0, 23, false);
-            return `every minute during hours ${hours}`;
-          }
-          if (parsed.hour.isStar && parsed.minute.values.length === 1) {
-            return `at minute ${String(parsed.minute.values[0]).padStart(2, "0")} past every hour`;
-          }
-          if (parsed.hour.values.length === 1 && parsed.minute.values.length === 1) {
-            const hour = parsed.hour.values[0];
-            const minute = String(parsed.minute.values[0]).padStart(2, "0");
-            const period = hour >= 12 ? "pm" : "am";
-            const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-            return `at ${hour12}:${minute} ${period}`;
-          }
-          const minuteText = formatValueSet(parsed.minute.values, 0, 59, false);
-          const hourText = formatValueSet(parsed.hour.values, 0, 23, false);
-          return `at minutes ${minuteText} during hours ${hourText}`;
-        }
-
-        function describeMonthScope(parsed) {
-          if (parsed.month.isStar) {
-            return "";
-          }
-          const monthList = parsed.month.values.map((month) => MONTH_LABELS[month - 1]);
-          return `in ${joinNatural(monthList, "or")}`;
-        }
-
-        function describeCron(parsed) {
-          const dayScope = describeDayScope(parsed);
-          const timeScope = describeTimeScope(parsed);
-          const monthScope = describeMonthScope(parsed);
-
-          if (timeScope.startsWith("from ") && dayScope.startsWith("every ")) {
-            return `${dayScope} ${timeScope}${monthScope ? ` ${monthScope}` : ""}`;
-          }
-          if (timeScope === "every minute") {
-            return `${timeScope} ${dayScope}${monthScope ? ` ${monthScope}` : ""}`;
-          }
-          return `${dayScope} ${timeScope}${monthScope ? ` ${monthScope}` : ""}`;
-        }
-
-        function cronMatchesLocalMinute(parsed, localMs) {
-          const date = new Date(localMs);
-          const minute = date.getUTCMinutes();
-          const hour = date.getUTCHours();
-          const dom = date.getUTCDate();
-          const month = date.getUTCMonth() + 1;
-          const dow = date.getUTCDay();
-
-          const minuteMatch = parsed.minute.isStar || parsed.minute.values.includes(minute);
-          const hourMatch = parsed.hour.isStar || parsed.hour.values.includes(hour);
-          const monthMatch = parsed.month.isStar || parsed.month.values.includes(month);
-          const domMatch = parsed.dom.isStar || parsed.dom.values.includes(dom);
-          const dowMatch = parsed.dow.isStar || parsed.dow.values.includes(dow);
-
-          const domRestricted = !parsed.dom.isStar;
-          const dowRestricted = !parsed.dow.isStar;
-          let dayMatch = true;
-          if (domRestricted && dowRestricted) {
-            dayMatch = domMatch || dowMatch;
-          } else if (domRestricted) {
-            dayMatch = domMatch;
-          } else if (dowRestricted) {
-            dayMatch = dowMatch;
-          }
-
-          return minuteMatch && hourMatch && monthMatch && dayMatch;
-        }
-
-        function findNextTriggers(parsed, offsetMinutes, count = 3) {
-          const results = [];
-          const nowLocalMs = Date.now() + offsetMinutes * 60000;
-          let cursor = (Math.floor(nowLocalMs / 60000) + 1) * 60000;
-          const maxIterations = 60 * 24 * 366 * 2;
-
-          for (let idx = 0; idx < maxIterations && results.length < count; idx += 1) {
-            if (cronMatchesLocalMinute(parsed, cursor)) {
-              results.push(cursor);
-            }
-            cursor += 60000;
-          }
-          return results;
-        }
-
-        function formatLocalDateTime(localMs) {
-          const date = new Date(localMs);
-          const dow = DAY_NAMES[date.getUTCDay()];
-          const month = MONTH_LABELS[date.getUTCMonth()];
-          const day = String(date.getUTCDate()).padStart(2, "0");
-          const year = date.getUTCFullYear();
-          const hour = date.getUTCHours();
-          const minute = String(date.getUTCMinutes()).padStart(2, "0");
-          const period = hour >= 12 ? "pm" : "am";
-          const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-          return `${dow}, ${month} ${day} ${year} ${hour12}:${minute} ${period}`;
-        }
-
-        function renderCronSummary(parsed, sourceTz) {
-          const decoded = describeCron(parsed);
-          els.cronHuman.textContent = `Decoded: ${decoded}`;
-
-          const triggers = findNextTriggers(parsed, sourceTz.offset, 3);
-          if (triggers.length === 0) {
-            els.nextTriggers.textContent = "Next 3 triggers: none found in search window.";
-            return;
-          }
-
-          const items = triggers
-            .map(
-              (localMs) =>
-                `<li>${formatLocalDateTime(localMs)} (${sourceTz.label}, ${formatOffset(sourceTz.offset)})</li>`,
-            )
-            .join("");
-          els.nextTriggers.innerHTML = `Next 3 triggers:<ul>${items}</ul>`;
-        }
-
-        function buildSourceMinutes(parsed) {
-          const minutesOfWeek = new Set();
-          const dows = parsed.dow.isStar ? [0, 1, 2, 3, 4, 5, 6] : parsed.dow.values;
-          for (const dow of dows) {
-            for (const hour of parsed.hour.values) {
-              for (const minute of parsed.minute.values) {
-                minutesOfWeek.add(dow * 1440 + hour * 60 + minute);
-              }
-            }
-          }
-          return minutesOfWeek;
-        }
-
-        function shiftMinutesOfWeek(sourceMinutes, deltaMinutes) {
-          const shifted = new Set();
-          for (const minuteIndex of sourceMinutes) {
-            let next = (minuteIndex + deltaMinutes) % 10080;
-            if (next < 0) {
-              next += 10080;
-            }
-            shifted.add(next);
-          }
-          return shifted;
-        }
-
-        function buildDowHourMinuteMap(minutesOfWeek) {
-          const map = Array.from({ length: 7 }, () =>
-            Array.from({ length: 24 }, () => new Set()),
-          );
-          for (const idx of minutesOfWeek) {
-            const dow = Math.floor(idx / 1440);
-            const rem = idx % 1440;
-            const hour = Math.floor(rem / 60);
-            const minute = rem % 60;
-            map[dow][hour].add(minute);
-          }
-          return map;
-        }
-
-        function collapseConsecutive(values) {
-          if (values.length === 0) {
-            return [];
-          }
-          const sorted = [...values].sort((a, b) => a - b);
-          const ranges = [];
-          let start = sorted[0];
-          let end = sorted[0];
-          for (let i = 1; i < sorted.length; i += 1) {
-            const value = sorted[i];
-            if (value === end + 1) {
-              end = value;
-              continue;
-            }
-            ranges.push([start, end]);
-            start = value;
-            end = value;
-          }
-          ranges.push([start, end]);
-          return ranges;
-        }
-
-        function rangesToField(ranges) {
-          return ranges
-            .map(([start, end]) => (start === end ? String(start) : `${start}-${end}`))
-            .join(",");
-        }
-
-        function formatValueSet(values, min, max, useStarIfAll = true) {
-          const sorted = [...values].sort((a, b) => a - b);
-          if (useStarIfAll && sorted.length === max - min + 1 && sorted[0] === min && sorted[sorted.length - 1] === max) {
-            return "*";
-          }
-          return rangesToField(collapseConsecutive(sorted));
-        }
-
-        function mergeLinesByPattern(lines) {
-          const merged = new Map();
-          for (const line of lines) {
-            const key = `${line.minuteValues.join(",")}|${line.hourExpr}|${line.hourValues.join(",")}`;
-            if (!merged.has(key)) {
-              merged.set(key, {
-                minuteValues: line.minuteValues,
-                hourExpr: line.hourExpr,
-                hourValues: line.hourValues,
-                dows: [],
-              });
-            }
-            merged.get(key).dows.push(...line.dows);
-          }
-          return [...merged.values()]
-            .map((item) => ({
-              ...item,
-              dows: [...new Set(item.dows)].sort((a, b) => a - b),
-            }))
-            .sort((a, b) => {
-              const dowDiff = a.dows[0] - b.dows[0];
-              if (dowDiff !== 0) {
-                return dowDiff;
-              }
-              const hourDiff = a.hourValues[0] - b.hourValues[0];
-              if (hourDiff !== 0) {
-                return hourDiff;
-              }
-              return a.minuteValues[0] - b.minuteValues[0];
-            });
-        }
-
-        function buildOutputLines(targetMap, options) {
-          const perDowLines = [];
-
-          for (let dow = 0; dow < 7; dow += 1) {
-            const minuteMap = new Map();
-            for (let hour = 0; hour < 24; hour += 1) {
-              const minutes = [...targetMap[dow][hour]].sort((a, b) => a - b);
-              if (minutes.length === 0) {
-                continue;
-              }
-              const minuteKey = minutes.join(",");
-              if (!minuteMap.has(minuteKey)) {
-                minuteMap.set(minuteKey, { minuteValues: minutes, hours: [] });
-              }
-              minuteMap.get(minuteKey).hours.push(hour);
-            }
-
-            for (const group of minuteMap.values()) {
-              const segments = collapseConsecutive(group.hours);
-              if (
-                options.allowWrap &&
-                segments.length === 2 &&
-                segments[0][0] === 0 &&
-                segments[1][1] === 23
-              ) {
-                perDowLines.push({
-                  dows: [dow],
-                  minuteValues: group.minuteValues,
-                  hourExpr: `${segments[1][0]}-${segments[0][1]}`,
-                  hourValues: group.hours,
-                });
-              } else {
-                for (const segment of segments) {
-                  const segmentHours = [];
-                  for (let hour = segment[0]; hour <= segment[1]; hour += 1) {
-                    segmentHours.push(hour);
-                  }
-                  perDowLines.push({
-                    dows: [dow],
-                    minuteValues: group.minuteValues,
-                    hourExpr: segment[0] === segment[1] ? String(segment[0]) : `${segment[0]}-${segment[1]}`,
-                    hourValues: segmentHours,
-                  });
-                }
-              }
-            }
-          }
-
-          return mergeLinesByPattern(perDowLines);
-        }
-
-        function lineToCron(line) {
-          const minuteExpr = formatValueSet(line.minuteValues, 0, 59, true);
-          const dowExpr = formatValueSet(line.dows, 0, 6, true);
-          return `${minuteExpr} ${line.hourExpr} * * ${dowExpr}`;
-        }
-
-        function buildLayerMap(lines) {
-          return lines.map((line) => ({
-            dowSet: new Set(line.dows),
-            hourSet: new Set(line.hourValues),
-          }));
-        }
-
-        function gradientForColors(colors) {
-          if (colors.length === 0) {
-            return "";
-          }
-          if (colors.length === 1) {
-            return colors[0];
-          }
-          const step = 100 / colors.length;
-          const segments = colors
-            .map((color, idx) => {
-              const start = (step * idx).toFixed(2);
-              const end = (step * (idx + 1)).toFixed(2);
-              return `${color} ${start}% ${end}%`;
-            })
-            .join(", ");
-          return `linear-gradient(135deg, ${segments})`;
-        }
-
-        function renderLegend(convertedExpressions) {
-          els.legend.innerHTML = "";
-
-          const sourceLegend = document.createElement("div");
-          sourceLegend.className = "legend-item";
-          const sourcePill = document.createElement("span");
-          sourcePill.className = "legend-pill";
-          sourcePill.textContent = "Source schedule";
-          sourcePill.style.background = "color-mix(in oklab, var(--source) 24%, var(--panel) 76%)";
-          sourcePill.style.borderColor = "color-mix(in oklab, var(--source) 45%, var(--border) 55%)";
-          sourceLegend.appendChild(sourcePill);
-          els.legend.appendChild(sourceLegend);
-
-          for (let i = 0; i < convertedExpressions.length; i += 1) {
-            const item = document.createElement("div");
-            item.className = "legend-item";
-            const expressionPill = document.createElement("span");
-            expressionPill.className = "legend-pill";
-            expressionPill.textContent = convertedExpressions[i];
-            const expressionColor = CONVERT_COLORS[i % CONVERT_COLORS.length];
-            expressionPill.style.background = `color-mix(in oklab, ${expressionColor} 24%, var(--panel) 76%)`;
-            expressionPill.style.borderColor = `color-mix(in oklab, ${expressionColor} 45%, var(--border) 55%)`;
-            item.appendChild(expressionPill);
-            els.legend.appendChild(item);
-          }
-        }
-
-        function renderCalendar(sourceMap, lineLayers, convertedExpressions = []) {
-          const table = document.createElement("table");
-          table.id = "cc-calendar-grid";
-
-          const thead = document.createElement("thead");
-          const headRow = document.createElement("tr");
-          const corner = document.createElement("th");
-          corner.textContent = "Hour";
-          headRow.appendChild(corner);
-          for (const dow of CALENDAR_DAY_ORDER) {
-            const th = document.createElement("th");
-            th.textContent = DAY_NAMES[dow];
-            headRow.appendChild(th);
-          }
-          thead.appendChild(headRow);
-          table.appendChild(thead);
-
-          const tbody = document.createElement("tbody");
-          for (let hour = 0; hour < 24; hour += 1) {
-            const tr = document.createElement("tr");
-            const timeTd = document.createElement("td");
-            timeTd.className = "time-col";
-            timeTd.textContent = `${String(hour).padStart(2, "0")}:00`;
-            tr.appendChild(timeTd);
-
-            for (const dow of CALENDAR_DAY_ORDER) {
-              const cell = document.createElement("td");
-              cell.className = "slot";
-
-              const colors = [];
-              const sourceCount = sourceMap[dow][hour].size;
-              if (sourceCount > 0) {
-                colors.push("var(--source)");
-              }
-
-              const convertedExprsForCell = [];
-              lineLayers.forEach((layer, idx) => {
-                if (layer.dowSet.has(dow) && layer.hourSet.has(hour)) {
-                  convertedExprsForCell.push(convertedExpressions[idx] || `line ${idx + 1}`);
-                  colors.push(CONVERT_COLORS[idx % CONVERT_COLORS.length]);
-                }
-              });
-
-              const fill = gradientForColors(colors);
-              if (fill) {
-                if (fill.startsWith("linear-gradient")) {
-                  cell.style.backgroundImage = fill;
-                } else {
-                  cell.style.background = fill;
-                }
-              }
-
-              const tooltipParts = [`${DAY_NAMES[dow]} ${String(hour).padStart(2, "0")}:00`];
-              if (sourceCount > 0) {
-                tooltipParts.push(`Source: ${sourceCount} minute(s)`);
-              }
-              if (convertedExprsForCell.length > 0) {
-                tooltipParts.push(`Converted expressions: ${convertedExprsForCell.join(" ; ")}`);
-              }
-              cell.title = tooltipParts.join(" | ");
-
-              tr.appendChild(cell);
-            }
-            tbody.appendChild(tr);
-          }
-
-          table.appendChild(tbody);
-          els.calendarWrap.innerHTML = "";
-          els.calendarWrap.appendChild(table);
-        }
-
-        function setStatus(message, type = "info") {
-          els.status.className = "";
-          if (type === "error") {
-            els.status.classList.add("error");
-          } else if (type === "success") {
-            els.status.classList.add("success");
-          }
-          els.status.textContent = message;
-        }
-
-        function syncTimezoneUi(which) {
-          const isSource = which === "source";
-          const modeEl = isSource ? els.sourceMode : els.targetMode;
-          const fixedField = isSource ? els.sourceFixedField : els.targetFixedField;
-          const ianaField = isSource ? els.sourceIanaField : els.targetIanaField;
-          const dstWrap = isSource ? els.sourceDstWrap : els.targetDstWrap;
-
-          const isIana = modeEl.value === "iana";
-          fixedField.hidden = isIana;
-          ianaField.hidden = !isIana;
-          dstWrap.hidden = !isIana;
-        }
-
-        function updateResolvedOffsets() {
-          try {
-            const source = resolveTimezone("source");
-            els.sourceOffset.textContent = source.description;
-          } catch (error) {
-            els.sourceOffset.textContent = `Resolved offset: error (${error.message})`;
-          }
-
-          try {
-            const target = resolveTimezone("target");
-            els.targetOffset.textContent = target.description;
-          } catch (error) {
-            els.targetOffset.textContent = `Resolved offset: error (${error.message})`;
-          }
-        }
-
-        function currentState() {
-          return {
-            cron: els.cronInput.value,
-            sourceMode: els.sourceMode.value,
-            sourceFixed: els.sourceFixed.value,
-            sourceIana: els.sourceIana.value,
-            sourceDst: String(els.sourceDst.checked),
-            targetMode: els.targetMode.value,
-            targetFixed: els.targetFixed.value,
-            targetIana: els.targetIana.value,
-            targetDst: String(els.targetDst.checked),
-            allowWrap: String(els.allowWrap.checked),
-          };
-        }
-
-        function applyState(state) {
-          if (!state || typeof state !== "object") {
-            return;
-          }
-          if (typeof state.cron === "string") els.cronInput.value = state.cron;
-          if (typeof state.sourceMode === "string") els.sourceMode.value = state.sourceMode;
-          if (typeof state.sourceFixed === "string") els.sourceFixed.value = state.sourceFixed;
-          if (typeof state.sourceIana === "string") els.sourceIana.value = state.sourceIana;
-          if (typeof state.sourceDst === "string") els.sourceDst.checked = state.sourceDst === "true";
-          if (typeof state.targetMode === "string") els.targetMode.value = state.targetMode;
-          if (typeof state.targetFixed === "string") els.targetFixed.value = state.targetFixed;
-          if (typeof state.targetIana === "string") els.targetIana.value = state.targetIana;
-          if (typeof state.targetDst === "string") els.targetDst.checked = state.targetDst === "true";
-          if (typeof state.allowWrap === "string") els.allowWrap.checked = state.allowWrap === "true";
-        }
-
-        function saveState() {
-          const state = currentState();
-          const params = new URLSearchParams(state);
-          const encoded = params.toString();
-          window.location.hash = encoded;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        }
-
-        function loadState() {
-          const hash = window.location.hash.replace(/^#/, "");
-          if (hash) {
-            const params = new URLSearchParams(hash);
-            const state = Object.fromEntries(params.entries());
-            applyState(state);
-            return;
-          }
-
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) {
-            return;
-          }
-          try {
-            applyState(JSON.parse(raw));
-          } catch {
-            localStorage.removeItem(STORAGE_KEY);
-          }
-        }
-
-        function renderNotes(notes, isWarning = false) {
-          if (!notes || notes.length === 0) {
-            els.notes.innerHTML = "";
-            return;
-          }
-          const list = notes.map((line) => `<li>${line}</li>`).join("");
-          els.notes.innerHTML = `<ul class="${isWarning ? "warn" : ""}">${list}</ul>`;
-        }
-
-        function defaultState() {
-          els.cronInput.value = "* 8-20 * * 1-5";
-          els.sourceMode.value = "fixed";
-          els.sourceFixed.value = "PST";
-          els.sourceIana.value = "America/Los_Angeles";
-          els.sourceDst.checked = false;
-          els.targetMode.value = "fixed";
-          els.targetFixed.value = "UTC";
-          els.targetIana.value = "UTC";
-          els.targetDst.checked = false;
-          els.allowWrap.checked = false;
-          syncTimezoneUi("source");
-          syncTimezoneUi("target");
-          updateResolvedOffsets();
-        }
-
-        function convert() {
-          try {
-            const parsed = parseCron(els.cronInput.value);
-            const sourceTz = resolveTimezone("source");
-            const targetTz = resolveTimezone("target");
-            renderCronSummary(parsed, sourceTz);
-
-            if (!parsed.dom.isStar || !parsed.month.isStar) {
-              throw new Error(
-                "This converter currently generates output only when day-of-month and month are '*' (weekly-style schedules).",
-              );
-            }
-
-            const deltaMinutes = targetTz.offset - sourceTz.offset;
-            const sourceMinutes = buildSourceMinutes(parsed);
-            const shifted = shiftMinutesOfWeek(sourceMinutes, deltaMinutes);
-            const sourceMap = buildDowHourMinuteMap(sourceMinutes);
-            const targetMap = buildDowHourMinuteMap(shifted);
-
-            const lines = buildOutputLines(targetMap, {
-              allowWrap: els.allowWrap.checked,
-            });
-
-            if (lines.length === 0) {
-              throw new Error("No converted schedule entries were generated.");
-            }
-
-            const outputLines = lines.map((line) => lineToCron(line));
-            els.output.textContent = outputLines.join("\n");
-
-            const notes = [
-              `Source offset: ${sourceTz.description.replace("Resolved offset: ", "")}`,
-              `Target offset: ${targetTz.description.replace("Resolved offset: ", "")}`,
-              `Offset delta applied: ${deltaMinutes >= 0 ? "+" : ""}${deltaMinutes} minute(s)`,
-              "POSIX day-of-month/day-of-week OR semantics are assumed.",
-              "Output uses numeric day-of-week (0=Sunday).",
+        (() => {
+            const STORAGE_KEY = "cron-converter-state-v1";
+            const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            const DAY_NAMES_LONG = [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
             ];
-            renderNotes(notes, false);
+            const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const CALENDAR_DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+            const MONTH_NAMES = {
+                jan: 1,
+                feb: 2,
+                mar: 3,
+                apr: 4,
+                may: 5,
+                jun: 6,
+                jul: 7,
+                aug: 8,
+                sep: 9,
+                oct: 10,
+                nov: 11,
+                dec: 12,
+            };
+            const DOW_NAMES = {
+                sun: 0,
+                mon: 1,
+                tue: 2,
+                wed: 3,
+                thu: 4,
+                fri: 5,
+                sat: 6,
+            };
+            const CONVERT_COLORS = [
+                "var(--conv-1)",
+                "var(--conv-2)",
+                "var(--conv-3)",
+                "var(--conv-4)",
+                "var(--conv-5)",
+            ];
 
-            const layers = buildLayerMap(lines);
-            renderLegend(outputLines);
-            renderCalendar(sourceMap, layers, outputLines);
+            const COMMON_FIXED_PRESETS = [
+                { id: "UTC", label: "UTC (UTC+00:00)", offset: 0 },
+                { id: "PST", label: "PST (UTC-08:00)", offset: -8 * 60 },
+                { id: "PDT", label: "PDT (UTC-07:00)", offset: -7 * 60 },
+                { id: "MST", label: "MST (UTC-07:00)", offset: -7 * 60 },
+                { id: "MDT", label: "MDT (UTC-06:00)", offset: -6 * 60 },
+                { id: "CST", label: "CST (UTC-06:00)", offset: -6 * 60 },
+                { id: "CDT", label: "CDT (UTC-05:00)", offset: -5 * 60 },
+                { id: "EST", label: "EST (UTC-05:00)", offset: -5 * 60 },
+                { id: "EDT", label: "EDT (UTC-04:00)", offset: -4 * 60 },
+                { id: "CET", label: "CET (UTC+01:00)", offset: 60 },
+                { id: "CEST", label: "CEST (UTC+02:00)", offset: 120 },
+                { id: "IST", label: "IST (UTC+05:30)", offset: 330 },
+                { id: "JST", label: "JST (UTC+09:00)", offset: 540 },
+                { id: "AEST", label: "AEST (UTC+10:00)", offset: 600 },
+                { id: "AEDT", label: "AEDT (UTC+11:00)", offset: 660 },
+                { id: "NZST", label: "NZST (UTC+12:00)", offset: 720 },
+                { id: "NZDT", label: "NZDT (UTC+13:00)", offset: 780 },
+            ];
 
-            setStatus(`Converted to ${lines.length} expression(s).`, "success");
-            saveState();
-          } catch (error) {
-            els.output.textContent = "No output. Fix the validation error and try again.";
-            els.cronHuman.textContent = "Decoded: —";
-            els.nextTriggers.textContent = "Next 3 triggers: —";
-            renderLegend([]);
-            renderCalendar(
-              Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => new Set())),
-              [],
-            );
-            renderNotes([error.message], true);
-            setStatus(error.message, "error");
-            saveState();
-          }
-        }
+            const FALLBACK_IANA_ZONES = [
+                "UTC",
+                "America/Los_Angeles",
+                "America/Denver",
+                "America/Chicago",
+                "America/New_York",
+                "America/Phoenix",
+                "America/Anchorage",
+                "Pacific/Honolulu",
+                "Europe/London",
+                "Europe/Paris",
+                "Europe/Berlin",
+                "Asia/Kolkata",
+                "Asia/Tokyo",
+                "Asia/Singapore",
+                "Australia/Sydney",
+                "Pacific/Auckland",
+            ];
 
-        async function copyOutput() {
-          const text = els.output.textContent.trim();
-          if (!text || text.startsWith("No output")) {
-            setStatus("Nothing to copy yet.", "error");
-            return;
-          }
-          try {
-            await navigator.clipboard.writeText(text);
-            setStatus("Copied converted cron output.", "success");
-          } catch {
-            setStatus("Clipboard copy failed in this browser context.", "error");
-          }
-        }
+            const offsetPresetMap = new Map();
+            const zoneOffsetCache = new Map();
 
-        function downloadOutput() {
-          const text = els.output.textContent.trim();
-          if (!text || text.startsWith("No output")) {
-            setStatus("Nothing to download yet.", "error");
-            return;
-          }
-          const blob = new Blob([`${text}\n`], { type: "text/plain;charset=utf-8" });
-          const href = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = href;
-          a.download = "converted-cron.txt";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(href);
-          setStatus("Downloaded converted-cron.txt.", "success");
-        }
+            const els = {
+                cronInput: document.getElementById("cc-cron-input"),
+                sourceMode: document.getElementById("cc-source-mode"),
+                sourceFixed: document.getElementById("cc-source-fixed"),
+                sourceFixedField: document.getElementById("cc-source-fixed-field"),
+                sourceIana: document.getElementById("cc-source-iana"),
+                sourceIanaField: document.getElementById("cc-source-iana-field"),
+                sourceDstWrap: document.getElementById("cc-source-dst-wrap"),
+                sourceDst: document.getElementById("cc-source-dst"),
+                sourceOffset: document.getElementById("cc-source-offset"),
+                cronHuman: document.getElementById("cc-cron-human"),
+                nextTriggers: document.getElementById("cc-next-triggers"),
+                targetMode: document.getElementById("cc-target-mode"),
+                targetFixed: document.getElementById("cc-target-fixed"),
+                targetFixedField: document.getElementById("cc-target-fixed-field"),
+                targetIana: document.getElementById("cc-target-iana"),
+                targetIanaField: document.getElementById("cc-target-iana-field"),
+                targetDstWrap: document.getElementById("cc-target-dst-wrap"),
+                targetDst: document.getElementById("cc-target-dst"),
+                targetOffset: document.getElementById("cc-target-offset"),
+                ianaList: document.getElementById("cc-iana-zones"),
+                allowWrap: document.getElementById("cc-allow-wrap"),
+                convertBtn: document.getElementById("cc-convert"),
+                swapBtn: document.getElementById("cc-swap"),
+                resetBtn: document.getElementById("cc-reset"),
+                clearSavedBtn: document.getElementById("cc-clear-saved"),
+                status: document.getElementById("cc-status"),
+                output: document.getElementById("cc-output-text"),
+                copyBtn: document.getElementById("cc-copy-output"),
+                downloadBtn: document.getElementById("cc-download-output"),
+                notes: document.getElementById("cc-notes"),
+                legend: document.getElementById("cc-legend"),
+                calendarWrap: document.getElementById("cc-calendar-wrap"),
+            };
 
-        function swapZones() {
-          const sourceState = {
-            mode: els.sourceMode.value,
-            fixed: els.sourceFixed.value,
-            iana: els.sourceIana.value,
-            dst: els.sourceDst.checked,
-          };
-          const targetState = {
-            mode: els.targetMode.value,
-            fixed: els.targetFixed.value,
-            iana: els.targetIana.value,
-            dst: els.targetDst.checked,
-          };
+            function generateOffsetPresets() {
+                const values = [...COMMON_FIXED_PRESETS];
+                const seen = new Set(COMMON_FIXED_PRESETS.map((item) => item.offset));
+                const extraOffsets = [
+                    -12 * 60,
+                    -11 * 60,
+                    -10 * 60,
+                    -9 * 60 - 30,
+                    -9 * 60,
+                    -8 * 60,
+                    -7 * 60,
+                    -6 * 60,
+                    -5 * 60,
+                    -4 * 60,
+                    -3 * 60 - 30,
+                    -3 * 60,
+                    -2 * 60,
+                    -60,
+                    0,
+                    60,
+                    2 * 60,
+                    3 * 60,
+                    3 * 60 + 30,
+                    4 * 60,
+                    4 * 60 + 30,
+                    5 * 60,
+                    5 * 60 + 30,
+                    5 * 60 + 45,
+                    6 * 60,
+                    6 * 60 + 30,
+                    7 * 60,
+                    8 * 60,
+                    8 * 60 + 45,
+                    9 * 60,
+                    9 * 60 + 30,
+                    10 * 60,
+                    10 * 60 + 30,
+                    11 * 60,
+                    12 * 60,
+                    12 * 60 + 45,
+                    13 * 60,
+                    14 * 60,
+                ];
+                for (const offset of extraOffsets) {
+                    if (seen.has(offset)) {
+                        continue;
+                    }
+                    seen.add(offset);
+                    values.push({
+                        id: `UTC${formatOffset(offset).replace("UTC", "")}`,
+                        label: `UTC offset ${formatOffset(offset)}`,
+                        offset,
+                    });
+                }
+                values.sort((a, b) => a.offset - b.offset || a.label.localeCompare(b.label));
+                return values;
+            }
 
-          els.sourceMode.value = targetState.mode;
-          els.sourceFixed.value = targetState.fixed;
-          els.sourceIana.value = targetState.iana;
-          els.sourceDst.checked = targetState.dst;
+            function populateFixedOffsetSelect(selectEl) {
+                selectEl.innerHTML = "";
+                const presets = generateOffsetPresets();
+                for (const item of presets) {
+                    offsetPresetMap.set(item.id, item.offset);
+                    const opt = document.createElement("option");
+                    opt.value = item.id;
+                    opt.textContent = item.label;
+                    selectEl.appendChild(opt);
+                }
+            }
 
-          els.targetMode.value = sourceState.mode;
-          els.targetFixed.value = sourceState.fixed;
-          els.targetIana.value = sourceState.iana;
-          els.targetDst.checked = sourceState.dst;
+            function populateIanaList() {
+                const zones =
+                    typeof Intl.supportedValuesOf === "function"
+                        ? Intl.supportedValuesOf("timeZone")
+                        : FALLBACK_IANA_ZONES;
+                els.ianaList.innerHTML = "";
+                for (const zone of zones) {
+                    const opt = document.createElement("option");
+                    opt.value = zone;
+                    els.ianaList.appendChild(opt);
+                }
+            }
 
-          syncTimezoneUi("source");
-          syncTimezoneUi("target");
-          updateResolvedOffsets();
-          convert();
-        }
+            function formatOffset(offsetMinutes) {
+                const sign = offsetMinutes >= 0 ? "+" : "-";
+                const absolute = Math.abs(offsetMinutes);
+                const hours = String(Math.floor(absolute / 60)).padStart(2, "0");
+                const minutes = String(absolute % 60).padStart(2, "0");
+                return `UTC${sign}${hours}:${minutes}`;
+            }
 
-        function clearSavedState() {
-          localStorage.removeItem(STORAGE_KEY);
-          window.location.hash = "";
-          setStatus("Saved state cleared.", "success");
-        }
+            function getTimeZoneOffsetMinutes(timeZone, utcDate) {
+                const formatter = new Intl.DateTimeFormat("en-US", {
+                    timeZone,
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: false,
+                });
+                const parts = formatter.formatToParts(utcDate);
+                const map = {};
+                for (const part of parts) {
+                    if (part.type !== "literal") {
+                        map[part.type] = Number(part.value);
+                    }
+                }
+                const asUtc = Date.UTC(map.year, map.month - 1, map.day, map.hour, map.minute, map.second);
+                return Math.round((asUtc - utcDate.getTime()) / 60000);
+            }
 
-        function bindEvents() {
-          const timezoneInputs = [
-            els.sourceMode,
-            els.sourceFixed,
-            els.sourceIana,
-            els.sourceDst,
-            els.targetMode,
-            els.targetFixed,
-            els.targetIana,
-            els.targetDst,
-            els.allowWrap,
-          ];
+            function getIanaZoneOffsets(zone) {
+                if (zoneOffsetCache.has(zone)) {
+                    return zoneOffsetCache.get(zone);
+                }
+                try {
+                    const formatter = new Intl.DateTimeFormat("en-US", { timeZone: zone });
+                    formatter.format(new Date());
+                } catch (error) {
+                    throw new Error(`Invalid IANA timezone: ${zone}`);
+                }
 
-          els.convertBtn.addEventListener("click", convert);
-          els.swapBtn.addEventListener("click", swapZones);
-          els.resetBtn.addEventListener("click", () => {
-            defaultState();
-            convert();
-          });
-          els.clearSavedBtn.addEventListener("click", clearSavedState);
-          els.copyBtn.addEventListener("click", copyOutput);
-          els.downloadBtn.addEventListener("click", downloadOutput);
+                const offsets = new Set();
+                for (let month = 0; month < 12; month += 1) {
+                    const probe = new Date(Date.UTC(2025, month, 1, 12, 0, 0));
+                    offsets.add(getTimeZoneOffsetMinutes(zone, probe));
+                }
+                const values = [...offsets].sort((a, b) => a - b);
+                zoneOffsetCache.set(zone, values);
+                return values;
+            }
 
-          els.cronInput.addEventListener("input", () => {
-            saveState();
-            convert();
-          });
+            function resolveTimezone(which) {
+                const isSource = which === "source";
+                const modeEl = isSource ? els.sourceMode : els.targetMode;
+                const fixedEl = isSource ? els.sourceFixed : els.targetFixed;
+                const ianaEl = isSource ? els.sourceIana : els.targetIana;
+                const dstEl = isSource ? els.sourceDst : els.targetDst;
 
-          timezoneInputs.forEach((input) => {
-            input.addEventListener("change", () => {
-              syncTimezoneUi("source");
-              syncTimezoneUi("target");
-              updateResolvedOffsets();
-              saveState();
-              convert();
-            });
-          });
-        }
+                if (modeEl.value === "fixed") {
+                    const offset = offsetPresetMap.get(fixedEl.value);
+                    if (typeof offset !== "number") {
+                        throw new Error(`Unknown fixed offset preset: ${fixedEl.value}`);
+                    }
+                    return {
+                        label: fixedEl.value,
+                        offset,
+                        description: `Resolved offset: ${formatOffset(offset)}`,
+                    };
+                }
 
-        function init() {
-          populateFixedOffsetSelect(els.sourceFixed);
-          populateFixedOffsetSelect(els.targetFixed);
-          populateIanaList();
+                const zone = ianaEl.value.trim();
+                if (!zone) {
+                    throw new Error("IANA timezone is required.");
+                }
+                const offsets = getIanaZoneOffsets(zone);
+                const hasDst = offsets.length > 1;
+                const standardOffset = offsets[0];
+                const daylightOffset = offsets[offsets.length - 1];
+                const chosenOffset = hasDst ? (dstEl.checked ? daylightOffset : standardOffset) : standardOffset;
+                const description = hasDst
+                    ? `Resolved offset: ${formatOffset(chosenOffset)} (${dstEl.checked ? "daylight" : "standard"})`
+                    : `Resolved offset: ${formatOffset(chosenOffset)} (no DST shift)`;
+                return {
+                    label: zone,
+                    offset: chosenOffset,
+                    description,
+                };
+            }
 
-          defaultState();
-          loadState();
-          syncTimezoneUi("source");
-          syncTimezoneUi("target");
-          updateResolvedOffsets();
-          bindEvents();
-          convert();
-        }
+            function parseValue(token, kind) {
+                const raw = token.trim().toLowerCase();
+                if (!raw) {
+                    throw new Error("Empty value segment found.");
+                }
+                if (kind === "month" && MONTH_NAMES[raw]) {
+                    return MONTH_NAMES[raw];
+                }
+                if (kind === "dow" && DOW_NAMES[raw] !== undefined) {
+                    return DOW_NAMES[raw];
+                }
+                if (!/^\d+$/.test(raw)) {
+                    throw new Error(`Invalid value: '${token}'.`);
+                }
+                const num = Number(raw);
+                return num;
+            }
 
-        init();
-      })();
+            function parseField(field, config) {
+                const text = field.trim();
+                const tokens = text.split(",");
+                const values = new Set();
+                const isStar = text === "*";
+
+                for (const tokenRaw of tokens) {
+                    const token = tokenRaw.trim();
+                    if (!token) {
+                        throw new Error(`Invalid empty token in ${config.label}.`);
+                    }
+
+                    let [basePart, stepPart] = token.split("/");
+                    if (token.includes("/") && stepPart === undefined) {
+                        throw new Error(`Invalid step syntax in ${config.label}: '${token}'.`);
+                    }
+
+                    let step = 1;
+                    if (stepPart !== undefined) {
+                        if (!/^\d+$/.test(stepPart) || Number(stepPart) <= 0) {
+                            throw new Error(`Step must be a positive integer in ${config.label}: '${token}'.`);
+                        }
+                        step = Number(stepPart);
+                    }
+
+                    let start;
+                    let end;
+                    if (basePart === "*") {
+                        start = config.min;
+                        end = config.max;
+                    } else if (basePart.includes("-")) {
+                        const [startRaw, endRaw] = basePart.split("-");
+                        if (endRaw === undefined || startRaw.trim() === "" || endRaw.trim() === "") {
+                            throw new Error(`Invalid range in ${config.label}: '${token}'.`);
+                        }
+                        start = parseValue(startRaw, config.kind);
+                        end = parseValue(endRaw, config.kind);
+                    } else {
+                        start = parseValue(basePart, config.kind);
+                        end = start;
+                    }
+
+                    if (
+                        Number.isNaN(start) ||
+                        Number.isNaN(end) ||
+                        start < config.min ||
+                        end > config.max ||
+                        start > end
+                    ) {
+                        throw new Error(`Out-of-range value in ${config.label}: '${token}'.`);
+                    }
+
+                    for (let value = start; value <= end; value += step) {
+                        const normalized = config.kind === "dow" && value === 7 ? 0 : value;
+                        values.add(normalized);
+                    }
+                }
+
+                if (values.size === 0) {
+                    throw new Error(`${config.label} does not contain any values.`);
+                }
+
+                return {
+                    text,
+                    isStar,
+                    values: [...values].sort((a, b) => a - b),
+                };
+            }
+
+            function parseCron(expression) {
+                const fields = expression
+                    .trim()
+                    .split(/\s+/)
+                    .filter(Boolean);
+                if (fields.length !== 5) {
+                    throw new Error("Expected exactly 5 fields: minute hour day-of-month month day-of-week.");
+                }
+
+                const minute = parseField(fields[0], { kind: "minute", min: 0, max: 59, label: "minute" });
+                const hour = parseField(fields[1], { kind: "hour", min: 0, max: 23, label: "hour" });
+                const dom = parseField(fields[2], { kind: "dom", min: 1, max: 31, label: "day-of-month" });
+                const month = parseField(fields[3], { kind: "month", min: 1, max: 12, label: "month" });
+                const dow = parseField(fields[4], { kind: "dow", min: 0, max: 7, label: "day-of-week" });
+
+                return {
+                    minute,
+                    hour,
+                    dom,
+                    month,
+                    dow,
+                    raw: fields,
+                };
+            }
+
+            function setEquals(values, expected) {
+                if (values.length !== expected.length) {
+                    return false;
+                }
+                for (let idx = 0; idx < values.length; idx += 1) {
+                    if (values[idx] !== expected[idx]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function hourToAmPm(hour) {
+                const period = hour >= 12 ? "pm" : "am";
+                const normalized = hour % 12 === 0 ? 12 : hour % 12;
+                return `${normalized} ${period}`;
+            }
+
+            function joinNatural(items, conjunction = "and") {
+                if (items.length === 0) {
+                    return "";
+                }
+                if (items.length === 1) {
+                    return items[0];
+                }
+                if (items.length === 2) {
+                    return `${items[0]} ${conjunction} ${items[1]}`;
+                }
+                return `${items.slice(0, -1).join(", ")}, ${conjunction} ${items[items.length - 1]}`;
+            }
+
+            function describeDayScope(parsed) {
+                if (parsed.dom.isStar && parsed.dow.isStar) {
+                    return "every day";
+                }
+                if (parsed.dom.isStar && setEquals(parsed.dow.values, [1, 2, 3, 4, 5])) {
+                    return "every weekday";
+                }
+                if (parsed.dom.isStar && setEquals(parsed.dow.values, [0, 6])) {
+                    return "every weekend";
+                }
+                if (parsed.dom.isStar) {
+                    const days = parsed.dow.values.map((day) => DAY_NAMES_LONG[day]);
+                    return `on ${joinNatural(days, "or")}`;
+                }
+                if (parsed.dow.isStar) {
+                    const domText = formatValueSet(parsed.dom.values, 1, 31, false);
+                    return `on day-of-month ${domText}`;
+                }
+                const domText = formatValueSet(parsed.dom.values, 1, 31, false);
+                const dowText = parsed.dow.values.map((day) => DAY_NAMES_LONG[day]).join(", ");
+                return `when day-of-month ${domText} or day-of-week (${dowText}) matches`;
+            }
+
+            function describeTimeScope(parsed) {
+                const hourRanges = collapseConsecutive(parsed.hour.values);
+                if (parsed.minute.isStar && parsed.hour.isStar) {
+                    return "every minute";
+                }
+                if (parsed.minute.isStar && hourRanges.length === 1) {
+                    const [start, end] = hourRanges[0];
+                    if (start === end) {
+                        return `every minute during ${hourToAmPm(start)}`;
+                    }
+                    return `from ${hourToAmPm(start)} to ${hourToAmPm(end)}`;
+                }
+                if (parsed.minute.isStar) {
+                    const hours = formatValueSet(parsed.hour.values, 0, 23, false);
+                    return `every minute during hours ${hours}`;
+                }
+                if (parsed.hour.isStar && parsed.minute.values.length === 1) {
+                    return `at minute ${String(parsed.minute.values[0]).padStart(2, "0")} past every hour`;
+                }
+                if (parsed.hour.values.length === 1 && parsed.minute.values.length === 1) {
+                    const hour = parsed.hour.values[0];
+                    const minute = String(parsed.minute.values[0]).padStart(2, "0");
+                    const period = hour >= 12 ? "pm" : "am";
+                    const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+                    return `at ${hour12}:${minute} ${period}`;
+                }
+                const minuteText = formatValueSet(parsed.minute.values, 0, 59, false);
+                const hourText = formatValueSet(parsed.hour.values, 0, 23, false);
+                return `at minutes ${minuteText} during hours ${hourText}`;
+            }
+
+            function describeMonthScope(parsed) {
+                if (parsed.month.isStar) {
+                    return "";
+                }
+                const monthList = parsed.month.values.map((month) => MONTH_LABELS[month - 1]);
+                return `in ${joinNatural(monthList, "or")}`;
+            }
+
+            function describeCron(parsed) {
+                const dayScope = describeDayScope(parsed);
+                const timeScope = describeTimeScope(parsed);
+                const monthScope = describeMonthScope(parsed);
+
+                if (timeScope.startsWith("from ") && dayScope.startsWith("every ")) {
+                    return `${dayScope} ${timeScope}${monthScope ? ` ${monthScope}` : ""}`;
+                }
+                if (timeScope === "every minute") {
+                    return `${timeScope} ${dayScope}${monthScope ? ` ${monthScope}` : ""}`;
+                }
+                return `${dayScope} ${timeScope}${monthScope ? ` ${monthScope}` : ""}`;
+            }
+
+            function cronMatchesLocalMinute(parsed, localMs) {
+                const date = new Date(localMs);
+                const minute = date.getUTCMinutes();
+                const hour = date.getUTCHours();
+                const dom = date.getUTCDate();
+                const month = date.getUTCMonth() + 1;
+                const dow = date.getUTCDay();
+
+                const minuteMatch = parsed.minute.isStar || parsed.minute.values.includes(minute);
+                const hourMatch = parsed.hour.isStar || parsed.hour.values.includes(hour);
+                const monthMatch = parsed.month.isStar || parsed.month.values.includes(month);
+                const domMatch = parsed.dom.isStar || parsed.dom.values.includes(dom);
+                const dowMatch = parsed.dow.isStar || parsed.dow.values.includes(dow);
+
+                const domRestricted = !parsed.dom.isStar;
+                const dowRestricted = !parsed.dow.isStar;
+                let dayMatch = true;
+                if (domRestricted && dowRestricted) {
+                    dayMatch = domMatch || dowMatch;
+                } else if (domRestricted) {
+                    dayMatch = domMatch;
+                } else if (dowRestricted) {
+                    dayMatch = dowMatch;
+                }
+
+                return minuteMatch && hourMatch && monthMatch && dayMatch;
+            }
+
+            function findNextTriggers(parsed, offsetMinutes, count = 3) {
+                const results = [];
+                const nowLocalMs = Date.now() + offsetMinutes * 60000;
+                let cursor = (Math.floor(nowLocalMs / 60000) + 1) * 60000;
+                const maxIterations = 60 * 24 * 366 * 2;
+
+                for (let idx = 0; idx < maxIterations && results.length < count; idx += 1) {
+                    if (cronMatchesLocalMinute(parsed, cursor)) {
+                        results.push(cursor);
+                    }
+                    cursor += 60000;
+                }
+                return results;
+            }
+
+            function formatLocalDateTime(localMs) {
+                const date = new Date(localMs);
+                const dow = DAY_NAMES[date.getUTCDay()];
+                const month = MONTH_LABELS[date.getUTCMonth()];
+                const day = String(date.getUTCDate()).padStart(2, "0");
+                const year = date.getUTCFullYear();
+                const hour = date.getUTCHours();
+                const minute = String(date.getUTCMinutes()).padStart(2, "0");
+                const period = hour >= 12 ? "pm" : "am";
+                const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+                return `${dow}, ${month} ${day} ${year} ${hour12}:${minute} ${period}`;
+            }
+
+            function renderCronSummary(parsed, sourceTz) {
+                const decoded = describeCron(parsed);
+                els.cronHuman.textContent = `Decoded: ${decoded}`;
+
+                const triggers = findNextTriggers(parsed, sourceTz.offset, 3);
+                if (triggers.length === 0) {
+                    els.nextTriggers.textContent = "Next 3 triggers: none found in search window.";
+                    return;
+                }
+
+                const items = triggers
+                    .map(
+                        (localMs) =>
+                            `<li>${formatLocalDateTime(localMs)} (${sourceTz.label}, ${formatOffset(sourceTz.offset)})</li>`,
+                    )
+                    .join("");
+                els.nextTriggers.innerHTML = `Next 3 triggers:<ul>${items}</ul>`;
+            }
+
+            function buildSourceMinutes(parsed) {
+                const minutesOfWeek = new Set();
+                const dows = parsed.dow.isStar ? [0, 1, 2, 3, 4, 5, 6] : parsed.dow.values;
+                for (const dow of dows) {
+                    for (const hour of parsed.hour.values) {
+                        for (const minute of parsed.minute.values) {
+                            minutesOfWeek.add(dow * 1440 + hour * 60 + minute);
+                        }
+                    }
+                }
+                return minutesOfWeek;
+            }
+
+            function shiftMinutesOfWeek(sourceMinutes, deltaMinutes) {
+                const shifted = new Set();
+                for (const minuteIndex of sourceMinutes) {
+                    let next = (minuteIndex + deltaMinutes) % 10080;
+                    if (next < 0) {
+                        next += 10080;
+                    }
+                    shifted.add(next);
+                }
+                return shifted;
+            }
+
+            function buildDowHourMinuteMap(minutesOfWeek) {
+                const map = Array.from({ length: 7 }, () =>
+                    Array.from({ length: 24 }, () => new Set()),
+                );
+                for (const idx of minutesOfWeek) {
+                    const dow = Math.floor(idx / 1440);
+                    const rem = idx % 1440;
+                    const hour = Math.floor(rem / 60);
+                    const minute = rem % 60;
+                    map[dow][hour].add(minute);
+                }
+                return map;
+            }
+
+            function collapseConsecutive(values) {
+                if (values.length === 0) {
+                    return [];
+                }
+                const sorted = [...values].sort((a, b) => a - b);
+                const ranges = [];
+                let start = sorted[0];
+                let end = sorted[0];
+                for (let i = 1; i < sorted.length; i += 1) {
+                    const value = sorted[i];
+                    if (value === end + 1) {
+                        end = value;
+                        continue;
+                    }
+                    ranges.push([start, end]);
+                    start = value;
+                    end = value;
+                }
+                ranges.push([start, end]);
+                return ranges;
+            }
+
+            function rangesToField(ranges) {
+                return ranges
+                    .map(([start, end]) => (start === end ? String(start) : `${start}-${end}`))
+                    .join(",");
+            }
+
+            function formatValueSet(values, min, max, useStarIfAll = true) {
+                const sorted = [...values].sort((a, b) => a - b);
+                if (useStarIfAll && sorted.length === max - min + 1 && sorted[0] === min && sorted[sorted.length - 1] === max) {
+                    return "*";
+                }
+                return rangesToField(collapseConsecutive(sorted));
+            }
+
+            function mergeLinesByPattern(lines) {
+                const merged = new Map();
+                for (const line of lines) {
+                    const key = `${line.minuteValues.join(",")}|${line.hourExpr}|${line.hourValues.join(",")}`;
+                    if (!merged.has(key)) {
+                        merged.set(key, {
+                            minuteValues: line.minuteValues,
+                            hourExpr: line.hourExpr,
+                            hourValues: line.hourValues,
+                            dows: [],
+                        });
+                    }
+                    merged.get(key).dows.push(...line.dows);
+                }
+                return [...merged.values()]
+                    .map((item) => ({
+                        ...item,
+                        dows: [...new Set(item.dows)].sort((a, b) => a - b),
+                    }))
+                    .sort((a, b) => {
+                        const dowDiff = a.dows[0] - b.dows[0];
+                        if (dowDiff !== 0) {
+                            return dowDiff;
+                        }
+                        const hourDiff = a.hourValues[0] - b.hourValues[0];
+                        if (hourDiff !== 0) {
+                            return hourDiff;
+                        }
+                        return a.minuteValues[0] - b.minuteValues[0];
+                    });
+            }
+
+            function buildOutputLines(targetMap, options) {
+                const perDowLines = [];
+
+                for (let dow = 0; dow < 7; dow += 1) {
+                    const minuteMap = new Map();
+                    for (let hour = 0; hour < 24; hour += 1) {
+                        const minutes = [...targetMap[dow][hour]].sort((a, b) => a - b);
+                        if (minutes.length === 0) {
+                            continue;
+                        }
+                        const minuteKey = minutes.join(",");
+                        if (!minuteMap.has(minuteKey)) {
+                            minuteMap.set(minuteKey, { minuteValues: minutes, hours: [] });
+                        }
+                        minuteMap.get(minuteKey).hours.push(hour);
+                    }
+
+                    for (const group of minuteMap.values()) {
+                        const segments = collapseConsecutive(group.hours);
+                        if (
+                            options.allowWrap &&
+                            segments.length === 2 &&
+                            segments[0][0] === 0 &&
+                            segments[1][1] === 23
+                        ) {
+                            perDowLines.push({
+                                dows: [dow],
+                                minuteValues: group.minuteValues,
+                                hourExpr: `${segments[1][0]}-${segments[0][1]}`,
+                                hourValues: group.hours,
+                            });
+                        } else {
+                            for (const segment of segments) {
+                                const segmentHours = [];
+                                for (let hour = segment[0]; hour <= segment[1]; hour += 1) {
+                                    segmentHours.push(hour);
+                                }
+                                perDowLines.push({
+                                    dows: [dow],
+                                    minuteValues: group.minuteValues,
+                                    hourExpr: segment[0] === segment[1] ? String(segment[0]) : `${segment[0]}-${segment[1]}`,
+                                    hourValues: segmentHours,
+                                });
+                            }
+                        }
+                    }
+                }
+
+                return mergeLinesByPattern(perDowLines);
+            }
+
+            function lineToCron(line) {
+                const minuteExpr = formatValueSet(line.minuteValues, 0, 59, true);
+                const dowExpr = formatValueSet(line.dows, 0, 6, true);
+                return `${minuteExpr} ${line.hourExpr} * * ${dowExpr}`;
+            }
+
+            function buildLayerMap(lines) {
+                return lines.map((line) => ({
+                    dowSet: new Set(line.dows),
+                    hourSet: new Set(line.hourValues),
+                }));
+            }
+
+            function gradientForColors(colors) {
+                if (colors.length === 0) {
+                    return "";
+                }
+                if (colors.length === 1) {
+                    return colors[0];
+                }
+                const step = 100 / colors.length;
+                const segments = colors
+                    .map((color, idx) => {
+                        const start = (step * idx).toFixed(2);
+                        const end = (step * (idx + 1)).toFixed(2);
+                        return `${color} ${start}% ${end}%`;
+                    })
+                    .join(", ");
+                return `linear-gradient(135deg, ${segments})`;
+            }
+
+            function renderLegend(convertedExpressions) {
+                els.legend.innerHTML = "";
+
+                const sourceLegend = document.createElement("div");
+                sourceLegend.className = "legend-item";
+                const sourcePill = document.createElement("span");
+                sourcePill.className = "legend-pill";
+                sourcePill.textContent = "Source schedule";
+                sourcePill.style.background = "color-mix(in oklab, var(--source) 24%, var(--panel) 76%)";
+                sourcePill.style.borderColor = "color-mix(in oklab, var(--source) 45%, var(--border) 55%)";
+                sourceLegend.appendChild(sourcePill);
+                els.legend.appendChild(sourceLegend);
+
+                for (let i = 0; i < convertedExpressions.length; i += 1) {
+                    const item = document.createElement("div");
+                    item.className = "legend-item";
+                    const expressionPill = document.createElement("span");
+                    expressionPill.className = "legend-pill";
+                    expressionPill.textContent = convertedExpressions[i];
+                    const expressionColor = CONVERT_COLORS[i % CONVERT_COLORS.length];
+                    expressionPill.style.background = `color-mix(in oklab, ${expressionColor} 24%, var(--panel) 76%)`;
+                    expressionPill.style.borderColor = `color-mix(in oklab, ${expressionColor} 45%, var(--border) 55%)`;
+                    item.appendChild(expressionPill);
+                    els.legend.appendChild(item);
+                }
+            }
+
+            function renderCalendar(sourceMap, lineLayers, convertedExpressions = []) {
+                const table = document.createElement("table");
+                table.id = "cc-calendar-grid";
+
+                const thead = document.createElement("thead");
+                const headRow = document.createElement("tr");
+                const corner = document.createElement("th");
+                corner.textContent = "Hour";
+                headRow.appendChild(corner);
+                for (const dow of CALENDAR_DAY_ORDER) {
+                    const th = document.createElement("th");
+                    th.textContent = DAY_NAMES[dow];
+                    headRow.appendChild(th);
+                }
+                thead.appendChild(headRow);
+                table.appendChild(thead);
+
+                const tbody = document.createElement("tbody");
+                for (let hour = 0; hour < 24; hour += 1) {
+                    const tr = document.createElement("tr");
+                    const timeTd = document.createElement("td");
+                    timeTd.className = "time-col";
+                    timeTd.textContent = `${String(hour).padStart(2, "0")}:00`;
+                    tr.appendChild(timeTd);
+
+                    for (const dow of CALENDAR_DAY_ORDER) {
+                        const cell = document.createElement("td");
+                        cell.className = "slot";
+
+                        const colors = [];
+                        const sourceCount = sourceMap[dow][hour].size;
+                        if (sourceCount > 0) {
+                            colors.push("var(--source)");
+                        }
+
+                        const convertedExprsForCell = [];
+                        lineLayers.forEach((layer, idx) => {
+                            if (layer.dowSet.has(dow) && layer.hourSet.has(hour)) {
+                                convertedExprsForCell.push(convertedExpressions[idx] || `line ${idx + 1}`);
+                                colors.push(CONVERT_COLORS[idx % CONVERT_COLORS.length]);
+                            }
+                        });
+
+                        const fill = gradientForColors(colors);
+                        if (fill) {
+                            if (fill.startsWith("linear-gradient")) {
+                                cell.style.backgroundImage = fill;
+                            } else {
+                                cell.style.background = fill;
+                            }
+                        }
+
+                        const tooltipParts = [`${DAY_NAMES[dow]} ${String(hour).padStart(2, "0")}:00`];
+                        if (sourceCount > 0) {
+                            tooltipParts.push(`Source: ${sourceCount} minute(s)`);
+                        }
+                        if (convertedExprsForCell.length > 0) {
+                            tooltipParts.push(`Converted expressions: ${convertedExprsForCell.join(" ; ")}`);
+                        }
+                        cell.title = tooltipParts.join(" | ");
+
+                        tr.appendChild(cell);
+                    }
+                    tbody.appendChild(tr);
+                }
+
+                table.appendChild(tbody);
+                els.calendarWrap.innerHTML = "";
+                els.calendarWrap.appendChild(table);
+            }
+
+            function setStatus(message, type = "info") {
+                els.status.className = "";
+                if (type === "error") {
+                    els.status.classList.add("error");
+                } else if (type === "success") {
+                    els.status.classList.add("success");
+                }
+                els.status.textContent = message;
+            }
+
+            function syncTimezoneUi(which) {
+                const isSource = which === "source";
+                const modeEl = isSource ? els.sourceMode : els.targetMode;
+                const fixedField = isSource ? els.sourceFixedField : els.targetFixedField;
+                const ianaField = isSource ? els.sourceIanaField : els.targetIanaField;
+                const dstWrap = isSource ? els.sourceDstWrap : els.targetDstWrap;
+
+                const isIana = modeEl.value === "iana";
+                fixedField.hidden = isIana;
+                ianaField.hidden = !isIana;
+                dstWrap.hidden = !isIana;
+            }
+
+            function updateResolvedOffsets() {
+                try {
+                    const source = resolveTimezone("source");
+                    els.sourceOffset.textContent = source.description;
+                } catch (error) {
+                    els.sourceOffset.textContent = `Resolved offset: error (${error.message})`;
+                }
+
+                try {
+                    const target = resolveTimezone("target");
+                    els.targetOffset.textContent = target.description;
+                } catch (error) {
+                    els.targetOffset.textContent = `Resolved offset: error (${error.message})`;
+                }
+            }
+
+            function currentState() {
+                return {
+                    cron: els.cronInput.value,
+                    sourceMode: els.sourceMode.value,
+                    sourceFixed: els.sourceFixed.value,
+                    sourceIana: els.sourceIana.value,
+                    sourceDst: String(els.sourceDst.checked),
+                    targetMode: els.targetMode.value,
+                    targetFixed: els.targetFixed.value,
+                    targetIana: els.targetIana.value,
+                    targetDst: String(els.targetDst.checked),
+                    allowWrap: String(els.allowWrap.checked),
+                };
+            }
+
+            function applyState(state) {
+                if (!state || typeof state !== "object") {
+                    return;
+                }
+                if (typeof state.cron === "string") els.cronInput.value = state.cron;
+                if (typeof state.sourceMode === "string") els.sourceMode.value = state.sourceMode;
+                if (typeof state.sourceFixed === "string") els.sourceFixed.value = state.sourceFixed;
+                if (typeof state.sourceIana === "string") els.sourceIana.value = state.sourceIana;
+                if (typeof state.sourceDst === "string") els.sourceDst.checked = state.sourceDst === "true";
+                if (typeof state.targetMode === "string") els.targetMode.value = state.targetMode;
+                if (typeof state.targetFixed === "string") els.targetFixed.value = state.targetFixed;
+                if (typeof state.targetIana === "string") els.targetIana.value = state.targetIana;
+                if (typeof state.targetDst === "string") els.targetDst.checked = state.targetDst === "true";
+                if (typeof state.allowWrap === "string") els.allowWrap.checked = state.allowWrap === "true";
+            }
+
+            function saveState() {
+                const state = currentState();
+                const params = new URLSearchParams(state);
+                const encoded = params.toString();
+                window.location.hash = encoded;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            }
+
+            function loadState() {
+                const hash = window.location.hash.replace(/^#/, "");
+                if (hash) {
+                    const params = new URLSearchParams(hash);
+                    const state = Object.fromEntries(params.entries());
+                    applyState(state);
+                    return;
+                }
+
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) {
+                    return;
+                }
+                try {
+                    applyState(JSON.parse(raw));
+                } catch {
+                    localStorage.removeItem(STORAGE_KEY);
+                }
+            }
+
+            function renderNotes(notes, isWarning = false) {
+                if (!notes || notes.length === 0) {
+                    els.notes.innerHTML = "";
+                    return;
+                }
+                const list = notes.map((line) => `<li>${line}</li>`).join("");
+                els.notes.innerHTML = `<ul class="${isWarning ? "warn" : ""}">${list}</ul>`;
+            }
+
+            function defaultState() {
+                els.cronInput.value = "* 8-20 * * 1-5";
+                els.sourceMode.value = "fixed";
+                els.sourceFixed.value = "PST";
+                els.sourceIana.value = "America/Los_Angeles";
+                els.sourceDst.checked = false;
+                els.targetMode.value = "fixed";
+                els.targetFixed.value = "UTC";
+                els.targetIana.value = "UTC";
+                els.targetDst.checked = false;
+                els.allowWrap.checked = false;
+                syncTimezoneUi("source");
+                syncTimezoneUi("target");
+                updateResolvedOffsets();
+            }
+
+            function convert() {
+                try {
+                    const parsed = parseCron(els.cronInput.value);
+                    const sourceTz = resolveTimezone("source");
+                    const targetTz = resolveTimezone("target");
+                    renderCronSummary(parsed, sourceTz);
+
+                    if (!parsed.dom.isStar || !parsed.month.isStar) {
+                        throw new Error(
+                            "This converter currently generates output only when day-of-month and month are '*' (weekly-style schedules).",
+                        );
+                    }
+
+                    const deltaMinutes = targetTz.offset - sourceTz.offset;
+                    const sourceMinutes = buildSourceMinutes(parsed);
+                    const shifted = shiftMinutesOfWeek(sourceMinutes, deltaMinutes);
+                    const sourceMap = buildDowHourMinuteMap(sourceMinutes);
+                    const targetMap = buildDowHourMinuteMap(shifted);
+
+                    const lines = buildOutputLines(targetMap, {
+                        allowWrap: els.allowWrap.checked,
+                    });
+
+                    if (lines.length === 0) {
+                        throw new Error("No converted schedule entries were generated.");
+                    }
+
+                    const outputLines = lines.map((line) => lineToCron(line));
+                    els.output.textContent = outputLines.join("\n");
+
+                    const notes = [
+                        `Source offset: ${sourceTz.description.replace("Resolved offset: ", "")}`,
+                        `Target offset: ${targetTz.description.replace("Resolved offset: ", "")}`,
+                        `Offset delta applied: ${deltaMinutes >= 0 ? "+" : ""}${deltaMinutes} minute(s)`,
+                        "POSIX day-of-month/day-of-week OR semantics are assumed.",
+                        "Output uses numeric day-of-week (0=Sunday).",
+                    ];
+                    renderNotes(notes, false);
+
+                    const layers = buildLayerMap(lines);
+                    renderLegend(outputLines);
+                    renderCalendar(sourceMap, layers, outputLines);
+
+                    setStatus(`Converted to ${lines.length} expression(s).`, "success");
+                    saveState();
+                } catch (error) {
+                    els.output.textContent = "No output. Fix the validation error and try again.";
+                    els.cronHuman.textContent = "Decoded: —";
+                    els.nextTriggers.textContent = "Next 3 triggers: —";
+                    renderLegend([]);
+                    renderCalendar(
+                        Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => new Set())),
+                        [],
+                    );
+                    renderNotes([error.message], true);
+                    setStatus(error.message, "error");
+                    saveState();
+                }
+            }
+
+            async function copyOutput() {
+                const text = els.output.textContent.trim();
+                if (!text || text.startsWith("No output")) {
+                    setStatus("Nothing to copy yet.", "error");
+                    return;
+                }
+                try {
+                    await navigator.clipboard.writeText(text);
+                    setStatus("Copied converted cron output.", "success");
+                } catch {
+                    setStatus("Clipboard copy failed in this browser context.", "error");
+                }
+            }
+
+            function downloadOutput() {
+                const text = els.output.textContent.trim();
+                if (!text || text.startsWith("No output")) {
+                    setStatus("Nothing to download yet.", "error");
+                    return;
+                }
+                const blob = new Blob([`${text}\n`], { type: "text/plain;charset=utf-8" });
+                const href = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = href;
+                a.download = "converted-cron.txt";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(href);
+                setStatus("Downloaded converted-cron.txt.", "success");
+            }
+
+            function swapZones() {
+                const sourceState = {
+                    mode: els.sourceMode.value,
+                    fixed: els.sourceFixed.value,
+                    iana: els.sourceIana.value,
+                    dst: els.sourceDst.checked,
+                };
+                const targetState = {
+                    mode: els.targetMode.value,
+                    fixed: els.targetFixed.value,
+                    iana: els.targetIana.value,
+                    dst: els.targetDst.checked,
+                };
+
+                els.sourceMode.value = targetState.mode;
+                els.sourceFixed.value = targetState.fixed;
+                els.sourceIana.value = targetState.iana;
+                els.sourceDst.checked = targetState.dst;
+
+                els.targetMode.value = sourceState.mode;
+                els.targetFixed.value = sourceState.fixed;
+                els.targetIana.value = sourceState.iana;
+                els.targetDst.checked = sourceState.dst;
+
+                syncTimezoneUi("source");
+                syncTimezoneUi("target");
+                updateResolvedOffsets();
+                convert();
+            }
+
+            function clearSavedState() {
+                localStorage.removeItem(STORAGE_KEY);
+                window.location.hash = "";
+                setStatus("Saved state cleared.", "success");
+            }
+
+            function bindEvents() {
+                const timezoneInputs = [
+                    els.sourceMode,
+                    els.sourceFixed,
+                    els.sourceIana,
+                    els.sourceDst,
+                    els.targetMode,
+                    els.targetFixed,
+                    els.targetIana,
+                    els.targetDst,
+                    els.allowWrap,
+                ];
+
+                els.convertBtn.addEventListener("click", convert);
+                els.swapBtn.addEventListener("click", swapZones);
+                els.resetBtn.addEventListener("click", () => {
+                    defaultState();
+                    convert();
+                });
+                els.clearSavedBtn.addEventListener("click", clearSavedState);
+                els.copyBtn.addEventListener("click", copyOutput);
+                els.downloadBtn.addEventListener("click", downloadOutput);
+
+                els.cronInput.addEventListener("input", () => {
+                    saveState();
+                    convert();
+                });
+
+                timezoneInputs.forEach((input) => {
+                    input.addEventListener("change", () => {
+                        syncTimezoneUi("source");
+                        syncTimezoneUi("target");
+                        updateResolvedOffsets();
+                        saveState();
+                        convert();
+                    });
+                });
+            }
+
+            function init() {
+                populateFixedOffsetSelect(els.sourceFixed);
+                populateFixedOffsetSelect(els.targetFixed);
+                populateIanaList();
+
+                defaultState();
+                loadState();
+                syncTimezoneUi("source");
+                syncTimezoneUi("target");
+                updateResolvedOffsets();
+                bindEvents();
+                convert();
+            }
+
+            init();
+        })();
     </script>
     <script src="/analytics.js"></script>
-  </body>
+</body>
+
 </html>
