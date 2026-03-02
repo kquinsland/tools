@@ -34,7 +34,7 @@ repos:
           - id: markdownlint-cli2
 
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.15.3
+      rev: v0.15.4
       hooks:
           # Lint, fixing what can be automatically fixed
           - id: ruff-check
