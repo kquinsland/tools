@@ -40,7 +40,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "5c2c9aa8c6cde866191c8a1316111ce67acaeb17"
-        updated_commit: null
+        updated_commit: "abfb1216472b1464848b00f2b6a0e7b93c2e7096"
       tags:
         - "html"
         - "cron"
@@ -168,6 +168,25 @@ tools:
         - "dependencies"
         - "mermaid"
         - "dot"
+  - html/syncthing-conflict-triage:
+      title: "Sync Conflict Triage"
+      language: "html"
+      description: "Scan a folder for SyncThing-style conflict files, compare side-by-side, edit in place, and stage deletions safely."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      dependencies:
+        - package: "diff"
+          version: "5.2.0"
+          via: "https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"
+      tags:
+        - "html"
+        - "files"
+        - "syncthing"
+        - "diff"
+        - "conflict"
+        - "triage"
   - html/url-inspect-rewrite:
       title: "URL Inspect & Rewrite"
       language: "html"
