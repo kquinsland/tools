@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Run the local Hugo development server"
+#MISE raw=true
+
+set -euo pipefail
+
+hugo server -D

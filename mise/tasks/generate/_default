@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Regenerate tracked site metadata and tool changelogs"
+#MISE depends=["generate:tools-data", "generate:changelogs"]
+
+set -euo pipefail

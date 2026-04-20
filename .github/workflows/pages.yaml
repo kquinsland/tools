@@ -43,77 +43,22 @@ jobs:
                   # Fetch Hugo theme
                   submodules: recursive
 
-            # Pre-requisites: Hugo binary and Python
-            - name: Setup Hugo
-              id: setup_hugo
-              # See: https://github.com/peaceiris/actions-hugo
-              uses: peaceiris/actions-hugo@75d2e84710de30f6ff7268e08f310b60ef14033f # v3.0.0
+            - name: Setup mise toolchain
+              id: setup_mise
+              uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
               with:
-                  # See: https://github.com/gohugoio/hugo/releases
-                  ##
-                  # renovate: datasource=github-tags depName=gohugoio/hugo versioning=semver
-                  hugo-version: "0.153.1"
-                  # Most themes require extended version for SCSS/SASS support
-                  extended: true
+                  # renovate: datasource=github-tags depName=jdx/mise versioning=loose
+                  version: 2026.4.18
+                  install: true
+                  install_args: python uv hugo-extended
+                  cache: true
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  experimental: false
+                  log_level: ${{ env.ACTIONS_STEP_DEBUG && 'debug' || 'info' }}
 
-            - name: Install uv
-              id: setup_uv
-              uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-              with:
-                  enable-cache: true
-                  ignore-nothing-to-cache: true
-
-            # As long as the page bundle is correct, hugo should just pick up the new tool and the like.
-            # To update the landing page, though, we need to regenerate the data file.
-            - name: Build data/tools.yaml
-              id: build_data_tools_yaml
-              run: |
-                  uv run ci/build_tools_data.py
-
-            - name: Build tool changelogs
-              id: build_tool_changelogs
-              run: |
-                  uv run ci/build_tool_changelogs.py
-
-            - name: Find modified tools data and changelogs
-              id: tools_data_changed
-              run: |
-                  CHANGES=()
-                  if ! git diff --quiet HEAD -- data/tools.yaml; then
-                    TOOLS_CHANGES=$(uv run ci/detect_tools_changes.py)
-                    if [ -z "$TOOLS_CHANGES" ]; then
-                      TOOLS_CHANGES="data/tools.yaml updated"
-                    fi
-                    CHANGES+=("$TOOLS_CHANGES")
-                  fi
-
-                  if ! git diff --quiet HEAD -- 'content/tools/**/changelog.md'; then
-                    COUNT=$(git diff --name-only HEAD -- 'content/tools/**/changelog.md' | wc -l | tr -d ' ')
-                    CHANGES+=("${COUNT} changelog(s) updated")
-                  fi
-
-                  if [ ${#CHANGES[@]} -eq 0 ]; then
-                    echo "changes=" >> $GITHUB_OUTPUT
-                  else
-                    echo "changes=$(IFS='; '; echo \"${CHANGES[*]}\")" >> $GITHUB_OUTPUT
-                  fi
-
-            - name: Commit and push if tools data or changelogs changed
-              id: commit_tools_data_changes
-              if: steps.tools_data_changed.outputs.changes != ''
-              env:
-                  CHANGES: ${{ steps.tools_data_changed.outputs.changes }}
-              run: |-
-                  git config user.name "Automated"
-                  git config user.email "actions@users.noreply.github.com"
-                  git add data/tools.yaml content/tools/**/changelog.md
-                  git commit -m "Updated tool data: ${CHANGES}" || exit 0
-                  git push
-
-            # Then use the updated tool data file to render out a new everything
-            - name: Build site
+            - name: Refresh generated files and build site
               id: build_site
-              run: hugo --minify
+              run: mise run release:build-pages
 
             # As far as I can tell, if you don't use the "legacy" pattern of pointing to a particular folder/branch, you must use the "official" actions
             ##

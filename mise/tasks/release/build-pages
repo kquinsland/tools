@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="CI helper: refresh generated files and build the Pages artifact"
+#MISE depends=["release:refresh-generated"]
+
+set -euo pipefail
+
+hugo --minify
