@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Build the Hugo site into public/"
+
+set -euo pipefail
+
+hugo --minify

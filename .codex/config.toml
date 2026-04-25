@@ -1,0 +1,3 @@
+# See: https://developers.openai.com/codex/config-advanced
+[features]
+multi_agent = true

@@ -1,9 +1,17 @@
+## `abfb121` - February 26, 2026 11:49
+
+- Restore cron converter formatting and keep calendar fix
+
+## `22745c0` - February 26, 2026 11:48
+
+- Fix cron calendar panel centering
+
 ---
 title: Changelog - Cron Timezone Converter
 bookHidden: true
 ---
-## `unreleased` - February 13, 2026
+## `5c2c9aa` - February 12, 2026 17:11
 
-- Add POSIX cron timezone converter with wrap-around output toggle.
-- Add fixed-offset and IANA timezone handling with DST choice for IANA zones.
-- Add Monday-Sunday overlap calendar preview with per-expression coloring.
+- feat: add cron timezone converter tool with icon and calendar
+
+[view history on github](https://github.com/kquinsland/tools/commits/main/content/tools/html/cron-converter/tool.html)
