@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/kquinsland/tools/compare/tools-site-v0.2.2...tools-site-v0.3.0) (2026-04-25)
+
+
+### Features
+
+* add EXIF inspector tool ([352f381](https://github.com/kquinsland/tools/commit/352f381df95f3c61f669f4e6af423d6344859a5d))
+* new tool - EXIF viewer ([cc49b24](https://github.com/kquinsland/tools/commit/cc49b2487494fef5c161c822959bdffe19db7126))
+
 ## [0.2.2](https://github.com/kquinsland/tools/compare/tools-site-v0.2.1...tools-site-v0.2.2) (2026-04-25)
 
 
