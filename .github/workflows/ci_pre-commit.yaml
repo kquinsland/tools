@@ -11,10 +11,6 @@ on:
     pull_request:
         branches:
             - main
-    # Run on any push to non-master branch
-    push:
-        branches-ignore:
-            - main
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
