@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/kquinsland/tools/compare/tools-site-v0.2.0...tools-site-v0.2.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **ci:** change when pre-commit runs ... again ([3d78bfd](https://github.com/kquinsland/tools/commit/3d78bfdb9437933edef6c0eead804f66fddbb53f))
+* **ci:** change when pre-commit runs ... again ([a7c653d](https://github.com/kquinsland/tools/commit/a7c653d2bc77f696c2b1eed424aa8083af729972))
+
 ## [0.2.0](https://github.com/kquinsland/tools/compare/tools-site-v0.1.0...tools-site-v0.2.0) (2026-04-25)
 
 
