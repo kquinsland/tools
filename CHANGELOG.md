@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/kquinsland/tools/compare/tools-site-v0.3.0...tools-site-v0.4.0) (2026-04-25)
+
+
+### Features
+
+* add QR code generator HTML tool ([faa80b7](https://github.com/kquinsland/tools/commit/faa80b7c4f24aad641b802a30605f04cc8eca296))
+* add QR code generator tool ([93024de](https://github.com/kquinsland/tools/commit/93024de6adec851cd247c21ff37f9c17469ea36b))
+
+
+### Bug Fixes
+
+* manually run `mise run generate` again ([067b0eb](https://github.com/kquinsland/tools/commit/067b0ebfea8799c15b34f7715e82d55335c77f40))
+
 ## [0.3.0](https://github.com/kquinsland/tools/compare/tools-site-v0.2.2...tools-site-v0.3.0) (2026-04-25)
 
 
