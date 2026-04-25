@@ -36,9 +36,65 @@ url = "https://github.com/nektos/act/releases/download/v0.2.87/act_Windows_x86_6
 version = "2.12.0"
 backend = "aqua:orhun/git-cliff"
 
+[tools.git-cliff."platforms.linux-arm64"]
+checksum = "sha256:a2d262b389aed349e0564aaaa38a44015c98a951048923b086d6cf732f6dbbaf"
+url = "https://github.com/orhun/git-cliff/releases/download/v2.12.0/git-cliff-2.12.0-aarch64-unknown-linux-musl.tar.gz"
+
+[tools.git-cliff."platforms.linux-arm64-musl"]
+checksum = "sha256:a2d262b389aed349e0564aaaa38a44015c98a951048923b086d6cf732f6dbbaf"
+url = "https://github.com/orhun/git-cliff/releases/download/v2.12.0/git-cliff-2.12.0-aarch64-unknown-linux-musl.tar.gz"
+
+[tools.git-cliff."platforms.linux-x64"]
+checksum = "sha256:c89a7bc55f3c51f391938aa3fa560125109695c1930d927879daea68dd786420"
+url = "https://github.com/orhun/git-cliff/releases/download/v2.12.0/git-cliff-2.12.0-x86_64-unknown-linux-musl.tar.gz"
+
+[tools.git-cliff."platforms.linux-x64-musl"]
+checksum = "sha256:c89a7bc55f3c51f391938aa3fa560125109695c1930d927879daea68dd786420"
+url = "https://github.com/orhun/git-cliff/releases/download/v2.12.0/git-cliff-2.12.0-x86_64-unknown-linux-musl.tar.gz"
+
+[tools.git-cliff."platforms.macos-arm64"]
+checksum = "sha256:2ae72a0061bee98d0e375f2ea8e0f4b23b4915ac2e37fa45a705066de49b43a0"
+url = "https://github.com/orhun/git-cliff/releases/download/v2.12.0/git-cliff-2.12.0-aarch64-apple-darwin.tar.gz"
+
+[tools.git-cliff."platforms.macos-x64"]
+checksum = "sha256:fd4bce35ea8a6f3af6ac4891073781ca24c654c36c83c865bc30bab332c05a14"
+url = "https://github.com/orhun/git-cliff/releases/download/v2.12.0/git-cliff-2.12.0-x86_64-apple-darwin.tar.gz"
+
+[tools.git-cliff."platforms.windows-x64"]
+checksum = "sha256:f2b8c692d9488c3313d7786e2099976151c10fd8f76580b12d045bb9683a8379"
+url = "https://github.com/orhun/git-cliff/releases/download/v2.12.0/git-cliff-2.12.0-x86_64-pc-windows-msvc.zip"
+
 [[tools.hugo]]
 version = "0.160.1"
 backend = "aqua:gohugoio/hugo"
+
+[tools.hugo."platforms.linux-arm64"]
+checksum = "sha256:2fa48cf16869c6de4e8e83eb21dbf1af4e10be8e220aa327c6e9db8906a1283a"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.160.1/hugo_0.160.1_linux-arm64.tar.gz"
+
+[tools.hugo."platforms.linux-arm64-musl"]
+checksum = "sha256:2fa48cf16869c6de4e8e83eb21dbf1af4e10be8e220aa327c6e9db8906a1283a"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.160.1/hugo_0.160.1_linux-arm64.tar.gz"
+
+[tools.hugo."platforms.linux-x64"]
+checksum = "sha256:2f72fefa6ce944907f74c36c35abcaa306cdd22e64647a9ee5b328fc0bfb67be"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.160.1/hugo_0.160.1_linux-amd64.tar.gz"
+
+[tools.hugo."platforms.linux-x64-musl"]
+checksum = "sha256:2f72fefa6ce944907f74c36c35abcaa306cdd22e64647a9ee5b328fc0bfb67be"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.160.1/hugo_0.160.1_linux-amd64.tar.gz"
+
+[tools.hugo."platforms.macos-arm64"]
+checksum = "sha256:e2a1cc1859e7ca72c59af1ed1ab42f8e4fc153a3076ad36e76ffa726682c8fe8"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.160.1/hugo_0.160.1_darwin-universal.pkg"
+
+[tools.hugo."platforms.macos-x64"]
+checksum = "sha256:e2a1cc1859e7ca72c59af1ed1ab42f8e4fc153a3076ad36e76ffa726682c8fe8"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.160.1/hugo_0.160.1_darwin-universal.pkg"
+
+[tools.hugo."platforms.windows-x64"]
+checksum = "sha256:e73d65ab5d6576a69d51bed4a0dcc90bc2ac5875014cc1263d97a57ed88b81ad"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.160.1/hugo_0.160.1_windows-amd64.zip"
 
 [[tools.hugo-extended]]
 version = "0.160.0"
@@ -201,8 +257,8 @@ url = "https://github.com/astral-sh/python-build-standalone/releases/download/20
 provenance = "github-attestations"
 
 [tools.python."platforms.linux-x64"]
-checksum = "sha256:c977de62ccfe09a63014546ad1e5c95f157a11594be65df302a88cdcae96fbe7"
-url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260324/cpython-3.14.3+20260324-x86_64-unknown-linux-musl-install_only_stripped.tar.gz"
+checksum = "sha256:d7a9f970914bb4c88756fe3bdcc186d4feb90e9500e54f1db47dae4dc9687e39"
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260324/cpython-3.14.3+20260324-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz"
 provenance = "github-attestations"
 
 [tools.python."platforms.linux-x64-musl"]
@@ -269,24 +325,38 @@ version = "0.0.32"
 backend = "aqua:astral-sh/ty"
 
 [tools.ty."platforms.linux-arm64"]
+checksum = "sha256:de848acf867991f495dc346f5d12a7ac470af3ac464fdad7aff22fb8ee931a17"
+url = "https://github.com/astral-sh/ty/releases/download/0.0.32/ty-aarch64-unknown-linux-musl.tar.gz"
 provenance = "github-attestations"
 
 [tools.ty."platforms.linux-arm64-musl"]
+checksum = "sha256:de848acf867991f495dc346f5d12a7ac470af3ac464fdad7aff22fb8ee931a17"
+url = "https://github.com/astral-sh/ty/releases/download/0.0.32/ty-aarch64-unknown-linux-musl.tar.gz"
 provenance = "github-attestations"
 
 [tools.ty."platforms.linux-x64"]
+checksum = "sha256:cc58ee952aa551a0cbca495a43325b093dfcb180f0b314bf2c71068d37833b9e"
+url = "https://github.com/astral-sh/ty/releases/download/0.0.32/ty-x86_64-unknown-linux-musl.tar.gz"
 provenance = "github-attestations"
 
 [tools.ty."platforms.linux-x64-musl"]
+checksum = "sha256:cc58ee952aa551a0cbca495a43325b093dfcb180f0b314bf2c71068d37833b9e"
+url = "https://github.com/astral-sh/ty/releases/download/0.0.32/ty-x86_64-unknown-linux-musl.tar.gz"
 provenance = "github-attestations"
 
 [tools.ty."platforms.macos-arm64"]
+checksum = "sha256:6b03b94d8c2ddcb5db67e6c863ef3c72b83fbcb973e0ff3a4c6daa4352dad009"
+url = "https://github.com/astral-sh/ty/releases/download/0.0.32/ty-aarch64-apple-darwin.tar.gz"
 provenance = "github-attestations"
 
 [tools.ty."platforms.macos-x64"]
+checksum = "sha256:766e205ec3a23181be11a0437e8bd941d03dbe0bcfb897e8538faa07e7ad6ab2"
+url = "https://github.com/astral-sh/ty/releases/download/0.0.32/ty-x86_64-apple-darwin.tar.gz"
 provenance = "github-attestations"
 
 [tools.ty."platforms.windows-x64"]
+checksum = "sha256:4d39959e4cf2e4527305a1eb78f2282593b6b66b02bd173aa92004f7ddfe8d09"
+url = "https://github.com/astral-sh/ty/releases/download/0.0.32/ty-x86_64-pc-windows-msvc.zip"
 provenance = "github-attestations"
 
 [[tools.uv]]

@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-#MISE description="Refresh mise.lock with the CI-pinned mise version"
-##
-# Note: this should be obviated soon, as soon as renovate gets support
-# See: https://github.com/renovatebot/renovate/issues/40568
-
-set -euo pipefail
-
-exec mise exec aqua:jdx/mise@2026.4.7 -- mise lock "$@"

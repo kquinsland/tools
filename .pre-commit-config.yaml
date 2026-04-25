@@ -1,16 +1,5 @@
 ---
 repos:
-    # Hopefully this isn't needed soon; renovate should get support for `mise.lock` files shortly...
-    - repo: local
-      hooks:
-          - id: mise-lock
-            name: Refresh mise.lock
-            # Route lockfile refreshes through the shared repo task so hooks,
-            # docs, and local runs all use the same pinned mise version.
-            entry: mise run mise-lock
-            language: system
-            files: ^mise\.toml$
-            pass_filenames: false
 
     # Standard fille formatting / hygiene
     - repo: https://github.com/pre-commit/pre-commit-hooks
