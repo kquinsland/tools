@@ -1,0 +1,2153 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sync Conflict Triage</title>
+    <link rel="stylesheet" href="/common.css" />
+    <style>
+        :root {
+            --bg: #f4f4f1;
+            --panel: #ffffff;
+            --panel-soft: #f7f6f2;
+            --ink: #1f242a;
+            --muted: #5d6672;
+            --border: #cdd4dc;
+            --accent: #1f7a5c;
+            --accent-soft: #dff3ea;
+            --danger: #b42318;
+            --danger-soft: #fee4e2;
+            --warn: #b54708;
+            --warn-soft: #fffaeb;
+            --saved: #1a7f37;
+            --unsaved: #d92d20;
+            --mono: "JetBrains Mono", "Source Code Pro", Menlo, Consolas, monospace;
+            --body: "Atkinson Hyperlegible", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                color-scheme: dark;
+                --bg: #252a30;
+                --panel: #313841;
+                --panel-soft: #2a3138;
+                --ink: #e8edf3;
+                --muted: #b9c1cc;
+                --border: #4d5866;
+                --accent: #56c9a2;
+                --accent-soft: #1f3d34;
+                --danger: #f97066;
+                --danger-soft: #4a2a2a;
+                --warn: #fdb022;
+                --warn-soft: #4a3a1e;
+                --saved: #6ce9a6;
+                --unsaved: #fda29b;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle at top right, #dbe5d7 0%, var(--bg) 35%, var(--bg) 100%);
+            color: var(--ink);
+            font-family: var(--body);
+            line-height: 1.5;
+        }
+
+        .tool-shell {
+            width: 100%;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .tool-title {
+            margin: 0;
+            font-size: 1.65rem;
+            line-height: 1.2;
+        }
+
+        .helper-text {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.94rem;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .setup-grid {
+            display: grid;
+            grid-template-columns: minmax(220px, auto) 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .regex-row {
+            display: grid;
+            grid-template-columns: 1fr 90px auto;
+            gap: 8px;
+            align-items: end;
+            margin-top: 10px;
+        }
+
+        .scan-btn-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .scan-btn-wrap .scan-label {
+            visibility: hidden;
+            font-size: 0.89rem;
+            line-height: 1.5;
+        }
+
+        .regex-row #scan-btn {
+            min-height: 42px;
+            height: 42px;
+            padding-top: 0;
+            padding-bottom: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ignore-row {
+            margin-top: 10px;
+        }
+
+        label {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 0.89rem;
+            color: var(--muted);
+        }
+
+        input,
+        select,
+        textarea,
+        button {
+            font: inherit;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            background: var(--panel-soft);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--ink);
+            padding: 8px 10px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 220px;
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        button {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--panel-soft);
+            color: var(--ink);
+            padding: 8px 11px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        button:hover:enabled {
+            border-color: var(--accent);
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        button.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        button.danger {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: #fff;
+        }
+
+        .status-banner {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 9px 10px;
+            background: var(--panel-soft);
+            font-size: 0.92rem;
+        }
+
+        .status-banner.error {
+            border-color: var(--danger);
+            background: var(--danger-soft);
+            color: var(--danger);
+        }
+
+        .status-banner.warn {
+            border-color: var(--warn);
+            background: var(--warn-soft);
+            color: var(--warn);
+        }
+
+        .tab-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab-button.active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            color: var(--ink);
+        }
+
+        .layout-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 620px;
+        }
+
+        .group-list {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 4px;
+        }
+
+        .group-item {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--panel-soft);
+            padding: 9px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 260px;
+            max-width: 420px;
+            flex: 0 0 auto;
+            white-space: normal;
+        }
+
+        .group-item.active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+
+        .group-name {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            line-height: 1.35;
+        }
+
+        .group-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .badge {
+            border-radius: 999px;
+            padding: 1px 7px;
+            border: 1px solid var(--border);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.78rem;
+            width: fit-content;
+            line-height: 1.5;
+        }
+
+        .badge.saved {
+            border-color: var(--saved);
+            color: var(--saved);
+        }
+
+        .badge.unsaved {
+            border-color: var(--unsaved);
+            color: var(--unsaved);
+        }
+
+        .badge.warn {
+            border-color: var(--warn);
+            color: var(--warn);
+        }
+
+        .badge.danger {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .badge.binary {
+            border-color: #0b7285;
+            color: #0b7285;
+            background: color-mix(in oklab, #0b7285 12%, transparent);
+        }
+
+        .group-pane {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .group-pane.active {
+            display: flex;
+        }
+
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .group-title {
+            margin: 0;
+            font-size: 1.1rem;
+            overflow-wrap: anywhere;
+        }
+
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .file-chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .file-chip {
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 5px 10px;
+            background: var(--panel-soft);
+            font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .file-chip.marked {
+            border-color: var(--danger);
+            background: var(--danger-soft);
+        }
+
+        .select-row {
+            display: grid;
+            grid-template-columns: auto minmax(230px, 1fr) minmax(230px, 1fr);
+            gap: 10px;
+            align-items: end;
+        }
+
+        .pin-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: var(--muted);
+            font-size: 0.88rem;
+            padding-bottom: 8px;
+        }
+
+        .pin-wrap input {
+            width: 17px;
+            height: 17px;
+            accent-color: var(--accent);
+        }
+
+        .diff-panel {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--panel-soft);
+            padding: 10px;
+        }
+
+        .diff-message {
+            margin: 0;
+            font-size: 0.92rem;
+            color: var(--muted);
+        }
+
+        .diff-scroll {
+            overflow: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--panel);
+        }
+
+        .diff-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            width: 100%;
+        }
+
+        .diff-head {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            background: var(--panel-soft);
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .diff-line {
+            display: grid;
+            grid-template-columns: 58px 1fr;
+            border-bottom: 1px solid color-mix(in oklab, var(--border), transparent 45%);
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            line-height: 1.35;
+            white-space: pre-wrap;
+            min-height: 20px;
+            min-width: 0;
+        }
+
+        .diff-line .ln {
+            border-right: 1px solid color-mix(in oklab, var(--border), transparent 40%);
+            color: var(--muted);
+            padding: 2px 6px 2px 4px;
+            text-align: right;
+            user-select: none;
+        }
+
+        .diff-line .txt {
+            padding: 2px 8px;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .diff-line.added {
+            background: color-mix(in oklab, #22c55e 22%, transparent);
+        }
+
+        .diff-line.removed {
+            background: color-mix(in oklab, #f04438 20%, transparent);
+        }
+
+        .editor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .editor-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--panel-soft);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .editor-name {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            overflow-wrap: anywhere;
+        }
+
+        .editor-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        .table-wrap {
+            overflow: auto;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 760px;
+            background: var(--panel-soft);
+            font-size: 0.9rem;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            padding: 8px;
+            vertical-align: top;
+        }
+
+        th {
+            background: var(--panel);
+            font-size: 0.82rem;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        td code {
+            font-family: var(--mono);
+            font-size: 0.8rem;
+        }
+
+        .empty-state {
+            margin: 0;
+            padding: 18px;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            background: var(--panel-soft);
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .danger-note {
+            margin: 0;
+            color: var(--danger);
+            font-size: 0.9rem;
+        }
+
+        .mono {
+            font-family: var(--mono);
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        @media (max-width: 1150px) {
+            .group-item {
+                min-width: 220px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding: 0;
+            }
+
+            .select-row,
+            .regex-row,
+            .setup-grid,
+            .editor-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pin-wrap {
+                padding-bottom: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="tool-shell" id="app-root">
+        <header class="panel" id="setup-panel">
+            <h1 class="tool-title">Sync Conflict Triage</h1>
+            <p class="helper-text">Pick a folder, scan for conflict files with a regex, compare and edit side-by-side, then stage deletions for review.</p>
+
+            <div class="setup-grid">
+                <button id="pick-folder-btn" class="primary" type="button">Pick Folder</button>
+                <div id="folder-display" class="mono">No folder selected.</div>
+            </div>
+
+            <div class="regex-row">
+                <label>
+                    Regex Pattern
+                    <input id="pattern-input" type="text" spellcheck="false" autocomplete="off" />
+                </label>
+                <label>
+                    Flags
+                    <input id="flags-input" type="text" value="" spellcheck="false" autocomplete="off" />
+                </label>
+                <div class="scan-btn-wrap">
+                    <span class="scan-label">Scan</span>
+                    <button id="scan-btn" class="primary" type="button">Scan Folder</button>
+                </div>
+            </div>
+            <div class="ignore-row">
+                <label>
+                    Ignore Directories (glob, comma or newline separated)
+                    <input id="ignore-dirs-input" type="text" spellcheck="false" autocomplete="off" />
+                </label>
+            </div>
+            <p class="helper-text">Use a capture for canonical base file name (named <code>base</code>/<code>canonical</code>/<code>A</code>, or capture group 1). Default regex matches SyncThing file names.</p>
+        </header>
+
+        <div id="status-banner" class="status-banner" hidden></div>
+
+        <nav class="tab-row" id="tab-row">
+            <button class="tab-button active" data-tab="triage" type="button">Triage</button>
+            <button class="tab-button" data-tab="delete" type="button">Delete Review</button>
+            <button class="tab-button" data-tab="summary" type="button">Summary</button>
+        </nav>
+
+        <div class="layout-grid">
+            <aside class="panel" id="group-nav-panel">
+                <h2 style="margin:0 0 10px; font-size:1.05rem;">Conflict Groups</h2>
+                <div id="group-list" class="group-list"></div>
+            </aside>
+
+            <section id="triage-pane" class="group-pane active panel">
+                <div class="group-header">
+                    <h2 id="group-title" class="group-title">No group selected</h2>
+                    <div class="action-row">
+                        <button id="prev-group-btn" type="button">Previous Group</button>
+                        <button id="next-group-btn" type="button">Next Group</button>
+                        <button id="toggle-resolved-btn" type="button">Mark Resolved</button>
+                    </div>
+                </div>
+
+                <div id="group-status-row" class="action-row"></div>
+
+                <div id="group-file-list" class="file-chip-row"></div>
+
+                <div class="select-row">
+                    <label class="pin-wrap">
+                        <input id="pin-canonical-checkbox" type="checkbox" checked />
+                        Pin canonical on left
+                    </label>
+                    <label id="left-select-label">
+                        Left File
+                        <select id="left-file-select"></select>
+                    </label>
+                    <label>
+                        Right File
+                        <select id="right-file-select"></select>
+                    </label>
+                </div>
+
+                <section class="diff-panel" id="diff-panel"></section>
+
+                <div class="editor-grid" id="editor-grid">
+                    <section class="editor-card" id="left-editor-panel"></section>
+                    <section class="editor-card" id="right-editor-panel"></section>
+                </div>
+            </section>
+
+            <section id="delete-pane" class="group-pane panel">
+                <h2 style="margin:0; font-size:1.05rem;">Delete Review</h2>
+                <p class="helper-text">Files are only removed when you click <strong>Delete Marked Files</strong>.</p>
+                <div class="action-row">
+                    <button id="clear-marked-btn" type="button">Clear Marked List</button>
+                    <button id="delete-marked-btn" class="danger" type="button">Delete Marked Files</button>
+                </div>
+                <p class="danger-note">Deletion uses File System Access API and is permanent.</p>
+                <div id="delete-list-wrap" class="table-wrap"></div>
+            </section>
+
+            <section id="summary-pane" class="group-pane panel">
+                <h2 style="margin:0; font-size:1.05rem;">Group Summary</h2>
+                <p class="helper-text">Track conflict progress and jump directly to any group.</p>
+                <div id="summary-wrap" class="table-wrap"></div>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
+    <script>
+        (() => {
+            const DEFAULT_PATTERN = "^(?<base>.+)\\.sync-conflict-(?<date>\\d{8})-(?<time>\\d{6})-(?<client>[^.]+)\\.(?<ext>[^.]+)$";
+            const DEFAULT_IGNORE_DIRS = ".trash/**";
+            const PREF_KEY = "syncthing-conflict-triage.v1";
+
+            const state = {
+                rootHandle: null,
+                rootName: "",
+                regexPattern: DEFAULT_PATTERN,
+                regexFlags: "",
+                ignoreDirsRaw: DEFAULT_IGNORE_DIRS,
+                groups: [],
+                entriesByPath: new Map(),
+                selectedGroupKey: null,
+                selectedLeftPath: null,
+                selectedRightPath: null,
+                pinCanonical: true,
+                activeTab: "triage",
+                pendingDeletion: new Set(),
+                busy: false,
+            };
+
+            const refs = {
+                pickFolderBtn: document.getElementById("pick-folder-btn"),
+                scanBtn: document.getElementById("scan-btn"),
+                folderDisplay: document.getElementById("folder-display"),
+                patternInput: document.getElementById("pattern-input"),
+                flagsInput: document.getElementById("flags-input"),
+                ignoreDirsInput: document.getElementById("ignore-dirs-input"),
+                statusBanner: document.getElementById("status-banner"),
+                tabRow: document.getElementById("tab-row"),
+                groupList: document.getElementById("group-list"),
+                triagePane: document.getElementById("triage-pane"),
+                deletePane: document.getElementById("delete-pane"),
+                summaryPane: document.getElementById("summary-pane"),
+                groupTitle: document.getElementById("group-title"),
+                groupStatusRow: document.getElementById("group-status-row"),
+                groupFileList: document.getElementById("group-file-list"),
+                pinCanonicalCheckbox: document.getElementById("pin-canonical-checkbox"),
+                leftSelectLabel: document.getElementById("left-select-label"),
+                leftFileSelect: document.getElementById("left-file-select"),
+                rightFileSelect: document.getElementById("right-file-select"),
+                diffPanel: document.getElementById("diff-panel"),
+                leftEditorPanel: document.getElementById("left-editor-panel"),
+                rightEditorPanel: document.getElementById("right-editor-panel"),
+                prevGroupBtn: document.getElementById("prev-group-btn"),
+                nextGroupBtn: document.getElementById("next-group-btn"),
+                toggleResolvedBtn: document.getElementById("toggle-resolved-btn"),
+                clearMarkedBtn: document.getElementById("clear-marked-btn"),
+                deleteMarkedBtn: document.getElementById("delete-marked-btn"),
+                deleteListWrap: document.getElementById("delete-list-wrap"),
+                summaryWrap: document.getElementById("summary-wrap"),
+            };
+
+            init();
+
+            function init() {
+                loadPreferences();
+                loadUrlState();
+
+                refs.patternInput.value = state.regexPattern;
+                refs.flagsInput.value = state.regexFlags;
+                refs.ignoreDirsInput.value = state.ignoreDirsRaw;
+                refs.pinCanonicalCheckbox.checked = state.pinCanonical;
+
+                bindEvents();
+                checkApiSupport();
+                renderAll();
+            }
+
+            function bindEvents() {
+                refs.pickFolderBtn.addEventListener("click", pickFolder);
+                refs.scanBtn.addEventListener("click", scanFolder);
+
+                refs.patternInput.addEventListener("change", () => {
+                    state.regexPattern = refs.patternInput.value.trim();
+                    savePreferences();
+                    saveUrlState();
+                });
+
+                refs.flagsInput.addEventListener("change", () => {
+                    state.regexFlags = refs.flagsInput.value.trim();
+                    savePreferences();
+                    saveUrlState();
+                });
+
+                refs.ignoreDirsInput.addEventListener("change", () => {
+                    state.ignoreDirsRaw = refs.ignoreDirsInput.value.trim();
+                    savePreferences();
+                    saveUrlState();
+                });
+
+                refs.tabRow.addEventListener("click", (event) => {
+                    const button = event.target.closest("button[data-tab]");
+                    if (!button) {
+                        return;
+                    }
+                    state.activeTab = button.dataset.tab;
+                    saveUrlState();
+                    renderTabs();
+                });
+
+                refs.groupList.addEventListener("click", async (event) => {
+                    const button = event.target.closest("button[data-group-key]");
+                    if (!button) {
+                        return;
+                    }
+                    await selectGroup(button.dataset.groupKey);
+                });
+
+                refs.prevGroupBtn.addEventListener("click", async () => {
+                    await selectRelativeGroup(-1);
+                });
+
+                refs.nextGroupBtn.addEventListener("click", async () => {
+                    await selectRelativeGroup(1);
+                });
+
+                refs.toggleResolvedBtn.addEventListener("click", () => {
+                    const group = getSelectedGroup();
+                    if (!group) {
+                        return;
+                    }
+                    group.manualResolved = !group.manualResolved;
+                    renderGroupStatusRow(group);
+                    renderGroupList();
+                    renderSummaryTable();
+                });
+
+                refs.pinCanonicalCheckbox.addEventListener("change", () => {
+                    state.pinCanonical = refs.pinCanonicalCheckbox.checked;
+                    ensureSelectionDefaults();
+                    savePreferences();
+                    saveUrlState();
+                    renderComparisonSelectors();
+                    renderDiffPanel();
+                    renderEditors();
+                });
+
+                refs.leftFileSelect.addEventListener("change", () => {
+                    state.selectedLeftPath = refs.leftFileSelect.value || null;
+                    if (!state.pinCanonical && state.selectedLeftPath === state.selectedRightPath) {
+                        const group = getSelectedGroup();
+                        if (group) {
+                            const options = getSelectableEntries(group).map((entry) => entry.path);
+                            const alt = options.find((path) => path !== state.selectedLeftPath) || null;
+                            state.selectedRightPath = alt;
+                            refs.rightFileSelect.value = alt || "";
+                        }
+                    }
+                    saveUrlState();
+                    renderDiffPanel();
+                    renderEditors();
+                });
+
+                refs.rightFileSelect.addEventListener("change", () => {
+                    state.selectedRightPath = refs.rightFileSelect.value || null;
+                    saveUrlState();
+                    renderDiffPanel();
+                    renderEditors();
+                });
+
+                document.getElementById("editor-grid").addEventListener("input", (event) => {
+                    const textarea = event.target.closest("textarea[data-path]");
+                    if (!textarea) {
+                        return;
+                    }
+                    const path = textarea.dataset.path;
+                    const entry = state.entriesByPath.get(path);
+                    if (!entry || entry.deleted || entry.isBinary || entry.missing) {
+                        return;
+                    }
+                    entry.text = textarea.value;
+                    entry.dirty = entry.text !== entry.savedText;
+                    entry.lineCount = countLines(entry.text);
+                    entry.size = new Blob([entry.text]).size;
+                    updateEditorCardState(path);
+                    renderDiffPanel();
+                    renderGroupList();
+                    renderSummaryTable();
+                });
+
+                document.getElementById("editor-grid").addEventListener("click", async (event) => {
+                    const button = event.target.closest("button[data-action][data-path]");
+                    if (!button) {
+                        return;
+                    }
+                    const action = button.dataset.action;
+                    const path = button.dataset.path;
+                    if (action === "save") {
+                        await saveEntry(path);
+                    }
+                    if (action === "reload") {
+                        await reloadEntry(path);
+                    }
+                    if (action === "toggle-mark") {
+                        toggleMarkedForDeletion(path);
+                    }
+                    if (action === "toggle-skip") {
+                        toggleSkip(path);
+                    }
+                });
+
+                refs.groupFileList.addEventListener("click", async (event) => {
+                    const button = event.target.closest("button[data-action]");
+                    if (!button) {
+                        return;
+                    }
+                    const action = button.dataset.action;
+                    const path = button.dataset.path;
+                    if (action === "focus-right") {
+                        state.selectedRightPath = path;
+                        ensureSelectionDefaults();
+                        renderComparisonSelectors();
+                        renderDiffPanel();
+                        renderEditors();
+                    }
+                    if (action === "toggle-mark") {
+                        toggleMarkedForDeletion(path);
+                    }
+                    if (action === "toggle-skip") {
+                        toggleSkip(path);
+                    }
+                    if (action === "open-group") {
+                        const key = button.dataset.groupKey;
+                        state.activeTab = "triage";
+                        renderTabs();
+                        await selectGroup(key);
+                    }
+                });
+
+                refs.clearMarkedBtn.addEventListener("click", () => {
+                    state.pendingDeletion.clear();
+                    renderAll();
+                });
+
+                refs.deleteMarkedBtn.addEventListener("click", deleteMarkedFiles);
+
+                refs.deleteListWrap.addEventListener("click", (event) => {
+                    const button = event.target.closest("button[data-action][data-path]");
+                    if (!button) {
+                        return;
+                    }
+                    if (button.dataset.action === "toggle-mark") {
+                        toggleMarkedForDeletion(button.dataset.path);
+                    }
+                });
+
+                refs.summaryWrap.addEventListener("click", async (event) => {
+                    const button = event.target.closest("button[data-action][data-group-key]");
+                    if (!button) {
+                        return;
+                    }
+                    if (button.dataset.action === "open-group") {
+                        state.activeTab = "triage";
+                        renderTabs();
+                        await selectGroup(button.dataset.groupKey);
+                    }
+                });
+            }
+
+            function checkApiSupport() {
+                if (!("showDirectoryPicker" in window)) {
+                    setStatus("This browser does not support showDirectoryPicker(). Use a current Chromium-based browser.", "error");
+                    refs.pickFolderBtn.disabled = true;
+                    refs.scanBtn.disabled = true;
+                }
+            }
+
+            async function pickFolder() {
+                if (!("showDirectoryPicker" in window)) {
+                    return;
+                }
+                try {
+                    const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+                    state.rootHandle = handle;
+                    state.rootName = handle.name;
+                    refs.folderDisplay.textContent = `Selected: ${handle.name}`;
+                    setStatus("Folder selected. Click Scan Folder to find conflict groups.", "info");
+                } catch (error) {
+                    if (error && error.name === "AbortError") {
+                        return;
+                    }
+                    setStatus(`Could not open folder: ${error.message}`, "error");
+                }
+            }
+
+            async function scanFolder() {
+                if (state.busy) {
+                    return;
+                }
+                if (!state.rootHandle) {
+                    setStatus("Pick a folder before scanning.", "warn");
+                    return;
+                }
+
+                state.regexPattern = refs.patternInput.value.trim();
+                state.regexFlags = refs.flagsInput.value.trim();
+                state.ignoreDirsRaw = refs.ignoreDirsInput.value.trim();
+                savePreferences();
+
+                let regex;
+                try {
+                    regex = new RegExp(state.regexPattern, state.regexFlags);
+                } catch (error) {
+                    setStatus(`Invalid regex: ${error.message}`, "error");
+                    return;
+                }
+
+                const ignoreMatchers = compileIgnoreMatchers(state.ignoreDirsRaw);
+                state.busy = true;
+                refs.scanBtn.disabled = true;
+                setStatus("Scanning folders recursively...", "info");
+
+                try {
+                    const files = [];
+                    await walkDirectory(state.rootHandle, "", files, ignoreMatchers);
+                    const { groups, entriesByPath } = buildGroupsFromFiles(files, regex);
+
+                    state.groups = groups;
+                    state.entriesByPath = entriesByPath;
+                    state.pendingDeletion.clear();
+
+                    if (groups.length > 0) {
+                        await selectGroup(groups[0].key);
+                        setStatus(`Found ${groups.length} conflict group(s).`, "info");
+                        void preloadBinaryFlagsForGroups(groups);
+                    } else {
+                        state.selectedGroupKey = null;
+                        state.selectedLeftPath = null;
+                        state.selectedRightPath = null;
+                        renderAll();
+                        setStatus("No conflict groups found with the current regex.", "warn");
+                    }
+                } catch (error) {
+                    setStatus(`Scan failed: ${error.message}`, "error");
+                } finally {
+                    state.busy = false;
+                    refs.scanBtn.disabled = false;
+                    renderDeleteTable();
+                    renderSummaryTable();
+                    saveUrlState();
+                }
+            }
+
+            async function walkDirectory(directoryHandle, dirPath, files, ignoreMatchers) {
+                for await (const [name, handle] of directoryHandle.entries()) {
+                    const path = dirPath ? `${dirPath}/${name}` : name;
+                    if (handle.kind === "file") {
+                        files.push({
+                            path,
+                            name,
+                            dirPath,
+                            handle,
+                            dirHandle: directoryHandle,
+                        });
+                    } else if (handle.kind === "directory") {
+                        if (shouldIgnoreDirectory(path, ignoreMatchers)) {
+                            continue;
+                        }
+                        await walkDirectory(handle, path, files, ignoreMatchers);
+                    }
+                }
+            }
+
+            async function preloadBinaryFlagsForGroups(groups) {
+                const candidates = [];
+                for (const group of groups) {
+                    const entries = [group.canonicalEntry, ...group.conflictEntries].filter(Boolean);
+                    for (const entry of entries) {
+                        if (!entry || entry.deleted || entry.missing || !entry.handle) {
+                            continue;
+                        }
+                        if (entry.binaryKnown || entry.loaded) {
+                            continue;
+                        }
+                        candidates.push(entry);
+                    }
+                }
+
+                for (const entry of candidates) {
+                    try {
+                        const file = await entry.handle.getFile();
+                        const chunk = await file.slice(0, Math.min(file.size, 8192)).arrayBuffer();
+                        entry.isBinary = detectBinary(chunk);
+                        entry.binaryKnown = true;
+                        if (!entry.size) {
+                            entry.size = file.size;
+                        }
+                    } catch {
+                        entry.binaryKnown = true;
+                    }
+                }
+
+                if (candidates.length > 0) {
+                    renderGroupList();
+                }
+            }
+
+            function shouldIgnoreDirectory(dirPath, ignoreMatchers) {
+                if (!dirPath || !Array.isArray(ignoreMatchers) || ignoreMatchers.length === 0) {
+                    return false;
+                }
+                const normalized = dirPath.replaceAll("\\\\", "/");
+                const candidates = [normalized, `${normalized}/`];
+                return ignoreMatchers.some((matcher) => {
+                    return candidates.some((candidate) => matcher.regex.test(candidate));
+                });
+            }
+
+            function compileIgnoreMatchers(raw) {
+                const patterns = String(raw || "")
+                    .split(/[\n,]+/)
+                    .map((value) => value.trim())
+                    .filter(Boolean);
+                return patterns.map((pattern) => ({
+                    pattern,
+                    regex: globToRegExp(pattern),
+                }));
+            }
+
+            function globToRegExp(globPattern) {
+                let pattern = String(globPattern).trim().replaceAll("\\\\", "/");
+                if (pattern.startsWith("./")) {
+                    pattern = pattern.slice(2);
+                }
+                const anchored = pattern.startsWith("/");
+                if (anchored) {
+                    pattern = pattern.slice(1);
+                }
+
+                let regexBody = "";
+                for (let index = 0; index < pattern.length; index += 1) {
+                    const char = pattern[index];
+                    const next = pattern[index + 1];
+                    if (char === "*" && next === "*") {
+                        regexBody += ".*";
+                        index += 1;
+                        continue;
+                    }
+                    if (char === "*") {
+                        regexBody += "[^/]*";
+                        continue;
+                    }
+                    if (char === "?") {
+                        regexBody += "[^/]";
+                        continue;
+                    }
+                    regexBody += escapeRegexChar(char);
+                }
+
+                const fullPattern = anchored ? `^${regexBody}$` : `(?:^|.*/)${regexBody}$`;
+                return new RegExp(fullPattern);
+            }
+
+            function escapeRegexChar(char) {
+                return /[\\^$.*+?()[\]{}|]/.test(char) ? `\\${char}` : char;
+            }
+
+            function buildGroupsFromFiles(files, regex) {
+                const byDirAndName = new Map();
+                for (const file of files) {
+                    byDirAndName.set(`${file.dirPath}\u0000${file.name}`, file);
+                }
+
+                const groupsByKey = new Map();
+                const entriesByPath = new Map();
+
+                for (const file of files) {
+                    const match = execRegex(regex, file.name);
+                    if (!match) {
+                        continue;
+                    }
+
+                    const canonicalName = deriveCanonicalName(file.name, match);
+                    if (!canonicalName || canonicalName === file.name) {
+                        continue;
+                    }
+
+                    const key = `${file.dirPath}::${canonicalName}`;
+                    let group = groupsByKey.get(key);
+                    if (!group) {
+                        group = {
+                            key,
+                            dirPath: file.dirPath,
+                            canonicalName,
+                            canonicalPath: file.dirPath ? `${file.dirPath}/${canonicalName}` : canonicalName,
+                            canonicalEntry: null,
+                            conflictEntries: [],
+                            manualResolved: false,
+                        };
+                        groupsByKey.set(key, group);
+                    }
+
+                    const entry = createFileEntry(file, "conflict");
+                    group.conflictEntries.push(entry);
+                    entriesByPath.set(entry.path, entry);
+                }
+
+                const groups = Array.from(groupsByKey.values());
+                groups.sort((a, b) => a.canonicalPath.localeCompare(b.canonicalPath));
+
+                for (const group of groups) {
+                    const lookup = byDirAndName.get(`${group.dirPath}\u0000${group.canonicalName}`);
+                    if (lookup) {
+                        const canonicalEntry = createFileEntry(lookup, "canonical");
+                        group.canonicalEntry = canonicalEntry;
+                        entriesByPath.set(canonicalEntry.path, canonicalEntry);
+                    } else {
+                        group.canonicalEntry = {
+                            kind: "canonical",
+                            name: group.canonicalName,
+                            path: group.canonicalPath,
+                            dirPath: group.dirPath,
+                            dirHandle: null,
+                            handle: null,
+                            missing: true,
+                            deleted: false,
+                            skipped: false,
+                            marked: false,
+                            loaded: true,
+                            loadError: null,
+                            isBinary: false,
+                            binaryKnown: true,
+                            hash: "",
+                            text: "",
+                            savedText: "",
+                            dirty: false,
+                            size: 0,
+                            lineCount: 0,
+                        };
+                    }
+                }
+
+                return { groups, entriesByPath };
+            }
+
+            function createFileEntry(file, kind) {
+                return {
+                    kind,
+                    name: file.name,
+                    path: file.path,
+                    dirPath: file.dirPath,
+                    dirHandle: file.dirHandle,
+                    handle: file.handle,
+                    missing: false,
+                    deleted: false,
+                    skipped: false,
+                    marked: false,
+                    loaded: false,
+                    loadError: null,
+                    isBinary: false,
+                    binaryKnown: false,
+                    hash: "",
+                    text: "",
+                    savedText: "",
+                    dirty: false,
+                    size: 0,
+                    lineCount: 0,
+                };
+            }
+
+            function execRegex(regex, value) {
+                regex.lastIndex = 0;
+                return regex.exec(value);
+            }
+
+            function deriveCanonicalName(fileName, match) {
+                const groups = match.groups || {};
+                let base = groups.canonical || groups.base || groups.A || groups.origin || "";
+                const ext = groups.ext || "";
+
+                if (!base && typeof match[1] === "string" && match[1].length > 0) {
+                    base = match[1];
+                }
+
+                if (base) {
+                    if (ext && !base.endsWith(`.${ext}`)) {
+                        return `${base}.${ext}`;
+                    }
+                    return base;
+                }
+
+                const marker = fileName.indexOf(".sync-conflict-");
+                if (marker > 0) {
+                    const prefix = fileName.slice(0, marker);
+                    const lastDot = fileName.lastIndexOf(".");
+                    const fileExt = lastDot >= 0 ? fileName.slice(lastDot + 1) : "";
+                    return fileExt ? `${prefix}.${fileExt}` : prefix;
+                }
+
+                return null;
+            }
+
+            async function selectGroup(groupKey) {
+                const group = state.groups.find((item) => item.key === groupKey);
+                if (!group) {
+                    return;
+                }
+                state.selectedGroupKey = groupKey;
+                await ensureGroupLoaded(group);
+                ensureSelectionDefaults();
+                renderAll();
+                saveUrlState();
+            }
+
+            async function selectRelativeGroup(offset) {
+                if (state.groups.length === 0 || !state.selectedGroupKey) {
+                    return;
+                }
+                const index = state.groups.findIndex((group) => group.key === state.selectedGroupKey);
+                if (index < 0) {
+                    return;
+                }
+                const nextIndex = Math.max(0, Math.min(state.groups.length - 1, index + offset));
+                const next = state.groups[nextIndex];
+                if (!next || next.key === state.selectedGroupKey) {
+                    return;
+                }
+                await selectGroup(next.key);
+            }
+
+            async function ensureGroupLoaded(group) {
+                const entries = [group.canonicalEntry, ...group.conflictEntries].filter(Boolean);
+                await Promise.all(entries.map(async (entry) => {
+                    if (entry.missing || entry.deleted || entry.loaded) {
+                        return;
+                    }
+                    await loadEntry(entry);
+                }));
+            }
+
+            async function loadEntry(entry) {
+                if (!entry.handle) {
+                    return;
+                }
+                try {
+                    const file = await entry.handle.getFile();
+                    const buffer = await file.arrayBuffer();
+                    entry.size = file.size;
+                    entry.hash = await sha256Hex(buffer);
+                    entry.isBinary = detectBinary(buffer);
+                    entry.binaryKnown = true;
+
+                    if (entry.isBinary) {
+                        entry.text = "";
+                        entry.savedText = "";
+                        entry.lineCount = 0;
+                    } else {
+                        const text = decodeUtf8(buffer);
+                        entry.text = text;
+                        entry.savedText = text;
+                        entry.lineCount = countLines(text);
+                    }
+
+                    entry.loaded = true;
+                    entry.dirty = false;
+                    entry.loadError = null;
+                } catch (error) {
+                    entry.loaded = true;
+                    entry.binaryKnown = true;
+                    entry.loadError = error.message;
+                }
+            }
+
+            async function saveEntry(path) {
+                const entry = state.entriesByPath.get(path);
+                if (!entry || entry.deleted || entry.missing || entry.isBinary) {
+                    return;
+                }
+                if (!entry.dirty) {
+                    return;
+                }
+                try {
+                    const writable = await entry.handle.createWritable();
+                    await writable.write(entry.text);
+                    await writable.close();
+                    entry.savedText = entry.text;
+                    entry.dirty = false;
+                    entry.size = new Blob([entry.text]).size;
+                    entry.lineCount = countLines(entry.text);
+                    entry.hash = await sha256Hex(new TextEncoder().encode(entry.text).buffer);
+                    setStatus(`Saved ${entry.path}`, "info");
+                    renderAll();
+                } catch (error) {
+                    setStatus(`Save failed for ${entry.path}: ${error.message}`, "error");
+                }
+            }
+
+            async function reloadEntry(path) {
+                const entry = state.entriesByPath.get(path);
+                if (!entry || entry.deleted || entry.missing) {
+                    return;
+                }
+                entry.loaded = false;
+                await loadEntry(entry);
+                setStatus(`Reloaded ${entry.path} from disk.`, "info");
+                renderAll();
+            }
+
+            function toggleMarkedForDeletion(path) {
+                const entry = state.entriesByPath.get(path);
+                if (!entry || entry.deleted || entry.missing) {
+                    return;
+                }
+                if (state.pendingDeletion.has(path)) {
+                    state.pendingDeletion.delete(path);
+                } else {
+                    state.pendingDeletion.add(path);
+                }
+                renderAll();
+            }
+
+            function toggleSkip(path) {
+                const entry = state.entriesByPath.get(path);
+                if (!entry || entry.deleted || entry.missing || entry.kind !== "conflict") {
+                    return;
+                }
+                entry.skipped = !entry.skipped;
+                if (entry.skipped) {
+                    state.pendingDeletion.delete(path);
+                }
+                ensureSelectionDefaults();
+                renderAll();
+            }
+
+            async function deleteMarkedFiles() {
+                const marked = Array.from(state.pendingDeletion)
+                    .map((path) => state.entriesByPath.get(path))
+                    .filter((entry) => entry && !entry.deleted && !entry.missing);
+
+                if (marked.length === 0) {
+                    setStatus("No files are marked for deletion.", "warn");
+                    return;
+                }
+
+                const confirmed = window.confirm(`Delete ${marked.length} file(s) permanently?`);
+                if (!confirmed) {
+                    return;
+                }
+
+                let deletedCount = 0;
+                const failures = [];
+
+                for (const entry of marked) {
+                    try {
+                        if (entry.dirty) {
+                            failures.push(`${entry.path} (unsaved changes)`);
+                            continue;
+                        }
+                        await entry.dirHandle.removeEntry(entry.name);
+                        entry.deleted = true;
+                        entry.skipped = false;
+                        deletedCount += 1;
+                        state.pendingDeletion.delete(entry.path);
+                    } catch (error) {
+                        failures.push(`${entry.path} (${error.message})`);
+                    }
+                }
+
+                ensureSelectionDefaults();
+                renderAll();
+
+                if (failures.length > 0) {
+                    setStatus(`Deleted ${deletedCount} file(s). Failed: ${failures.join("; ")}`, "warn");
+                } else {
+                    setStatus(`Deleted ${deletedCount} file(s).`, "info");
+                }
+            }
+
+            function ensureSelectionDefaults() {
+                const group = getSelectedGroup();
+                if (!group) {
+                    state.selectedLeftPath = null;
+                    state.selectedRightPath = null;
+                    return;
+                }
+
+                const activeEntries = getSelectableEntries(group);
+                const activeConflicts = getActiveConflicts(group);
+
+                if (state.pinCanonical && group.canonicalEntry && !group.canonicalEntry.deleted && !group.canonicalEntry.skipped && !group.canonicalEntry.missing) {
+                    state.selectedLeftPath = group.canonicalEntry.path;
+                } else if (!activeEntries.some((entry) => entry.path === state.selectedLeftPath)) {
+                    state.selectedLeftPath = activeEntries[0] ? activeEntries[0].path : null;
+                }
+
+                if (!state.pinCanonical && state.selectedRightPath === state.selectedLeftPath) {
+                    const alt = activeEntries.find((entry) => entry.path !== state.selectedLeftPath);
+                    state.selectedRightPath = alt ? alt.path : null;
+                }
+
+                if (state.pinCanonical) {
+                    if (!activeConflicts.some((entry) => entry.path === state.selectedRightPath)) {
+                        state.selectedRightPath = activeConflicts[0] ? activeConflicts[0].path : null;
+                    }
+                } else if (!activeEntries.some((entry) => entry.path === state.selectedRightPath)) {
+                    const fallback = activeEntries.find((entry) => entry.path !== state.selectedLeftPath);
+                    state.selectedRightPath = fallback ? fallback.path : null;
+                }
+            }
+
+            function getSelectableEntries(group) {
+                const entries = [];
+                if (group.canonicalEntry && !group.canonicalEntry.deleted && !group.canonicalEntry.skipped && !group.canonicalEntry.missing) {
+                    entries.push(group.canonicalEntry);
+                }
+                for (const entry of group.conflictEntries) {
+                    if (!entry.deleted && !entry.skipped) {
+                        entries.push(entry);
+                    }
+                }
+                return entries;
+            }
+
+            function getActiveConflicts(group) {
+                return group.conflictEntries.filter((entry) => !entry.deleted && !entry.skipped);
+            }
+
+            function getSelectedGroup() {
+                return state.groups.find((group) => group.key === state.selectedGroupKey) || null;
+            }
+
+            function getCurrentPair() {
+                const group = getSelectedGroup();
+                if (!group) {
+                    return { left: null, right: null };
+                }
+
+                const left = state.selectedLeftPath ? state.entriesByPath.get(state.selectedLeftPath) : group.canonicalEntry;
+                const right = state.selectedRightPath ? state.entriesByPath.get(state.selectedRightPath) : null;
+
+                return { left: left || null, right: right || null };
+            }
+
+            function renderAll() {
+                renderTabs();
+                renderGroupList();
+                renderTriagePane();
+                renderDeleteTable();
+                renderSummaryTable();
+            }
+
+            function renderTabs() {
+                const tabs = refs.tabRow.querySelectorAll("button[data-tab]");
+                for (const tab of tabs) {
+                    tab.classList.toggle("active", tab.dataset.tab === state.activeTab);
+                }
+                refs.triagePane.classList.toggle("active", state.activeTab === "triage");
+                refs.deletePane.classList.toggle("active", state.activeTab === "delete");
+                refs.summaryPane.classList.toggle("active", state.activeTab === "summary");
+            }
+
+            function renderGroupList() {
+                if (state.groups.length === 0) {
+                    refs.groupList.innerHTML = '<p class="empty-state">No groups yet. Pick a folder and scan.</p>';
+                    return;
+                }
+
+                refs.groupList.innerHTML = state.groups.map((group) => {
+                    const status = computeGroupStatus(group);
+                    const binaryInfo = getGroupBinaryInfo(group);
+                    const isActive = group.key === state.selectedGroupKey;
+                    return `
+                        <button type="button" class="group-item ${isActive ? "active" : ""}" data-group-key="${escapeAttr(group.key)}">
+                            <div class="group-name">${escapeHtml(group.canonicalPath)}</div>
+                            <div class="group-stats">
+                                <span class="badge ${status.className}">${escapeHtml(status.label)}</span>
+                                ${binaryInfo.binaryCount > 0 ? `<span class="badge binary">Binary ${binaryInfo.binaryCount}</span>` : ""}
+                                <span>${status.remaining} remaining</span>
+                                <span>${status.marked} marked</span>
+                            </div>
+                        </button>
+                    `;
+                }).join("");
+            }
+
+            function getGroupBinaryInfo(group) {
+                const entries = [group.canonicalEntry, ...group.conflictEntries].filter(Boolean);
+                let binaryCount = 0;
+                for (const entry of entries) {
+                    if (!entry || entry.deleted || entry.skipped || entry.missing) {
+                        continue;
+                    }
+                    if (entry.binaryKnown && entry.isBinary) {
+                        binaryCount += 1;
+                    }
+                }
+                return { binaryCount };
+            }
+
+            function renderTriagePane() {
+                const group = getSelectedGroup();
+                if (!group) {
+                    refs.groupTitle.textContent = "No group selected";
+                    refs.groupStatusRow.innerHTML = '<p class="empty-state" style="width:100%;">No conflict groups found for the current scan.</p>';
+                    refs.groupFileList.innerHTML = "";
+                    refs.diffPanel.innerHTML = '<p class="diff-message">Select a group to compare files.</p>';
+                    refs.leftEditorPanel.innerHTML = '<p class="diff-message">No file selected.</p>';
+                    refs.rightEditorPanel.innerHTML = '<p class="diff-message">No file selected.</p>';
+                    refs.prevGroupBtn.disabled = true;
+                    refs.nextGroupBtn.disabled = true;
+                    refs.toggleResolvedBtn.disabled = true;
+                    refs.leftFileSelect.innerHTML = "";
+                    refs.rightFileSelect.innerHTML = "";
+                    return;
+                }
+
+                refs.groupTitle.textContent = group.canonicalPath;
+                renderGroupStatusRow(group);
+                renderGroupFileChips(group);
+                renderComparisonSelectors();
+                renderDiffPanel();
+                renderEditors();
+
+                const index = state.groups.findIndex((item) => item.key === group.key);
+                refs.prevGroupBtn.disabled = index <= 0;
+                refs.nextGroupBtn.disabled = index >= state.groups.length - 1;
+                refs.toggleResolvedBtn.disabled = false;
+                refs.toggleResolvedBtn.textContent = group.manualResolved ? "Mark Unresolved" : "Mark Resolved";
+            }
+
+            function renderGroupStatusRow(group) {
+                const status = computeGroupStatus(group);
+                const canonicalIssue = group.canonicalEntry && (group.canonicalEntry.missing || group.canonicalEntry.deleted);
+                refs.groupStatusRow.innerHTML = `
+                    <span class="badge ${status.className}">${escapeHtml(status.label)}</span>
+                    <span class="helper-text">${status.remaining} conflict file(s) remaining, ${status.marked} marked for deletion.</span>
+                    ${canonicalIssue ? `<span class="badge danger">${group.canonicalEntry.deleted ? "Canonical file deleted" : "Canonical file missing"}</span>` : ""}
+                `;
+            }
+
+            function renderGroupFileChips(group) {
+                const chips = [];
+                if (group.canonicalEntry) {
+                    chips.push(renderFileChip(group.canonicalEntry, "canonical"));
+                }
+                for (const entry of group.conflictEntries) {
+                    chips.push(renderFileChip(entry, "conflict"));
+                }
+                refs.groupFileList.innerHTML = chips.join("");
+            }
+
+            function renderFileChip(entry, type) {
+                const marked = state.pendingDeletion.has(entry.path);
+                const skipLabel = entry.skipped ? "(skipped)" : "";
+                const deletedLabel = entry.deleted ? "(deleted)" : "";
+                const binaryLabel = entry.isBinary ? "(binary)" : "";
+                const sourceLabel = type === "canonical" ? "A" : "C";
+                const focusAction = type === "conflict" && !entry.deleted && !entry.skipped
+                    ? `<button type="button" class="file-chip" data-action="focus-right" data-path="${escapeAttr(entry.path)}">Compare ${escapeHtml(entry.name)}</button>`
+                    : "";
+
+                return `
+                    <div class="file-chip ${marked ? "marked" : ""}">
+                        <span class="mono">${sourceLabel}: ${escapeHtml(entry.name)}</span>
+                        ${skipLabel ? `<span>${escapeHtml(skipLabel)}</span>` : ""}
+                        ${deletedLabel ? `<span>${escapeHtml(deletedLabel)}</span>` : ""}
+                        ${binaryLabel ? `<span>${escapeHtml(binaryLabel)}</span>` : ""}
+                        ${entry.kind === "conflict" && !entry.deleted ? `<button type="button" data-action="toggle-mark" data-path="${escapeAttr(entry.path)}">${marked ? "Unmark" : "Mark Delete"}</button>` : ""}
+                        ${entry.kind === "conflict" && !entry.deleted ? `<button type="button" data-action="toggle-skip" data-path="${escapeAttr(entry.path)}">${entry.skipped ? "Unskip" : "Skip"}</button>` : ""}
+                        ${focusAction}
+                    </div>
+                `;
+            }
+
+            function renderComparisonSelectors() {
+                const group = getSelectedGroup();
+                if (!group) {
+                    refs.leftFileSelect.innerHTML = "";
+                    refs.rightFileSelect.innerHTML = "";
+                    return;
+                }
+
+                const selectableEntries = getSelectableEntries(group);
+                const activeConflicts = getActiveConflicts(group);
+                refs.pinCanonicalCheckbox.checked = state.pinCanonical;
+                refs.leftSelectLabel.hidden = state.pinCanonical;
+
+                if (state.pinCanonical) {
+                    refs.leftFileSelect.innerHTML = "";
+                } else {
+                    refs.leftFileSelect.innerHTML = selectableEntries
+                        .map((entry) => `<option value="${escapeAttr(entry.path)}">${escapeHtml(entry.path)}</option>`)
+                        .join("");
+                    if (state.selectedLeftPath) {
+                        refs.leftFileSelect.value = state.selectedLeftPath;
+                    }
+                }
+
+                const rightOptions = (state.pinCanonical ? activeConflicts : selectableEntries.filter((entry) => entry.path !== state.selectedLeftPath));
+                refs.rightFileSelect.innerHTML = rightOptions
+                    .map((entry) => `<option value="${escapeAttr(entry.path)}">${escapeHtml(entry.path)}</option>`)
+                    .join("");
+
+                if (state.selectedRightPath) {
+                    refs.rightFileSelect.value = state.selectedRightPath;
+                }
+
+                if (!refs.rightFileSelect.value && rightOptions[0]) {
+                    state.selectedRightPath = rightOptions[0].path;
+                    refs.rightFileSelect.value = state.selectedRightPath;
+                }
+            }
+
+            function renderDiffPanel() {
+                const { left, right } = getCurrentPair();
+
+                if (!left || !right) {
+                    refs.diffPanel.innerHTML = '<p class="diff-message">Select files to compare.</p>';
+                    return;
+                }
+
+                if (left.path === right.path) {
+                    refs.diffPanel.innerHTML = '<p class="diff-message">Pick two different files to compare.</p>';
+                    return;
+                }
+
+                if (left.loadError || right.loadError) {
+                    refs.diffPanel.innerHTML = `<p class="diff-message">Could not read one or both files: ${escapeHtml(left.loadError || "")}${left.loadError && right.loadError ? "; " : ""}${escapeHtml(right.loadError || "")}</p>`;
+                    return;
+                }
+
+                if (left.missing || right.missing) {
+                    refs.diffPanel.innerHTML = '<p class="diff-message">One selected file is missing from disk.</p>';
+                    return;
+                }
+
+                const leftBinary = Boolean(left.isBinary);
+                const rightBinary = Boolean(right.isBinary);
+
+                if (leftBinary || rightBinary) {
+                    if (left.hash && right.hash && left.hash === right.hash) {
+                        refs.diffPanel.innerHTML = `
+                            <p class="diff-message">Binary file detected. No differences found (SHA-256 hashes match: <code>${left.hash.slice(0, 16)}...</code>).</p>
+                        `;
+                    } else {
+                        refs.diffPanel.innerHTML = '<p class="diff-message">Binary file detected. Cannot display diff. You can skip the file or mark it for deletion.</p>';
+                    }
+                    return;
+                }
+
+                if (left.text === right.text) {
+                    refs.diffPanel.innerHTML = '<p class="diff-message">No differences found.</p>';
+                    return;
+                }
+
+                const rows = buildDiffRows(left.text, right.text);
+                const leftHeader = `${left.path}`;
+                const rightHeader = `${right.path}`;
+
+                const gridRows = rows.map((row) => {
+                    const leftClass = row.kind === "removed" ? "removed" : row.kind === "context" ? "" : "added";
+                    const rightClass = row.kind === "added" ? "added" : row.kind === "context" ? "" : "removed";
+                    return `
+                        <div class="diff-line ${leftClass}"><span class="ln">${row.leftNo || ""}</span><span class="txt">${escapeHtml(row.leftText)}</span></div>
+                        <div class="diff-line ${rightClass}"><span class="ln">${row.rightNo || ""}</span><span class="txt">${escapeHtml(row.rightText)}</span></div>
+                    `;
+                }).join("");
+
+                refs.diffPanel.innerHTML = `
+                    <div class="diff-scroll">
+                        <div class="diff-grid">
+                            <div class="diff-head">${escapeHtml(leftHeader)}</div>
+                            <div class="diff-head">${escapeHtml(rightHeader)}</div>
+                            ${gridRows}
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderEditors() {
+                const { left, right } = getCurrentPair();
+                refs.leftEditorPanel.innerHTML = renderEditorCard(left, "Left");
+                refs.rightEditorPanel.innerHTML = renderEditorCard(right, "Right");
+            }
+
+            function renderEditorCard(entry, sideLabel) {
+                if (!entry) {
+                    return `<p class="diff-message">${sideLabel} file is not selected.</p>`;
+                }
+
+                if (entry.missing) {
+                    return `
+                        <div class="editor-header">
+                            <div class="editor-name">${escapeHtml(entry.path)}</div>
+                            <span class="badge danger">Missing</span>
+                        </div>
+                        <p class="diff-message">Canonical file not found in this directory.</p>
+                    `;
+                }
+
+                const marked = state.pendingDeletion.has(entry.path);
+                const saveBadge = entry.dirty
+                    ? '<span class="badge unsaved save-state">✕ Unsaved</span>'
+                    : '<span class="badge saved save-state">✓ Saved</span>';
+                const hashText = entry.hash ? `${entry.hash.slice(0, 16)}...` : "n/a";
+
+                const textareaOrMessage = entry.isBinary
+                    ? '<p class="diff-message">Binary file detected. Cannot edit text.</p>'
+                    : `<textarea data-path="${escapeAttr(entry.path)}" spellcheck="false">${escapeHtml(entry.text)}</textarea>`;
+
+                const saveDisabled = entry.isBinary || entry.deleted || entry.missing || !entry.dirty ? "disabled" : "";
+                const reloadDisabled = entry.deleted || entry.missing ? "disabled" : "";
+                const skipButton = entry.kind === "conflict" && !entry.deleted
+                    ? `<button type="button" data-action="toggle-skip" data-path="${escapeAttr(entry.path)}">${entry.skipped ? "Unskip" : "Skip"}</button>`
+                    : "";
+                const markButton = !entry.deleted && !entry.missing
+                    ? `<button type="button" data-action="toggle-mark" data-path="${escapeAttr(entry.path)}">${marked ? "Unmark Delete" : "Mark Delete"}</button>`
+                    : "";
+
+                return `
+                    <div class="editor-header">
+                        <div class="editor-name">${escapeHtml(sideLabel)}: ${escapeHtml(entry.path)}</div>
+                        ${saveBadge}
+                    </div>
+                    <div class="editor-actions">
+                        <button type="button" data-action="save" data-path="${escapeAttr(entry.path)}" ${saveDisabled}>Save</button>
+                        <button type="button" data-action="reload" data-path="${escapeAttr(entry.path)}" ${reloadDisabled}>Reload</button>
+                        ${markButton}
+                        ${skipButton}
+                    </div>
+                    ${textareaOrMessage}
+                    <div class="meta-row" data-meta-path="${escapeAttr(entry.path)}">
+                        <span class="meta-size">${formatBytes(entry.size)}</span>
+                        <span class="meta-lines">${entry.isBinary ? "binary" : `${entry.lineCount} lines`}</span>
+                        <span class="meta-hash">sha256: ${hashText}</span>
+                    </div>
+                `;
+            }
+
+            function renderDeleteTable() {
+                const markedEntries = Array.from(state.pendingDeletion)
+                    .map((path) => state.entriesByPath.get(path))
+                    .filter((entry) => entry && !entry.deleted && !entry.missing);
+
+                if (markedEntries.length === 0) {
+                    refs.deleteListWrap.innerHTML = '<p class="empty-state">No files marked for deletion.</p>';
+                    return;
+                }
+
+                refs.deleteListWrap.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>File</th>
+                                <th>Type</th>
+                                <th>Size</th>
+                                <th>Unsaved?</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${markedEntries.map((entry) => `
+                                <tr>
+                                    <td><code>${escapeHtml(entry.path)}</code></td>
+                                    <td>${escapeHtml(entry.kind)}</td>
+                                    <td>${formatBytes(entry.size)}</td>
+                                    <td>${entry.dirty ? "Yes" : "No"}</td>
+                                    <td><button type="button" data-action="toggle-mark" data-path="${escapeAttr(entry.path)}">Unmark</button></td>
+                                </tr>
+                            `).join("")}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            function renderSummaryTable() {
+                if (state.groups.length === 0) {
+                    refs.summaryWrap.innerHTML = '<p class="empty-state">No groups to summarize yet.</p>';
+                    return;
+                }
+
+                refs.summaryWrap.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Canonical Path</th>
+                                <th>Status</th>
+                                <th>Remaining</th>
+                                <th>Marked</th>
+                                <th>Unsaved Files</th>
+                                <th>Open</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${state.groups.map((group) => {
+                                const status = computeGroupStatus(group);
+                                const unsavedCount = countUnsaved(group);
+                                return `
+                                    <tr>
+                                        <td><code>${escapeHtml(group.canonicalPath)}</code></td>
+                                        <td><span class="badge ${status.className}">${escapeHtml(status.label)}</span></td>
+                                        <td>${status.remaining}</td>
+                                        <td>${status.marked}</td>
+                                        <td>${unsavedCount}</td>
+                                        <td><button type="button" data-action="open-group" data-group-key="${escapeAttr(group.key)}">Open</button></td>
+                                    </tr>
+                                `;
+                            }).join("")}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            function computeGroupStatus(group) {
+                const activeConflicts = getActiveConflicts(group);
+                const marked = activeConflicts.filter((entry) => state.pendingDeletion.has(entry.path)).length;
+                const remaining = Math.max(0, activeConflicts.length - marked);
+                const missingCanonical = group.canonicalEntry && group.canonicalEntry.missing;
+                const deletedCanonical = group.canonicalEntry && group.canonicalEntry.deleted;
+
+                if (missingCanonical || deletedCanonical) {
+                    return { label: "Missing Canonical", className: "danger", remaining, marked };
+                }
+                if (group.manualResolved) {
+                    return { label: "Resolved (Manual)", className: "saved", remaining, marked };
+                }
+                if (remaining === 0) {
+                    return { label: "Resolved", className: "saved", remaining, marked };
+                }
+                if (marked > 0) {
+                    return { label: "Pending Delete", className: "warn", remaining, marked };
+                }
+                return { label: "Unresolved", className: "unsaved", remaining, marked };
+            }
+
+            function countUnsaved(group) {
+                const entries = [group.canonicalEntry, ...group.conflictEntries].filter(Boolean);
+                return entries.filter((entry) => !entry.deleted && !entry.missing && entry.dirty).length;
+            }
+
+            function updateEditorCardState(path) {
+                const entry = state.entriesByPath.get(path);
+                if (!entry) {
+                    return;
+                }
+                const card = document.querySelector(`.editor-card textarea[data-path="${cssEscape(path)}"]`)?.closest(".editor-card");
+                if (!card) {
+                    return;
+                }
+                const badge = card.querySelector(".save-state");
+                if (badge) {
+                    badge.className = `badge save-state ${entry.dirty ? "unsaved" : "saved"}`;
+                    badge.textContent = entry.dirty ? "✕ Unsaved" : "✓ Saved";
+                }
+                const saveButton = card.querySelector(`button[data-action="save"][data-path="${cssEscape(path)}"]`);
+                if (saveButton) {
+                    saveButton.disabled = entry.isBinary || entry.deleted || entry.missing || !entry.dirty;
+                }
+                const meta = card.querySelector(`[data-meta-path="${cssEscape(path)}"]`);
+                if (meta) {
+                    const sizeEl = meta.querySelector(".meta-size");
+                    const linesEl = meta.querySelector(".meta-lines");
+                    if (sizeEl) {
+                        sizeEl.textContent = formatBytes(entry.size);
+                    }
+                    if (linesEl) {
+                        linesEl.textContent = entry.isBinary ? "binary" : `${entry.lineCount} lines`;
+                    }
+                }
+            }
+
+            function buildDiffRows(leftText, rightText) {
+                const rows = [];
+                let leftNo = 1;
+                let rightNo = 1;
+                const chunks = Diff.diffLines(leftText, rightText);
+
+                for (const chunk of chunks) {
+                    const rawLines = chunk.value.split("\n");
+                    if (rawLines.length > 0 && rawLines[rawLines.length - 1] === "") {
+                        rawLines.pop();
+                    }
+
+                    for (const line of rawLines) {
+                        if (chunk.added) {
+                            rows.push({ kind: "added", leftNo: "", rightNo, leftText: "", rightText: line });
+                            rightNo += 1;
+                        } else if (chunk.removed) {
+                            rows.push({ kind: "removed", leftNo, rightNo: "", leftText: line, rightText: "" });
+                            leftNo += 1;
+                        } else {
+                            rows.push({ kind: "context", leftNo, rightNo, leftText: line, rightText: line });
+                            leftNo += 1;
+                            rightNo += 1;
+                        }
+                    }
+                }
+                return rows;
+            }
+
+            function decodeUtf8(buffer) {
+                return new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+            }
+
+            function detectBinary(buffer) {
+                const bytes = new Uint8Array(buffer.slice(0, Math.min(buffer.byteLength, 8192)));
+                if (bytes.length === 0) {
+                    return false;
+                }
+                let suspicious = 0;
+                for (const value of bytes) {
+                    if (value === 0) {
+                        return true;
+                    }
+                    const isControl = value < 7 || (value > 14 && value < 32);
+                    if (isControl) {
+                        suspicious += 1;
+                    }
+                }
+                return suspicious / bytes.length > 0.28;
+            }
+
+            function countLines(text) {
+                if (!text) {
+                    return 0;
+                }
+                return text.split(/\r\n|\r|\n/).length;
+            }
+
+            async function sha256Hex(buffer) {
+                const digest = await crypto.subtle.digest("SHA-256", buffer);
+                const bytes = Array.from(new Uint8Array(digest));
+                return bytes.map((byte) => byte.toString(16).padStart(2, "0")).join("");
+            }
+
+            function setStatus(message, level = "info") {
+                refs.statusBanner.hidden = false;
+                refs.statusBanner.textContent = message;
+                refs.statusBanner.className = "status-banner";
+                if (level === "error") {
+                    refs.statusBanner.classList.add("error");
+                } else if (level === "warn") {
+                    refs.statusBanner.classList.add("warn");
+                }
+            }
+
+            function formatBytes(bytes) {
+                if (!Number.isFinite(bytes)) {
+                    return "0 B";
+                }
+                const units = ["B", "KB", "MB", "GB"];
+                let size = bytes;
+                let idx = 0;
+                while (size >= 1024 && idx < units.length - 1) {
+                    size /= 1024;
+                    idx += 1;
+                }
+                const value = idx === 0 ? `${Math.round(size)}` : size.toFixed(2);
+                return `${value} ${units[idx]}`;
+            }
+
+            function loadPreferences() {
+                try {
+                    const raw = window.localStorage.getItem(PREF_KEY);
+                    if (!raw) {
+                        return;
+                    }
+                    const parsed = JSON.parse(raw);
+                    if (typeof parsed.pattern === "string") {
+                        state.regexPattern = parsed.pattern;
+                    }
+                    if (typeof parsed.flags === "string") {
+                        state.regexFlags = parsed.flags;
+                    }
+                    if (typeof parsed.ignoreDirsRaw === "string") {
+                        state.ignoreDirsRaw = parsed.ignoreDirsRaw;
+                    }
+                    if (typeof parsed.pinCanonical === "boolean") {
+                        state.pinCanonical = parsed.pinCanonical;
+                    }
+                } catch {
+                    // no-op
+                }
+            }
+
+            function savePreferences() {
+                const data = {
+                    pattern: state.regexPattern,
+                    flags: state.regexFlags,
+                    ignoreDirsRaw: state.ignoreDirsRaw,
+                    pinCanonical: state.pinCanonical,
+                };
+                window.localStorage.setItem(PREF_KEY, JSON.stringify(data));
+            }
+
+            function loadUrlState() {
+                const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+                const pattern = params.get("pattern");
+                const flags = params.get("flags");
+                const ignore = params.get("ignore");
+                const tab = params.get("tab");
+                const pin = params.get("pin");
+
+                if (pattern) {
+                    state.regexPattern = pattern;
+                }
+                if (flags !== null) {
+                    state.regexFlags = flags;
+                }
+                if (ignore !== null) {
+                    state.ignoreDirsRaw = ignore;
+                }
+                if (tab && ["triage", "delete", "summary"].includes(tab)) {
+                    state.activeTab = tab;
+                }
+                if (pin === "0") {
+                    state.pinCanonical = false;
+                }
+            }
+
+            function saveUrlState() {
+                const params = new URLSearchParams();
+                params.set("pattern", state.regexPattern);
+                params.set("flags", state.regexFlags);
+                params.set("ignore", state.ignoreDirsRaw);
+                params.set("tab", state.activeTab);
+                params.set("pin", state.pinCanonical ? "1" : "0");
+                if (state.selectedGroupKey) {
+                    params.set("group", state.selectedGroupKey);
+                }
+                window.history.replaceState(null, "", `#${params.toString()}`);
+            }
+
+            function escapeHtml(value) {
+                return String(value)
+                    .replaceAll("&", "&amp;")
+                    .replaceAll("<", "&lt;")
+                    .replaceAll(">", "&gt;")
+                    .replaceAll('"', "&quot;")
+                    .replaceAll("'", "&#39;");
+            }
+
+            function escapeAttr(value) {
+                return escapeHtml(value).replaceAll("`", "&#96;");
+            }
+
+            function cssEscape(value) {
+                if (window.CSS && typeof window.CSS.escape === "function") {
+                    return window.CSS.escape(value);
+                }
+                return value.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+            }
+        })();
+    </script>
+    <script src="/analytics.js"></script>
+</body>
+
+</html>
