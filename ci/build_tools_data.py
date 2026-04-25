@@ -19,6 +19,7 @@ from __future__ import annotations
 import logging
 import re
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path
@@ -80,19 +81,27 @@ def _run_git(args: list[str], *, cwd: Path) -> str:
     return result.stdout.strip()
 
 
-def _get_tool_git_commits(tool_dir: Path) -> tuple[str | None, str | None]:
+def _get_tool_git_commits(
+    tool_dir: Path, *, repo_root: Path | None = None
+) -> tuple[str | None, str | None]:
     """Return (introduced_commit, updated_commit) for the tool directory.
 
     If there is no git history, returns (None, None).
     If the most recent commit matches the introduction commit, updated_commit is None.
+    Generated per-tool changelogs are excluded to avoid self-referential updates.
     """
 
-    repo_root = Path(__file__).resolve().parents[1]
+    if repo_root is None:
+        repo_root = Path(__file__).resolve().parents[1]
     rel_path = tool_dir.relative_to(repo_root)
+    pathspecs = [
+        str(rel_path),
+        f":(exclude){(rel_path / 'changelog.md').as_posix()}",
+    ]
 
     try:
         first_commit = _run_git(
-            ["log", "--reverse", "--format=%H", "--", str(rel_path)],
+            ["log", "--reverse", "--format=%H", "--", *pathspecs],
             cwd=repo_root,
         ).splitlines()
         if not first_commit:
@@ -101,7 +110,7 @@ def _get_tool_git_commits(tool_dir: Path) -> tuple[str | None, str | None]:
 
         latest_commit = (
             _run_git(
-                ["log", "-n", "1", "--format=%H", "--", str(rel_path)],
+                ["log", "-n", "1", "--format=%H", "--", *pathspecs],
                 cwd=repo_root,
             ).strip()
             or None
@@ -596,6 +605,43 @@ def test_parse_pep723_dependencies() -> None:
 def test_parse_requirement_with_extras() -> None:
     dependency = _parse_requirement("requests[socks]>=2.31")
     assert dependency == Dependency(package="requests[socks]", version=">=2.31")
+
+
+def _git(args: list[str], *, cwd: Path) -> None:
+    subprocess.run(["git", *args], cwd=cwd, check=True, text=True)
+
+
+def test_tool_git_commits_ignore_generated_changelog() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp)
+        _git(["init"], cwd=repo)
+        _git(["config", "user.email", "test@example.com"], cwd=repo)
+        _git(["config", "user.name", "Test User"], cwd=repo)
+
+        tool_dir = repo / "content" / "tools" / "html" / "demo"
+        tool_dir.mkdir(parents=True)
+        (tool_dir / "_index.md").write_text("---\ntitle: Demo\n---\n", encoding="utf-8")
+        (tool_dir / "tool.html").write_text("<html>v1</html>", encoding="utf-8")
+        _git(["add", "."], cwd=repo)
+        _git(["commit", "-m", "Add demo tool"], cwd=repo)
+        introduced = _run_git(["rev-parse", "HEAD"], cwd=repo)
+
+        (tool_dir / "changelog.md").write_text("## generated\n", encoding="utf-8")
+        _git(["add", "."], cwd=repo)
+        _git(["commit", "-m", "Refresh changelog"], cwd=repo)
+
+        assert _get_tool_git_commits(tool_dir, repo_root=repo) == (introduced, None)
+
+        (tool_dir / "tool.html").write_text("<html>v2</html>", encoding="utf-8")
+        _git(["add", "."], cwd=repo)
+        _git(["commit", "-m", "Update demo tool"], cwd=repo)
+        updated = _run_git(["rev-parse", "HEAD"], cwd=repo)
+
+        (tool_dir / "changelog.md").write_text("## generated again\n", encoding="utf-8")
+        _git(["add", "."], cwd=repo)
+        _git(["commit", "-m", "Refresh changelog again"], cwd=repo)
+
+        assert _get_tool_git_commits(tool_dir, repo_root=repo) == (introduced, updated)
 
 
 def main() -> int:

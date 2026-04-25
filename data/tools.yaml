@@ -54,7 +54,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "5c2c9aa8c6cde866191c8a1316111ce67acaeb17"
-        updated_commit: "a061a8de0442438970499028ad6b14b3361a5780"
+        updated_commit: "abfb1216472b1464848b00f2b6a0e7b93c2e7096"
       tags:
         - "html"
         - "cron"
@@ -82,7 +82,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f2085d75a899e83fbb27cfb1610e703f2c0b9815"
-        updated_commit: "2f3f4e7ab3ac0f4087794e4618d8d63afd3f5cf5"
+        updated_commit: "6649874841dc1f33a2de5efae6147c2cded54986"
       dependencies:
         - package: "js-yaml"
           version: "4.1.0"
@@ -101,7 +101,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "b1e661e247daf6c0c5b262c49838c9b290cea1f9"
-        updated_commit: "07b5d8f428df9d3d4bfdaef3852de4d69bb45872"
+        updated_commit: null
       dependencies:
         - package: "js-yaml"
           version: "4.1.0"

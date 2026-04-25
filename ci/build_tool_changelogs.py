@@ -272,6 +272,19 @@ def _ensure_history_link(
     return f"{base}\n\n{link}\n"
 
 
+def _split_front_matter(text: str) -> tuple[str, str]:
+    lines = text.splitlines(keepends=True)
+    if not lines or lines[0].strip() != "---":
+        return "", text
+
+    for idx in range(1, len(lines)):
+        if lines[idx].strip() == "---":
+            split_at = idx + 1
+            return "".join(lines[:split_at]), "".join(lines[split_at:])
+
+    return "", text
+
+
 def _update_changelog(
     *,
     repo_root: Path,
@@ -315,7 +328,8 @@ def _update_changelog(
 
     new_block = _render_entries(commits)
     if existing_text.strip():
-        updated = f"{new_block}\n\n{existing_text.lstrip()}"
+        front_matter, body = _split_front_matter(existing_text)
+        updated = f"{front_matter}{new_block}\n\n{body.lstrip()}"
     else:
         front_matter = _render_front_matter(tool_dir=tool_dir) if init else ""
         updated = f"{front_matter}{new_block}\n"
@@ -423,24 +437,25 @@ def test_render_front_matter_uses_tool_title() -> None:
 
 
 def test_render_history_link_uses_tool_file() -> None:
-    repo_root = Path("/repo")
-    tool_dir = repo_root / "content" / "tools" / "html" / "demo"
-    tool_dir.mkdir(parents=True)
-    (tool_dir / "_index.md").write_text(
-        "\n".join(
-            [
-                "---",
-                "resources:",
-                "  - name: tool-file",
-                "    src: custom.html",
-                "---",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    link = _render_history_link(repo_root=repo_root, tool_dir=tool_dir)
-    assert link.endswith("content/tools/html/demo/custom.html)")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo_root = Path(tmp)
+        tool_dir = repo_root / "content" / "tools" / "html" / "demo"
+        tool_dir.mkdir(parents=True)
+        (tool_dir / "_index.md").write_text(
+            "\n".join(
+                [
+                    "---",
+                    "resources:",
+                    "  - name: tool-file",
+                    "    src: custom.html",
+                    "---",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        link = _render_history_link(repo_root=repo_root, tool_dir=tool_dir)
+        assert link.endswith("content/tools/html/demo/custom.html)")
 
 
 def _git(args: list[str], *, cwd: Path) -> None:
@@ -500,6 +515,58 @@ def test_update_changelog_from_last_hash() -> None:
         assert updated.startswith(f"## `{second_hash}`")
         assert f"## `{first_hash}`" in updated
         assert "Docs: Update index" not in updated
+
+
+def test_update_changelog_preserves_front_matter() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp)
+        _git(["init"], cwd=repo)
+        _git(["config", "user.email", "test@example.com"], cwd=repo)
+        _git(["config", "user.name", "Test User"], cwd=repo)
+
+        tool_dir = repo / "content" / "tools" / "html" / "demo"
+        tool_dir.mkdir(parents=True)
+        (tool_dir / "_index.md").write_text("---\ntitle: Demo\n---\n", encoding="utf-8")
+        (tool_dir / "tool.html").write_text("<html></html>", encoding="utf-8")
+        _git(["add", "."], cwd=repo)
+        _git(["commit", "-m", "Init tool"], cwd=repo)
+        first_hash = _run_git(["rev-parse", "--short", "HEAD"], cwd=repo)
+
+        changelog = tool_dir / "changelog.md"
+        changelog.write_text(
+            "\n".join(
+                [
+                    "---",
+                    "title: Changelog - Demo",
+                    "bookHidden: true",
+                    "---",
+                    f"## `{first_hash}` - January 1, 2025 10:00",
+                    "",
+                    "- Init tool",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        (tool_dir / "tool.html").write_text("<html>v2</html>", encoding="utf-8")
+        _git(["add", "."], cwd=repo)
+        _git(["commit", "-m", "Fix: Update tool"], cwd=repo)
+        second_hash = _run_git(["rev-parse", "--short", "HEAD"], cwd=repo)
+
+        changed = _update_changelog(
+            repo_root=repo,
+            tool_dir=tool_dir,
+            changelog_path=changelog,
+            init=False,
+        )
+        assert changed is True
+        updated = changelog.read_text(encoding="utf-8")
+        assert updated.startswith(
+            "---\ntitle: Changelog - Demo\nbookHidden: true\n---\n"
+        )
+        assert f"---\n## `{second_hash}`" in updated
+        assert f"## `{first_hash}`" in updated
 
 
 def test_init_creates_changelog() -> None:
