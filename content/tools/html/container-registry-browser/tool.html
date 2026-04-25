@@ -1,0 +1,1546 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Container Registry Browser</title>
+    <link rel="stylesheet" href="/common.css" />
+    <style>
+      :root {
+        --crb-bg: #f7f5f0;
+        --crb-panel: #fffdf8;
+        --crb-ink: #182027;
+        --crb-muted: #5f6872;
+        --crb-border: #d8d2c8;
+        --crb-accent: #2f6f73;
+        --crb-accent-ink: #effaf8;
+        --crb-warn: #9a5b08;
+        --crb-bad: #9f2f28;
+        --crb-good: #237343;
+        --crb-code: #f0ece4;
+        --crb-row: #faf8f3;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --crb-bg: #22272d;
+          --crb-panel: #2d333a;
+          --crb-ink: #edf0f2;
+          --crb-muted: #b9c0c8;
+          --crb-border: #505963;
+          --crb-accent: #67b5af;
+          --crb-accent-ink: #10201f;
+          --crb-warn: #f0b45b;
+          --crb-bad: #f08a82;
+          --crb-good: #7ed39b;
+          --crb-code: #22282f;
+          --crb-row: #252b32;
+        }
+      }
+
+      body {
+        min-height: 100vh;
+        background: var(--crb-bg);
+        color: var(--crb-ink);
+      }
+
+      .crb-wrap {
+        max-width: 1220px;
+        margin: 0 auto;
+        padding: 28px 18px 72px;
+      }
+
+      .crb-header {
+        margin-bottom: 18px;
+      }
+
+      .crb-header h1 {
+        margin: 0 0 8px;
+        font-size: clamp(2rem, 4vw, 3rem);
+      }
+
+      .crb-header p {
+        max-width: 78ch;
+        margin: 0;
+        color: var(--crb-muted);
+      }
+
+      .crb-panel {
+        border: 1px solid var(--crb-border);
+        border-radius: 8px;
+        background: var(--crb-panel);
+        padding: 16px;
+        margin: 14px 0;
+      }
+
+      .crb-panel h2 {
+        margin: 0 0 12px;
+        font-size: 1.1rem;
+      }
+
+      .crb-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 12px;
+        align-items: end;
+      }
+
+      .crb-field label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 700;
+      }
+
+      .crb-field input,
+      .crb-field textarea,
+      .crb-field select {
+        width: 100%;
+        border: 1px solid var(--crb-border);
+        border-radius: 6px;
+        padding: 9px 10px;
+        background: var(--crb-row);
+        color: var(--crb-ink);
+        font: inherit;
+      }
+
+      .crb-field textarea {
+        min-height: 110px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      .crb-actions,
+      .crb-toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .crb-toolbar {
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      button,
+      .crb-button {
+        border: 1px solid var(--crb-border);
+        border-radius: 6px;
+        padding: 8px 11px;
+        background: var(--crb-row);
+        color: var(--crb-ink);
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      button.primary {
+        background: var(--crb-accent);
+        color: var(--crb-accent-ink);
+        border-color: var(--crb-accent);
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .crb-status {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .crb-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--crb-border);
+        border-radius: 999px;
+        padding: 5px 9px;
+        background: var(--crb-row);
+        color: var(--crb-muted);
+        font-size: 0.92rem;
+      }
+
+      .crb-pill.good {
+        color: var(--crb-good);
+      }
+
+      .crb-pill.warn {
+        color: var(--crb-warn);
+      }
+
+      .crb-pill.bad {
+        color: var(--crb-bad);
+      }
+
+      .crb-muted {
+        color: var(--crb-muted);
+      }
+
+      .crb-table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--crb-border);
+        padding: 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--crb-muted);
+        font-size: 0.9rem;
+      }
+
+      code,
+      pre {
+        background: var(--crb-code);
+        border-radius: 5px;
+      }
+
+      code {
+        padding: 1px 4px;
+      }
+
+      pre {
+        overflow: auto;
+        padding: 10px;
+        margin: 8px 0 0;
+      }
+
+      .crb-digest {
+        word-break: break-all;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.92rem;
+      }
+
+      .crb-empty {
+        border: 1px dashed var(--crb-border);
+        border-radius: 8px;
+        padding: 18px;
+        color: var(--crb-muted);
+        text-align: center;
+      }
+
+      .crb-split {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 14px;
+      }
+
+      .crb-hidden {
+        display: none !important;
+      }
+
+      .crb-help {
+        border-left: 4px solid var(--crb-warn);
+        padding: 10px 12px;
+        background: var(--crb-row);
+        border-radius: 6px;
+        margin-bottom: 14px;
+      }
+
+      .crb-small {
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 760px) {
+        .crb-split {
+          grid-template-columns: 1fr;
+        }
+
+        .crb-toolbar {
+          align-items: stretch;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="crb-wrap">
+      <header class="crb-header">
+        <h1>Container Registry Browser</h1>
+        <p>
+          Browse OCI and Docker Registry API v2 repositories and tags, then inspect manifest
+          digests, platform entries, config metadata, and layers without uploading anything.
+        </p>
+      </header>
+
+      <section class="crb-panel" id="crb-source-panel">
+        <h2>Registry source</h2>
+        <div class="crb-grid">
+          <div class="crb-field">
+            <label for="crb-registry-input">Registry or repository URL</label>
+            <input
+              id="crb-registry-input"
+              type="text"
+              spellcheck="false"
+              placeholder="https://www.docker.elastic.co/r/elasticsearch"
+            />
+          </div>
+          <div class="crb-field">
+            <label for="crb-repo-input">Repository</label>
+            <input id="crb-repo-input" type="text" spellcheck="false" placeholder="elasticsearch/elasticsearch" />
+          </div>
+          <div class="crb-field">
+            <label for="crb-tag-input">Tag or digest</label>
+            <input id="crb-tag-input" type="text" spellcheck="false" placeholder="9.2.7 or sha256:..." />
+          </div>
+        </div>
+        <div class="crb-actions" style="margin-top: 12px">
+          <button id="crb-load-registry" class="primary" type="button">Browse Registry</button>
+          <button id="crb-load-tags" type="button">Load Tags</button>
+          <button id="crb-inspect-ref" type="button">Inspect Ref</button>
+          <button id="crb-reset" type="button">Reset</button>
+        </div>
+      </section>
+
+      <section class="crb-panel crb-hidden" id="crb-auth-panel">
+        <h2>Credentials</h2>
+        <p class="crb-muted">
+          These fields appear only after unauthenticated and anonymous bearer-token access fail.
+          Tokens are stored in this browser only.
+        </p>
+        <div class="crb-grid">
+          <div class="crb-field">
+            <label for="crb-username">Username</label>
+            <input id="crb-username" type="text" autocomplete="username" placeholder="username or token user" />
+          </div>
+          <div class="crb-field">
+            <label for="crb-password">Password / token</label>
+            <input id="crb-password" type="password" autocomplete="current-password" placeholder="password or token" />
+          </div>
+        </div>
+        <div class="crb-actions" style="margin-top: 12px">
+          <button id="crb-save-credentials" class="primary" type="button">Save Credentials</button>
+          <button id="crb-clear-credentials" type="button">Clear Credentials</button>
+        </div>
+      </section>
+
+      <section class="crb-panel" id="crb-status-panel">
+        <div class="crb-status">
+          <span id="crb-status" class="crb-pill">Idle</span>
+          <span id="crb-registry-status" class="crb-pill">No registry</span>
+          <span id="crb-auth-status" class="crb-pill">Auth: anonymous</span>
+          <span id="crb-count-status" class="crb-pill">0 repos, 0 tags</span>
+        </div>
+      </section>
+
+      <section class="crb-panel" id="crb-catalog-panel">
+        <div class="crb-toolbar">
+          <h2>Repositories</h2>
+          <div class="crb-actions">
+            <input id="crb-repo-filter" type="search" placeholder="Filter repos" aria-label="Filter repositories" />
+            <button id="crb-scan-visible" type="button">Scan Visible Activity</button>
+          </div>
+        </div>
+        <div class="crb-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Repository</th>
+                <th>Tags</th>
+                <th>Newest inspected</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="crb-repo-list"></tbody>
+          </table>
+        </div>
+        <div id="crb-repo-empty" class="crb-empty">No repositories loaded.</div>
+      </section>
+
+      <section class="crb-panel" id="crb-tags-panel">
+        <div class="crb-toolbar">
+          <h2>Tags</h2>
+          <div class="crb-actions">
+            <input id="crb-tag-filter" type="search" placeholder="Filter tags, e.g. v1." aria-label="Filter tags" />
+            <select id="crb-tag-sort" aria-label="Tag sort">
+              <option value="desc">Newest version first</option>
+              <option value="asc">Oldest version first</option>
+              <option value="alpha">Alphabetical</option>
+            </select>
+          </div>
+        </div>
+        <div id="crb-selected-repo" class="crb-muted">No repository selected.</div>
+        <div class="crb-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tag</th>
+                <th>Pull reference</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="crb-tag-list"></tbody>
+          </table>
+        </div>
+        <div id="crb-tag-empty" class="crb-empty">No tags loaded.</div>
+      </section>
+
+      <section class="crb-panel" id="crb-manifest-panel">
+        <div class="crb-toolbar">
+          <h2>Manifest</h2>
+          <div class="crb-actions">
+            <button id="crb-copy-manifest-json" type="button" disabled>Copy JSON</button>
+            <button id="crb-download-manifest-json" type="button" disabled>Download JSON</button>
+          </div>
+        </div>
+        <div id="crb-manifest-summary" class="crb-empty">Select a tag or digest to inspect a manifest.</div>
+        <div id="crb-manifest-details"></div>
+      </section>
+
+      <section class="crb-panel" id="crb-fallback-panel">
+        <h2>Paste or upload registry JSON</h2>
+        <div id="crb-request-help" class="crb-help crb-hidden"></div>
+        <div class="crb-split">
+          <div class="crb-field">
+            <label for="crb-tags-json">Tags list JSON</label>
+            <textarea id="crb-tags-json" spellcheck="false" placeholder='{"name":"repo/name","tags":["latest"]}'></textarea>
+            <div class="crb-actions" style="margin-top: 8px">
+              <button id="crb-import-tags" type="button">Import Tags</button>
+              <input id="crb-tags-file" type="file" accept=".json,application/json" />
+            </div>
+          </div>
+          <div class="crb-field">
+            <label for="crb-manifest-json">Manifest JSON</label>
+            <textarea id="crb-manifest-json" spellcheck="false" placeholder='{"schemaVersion":2,"mediaType":"..."}'></textarea>
+            <div class="crb-actions" style="margin-top: 8px">
+              <button id="crb-import-manifest" type="button">Import Manifest</button>
+              <input id="crb-manifest-file" type="file" accept=".json,application/json" />
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const elements = {
+        registryInput: document.getElementById("crb-registry-input"),
+        repoInput: document.getElementById("crb-repo-input"),
+        tagInput: document.getElementById("crb-tag-input"),
+        loadRegistry: document.getElementById("crb-load-registry"),
+        loadTags: document.getElementById("crb-load-tags"),
+        inspectRef: document.getElementById("crb-inspect-ref"),
+        reset: document.getElementById("crb-reset"),
+        authPanel: document.getElementById("crb-auth-panel"),
+        username: document.getElementById("crb-username"),
+        password: document.getElementById("crb-password"),
+        saveCredentials: document.getElementById("crb-save-credentials"),
+        clearCredentials: document.getElementById("crb-clear-credentials"),
+        status: document.getElementById("crb-status"),
+        registryStatus: document.getElementById("crb-registry-status"),
+        authStatus: document.getElementById("crb-auth-status"),
+        countStatus: document.getElementById("crb-count-status"),
+        repoFilter: document.getElementById("crb-repo-filter"),
+        scanVisible: document.getElementById("crb-scan-visible"),
+        repoList: document.getElementById("crb-repo-list"),
+        repoEmpty: document.getElementById("crb-repo-empty"),
+        tagFilter: document.getElementById("crb-tag-filter"),
+        tagSort: document.getElementById("crb-tag-sort"),
+        selectedRepo: document.getElementById("crb-selected-repo"),
+        tagList: document.getElementById("crb-tag-list"),
+        tagEmpty: document.getElementById("crb-tag-empty"),
+        manifestSummary: document.getElementById("crb-manifest-summary"),
+        manifestDetails: document.getElementById("crb-manifest-details"),
+        copyManifestJson: document.getElementById("crb-copy-manifest-json"),
+        downloadManifestJson: document.getElementById("crb-download-manifest-json"),
+        tagsJson: document.getElementById("crb-tags-json"),
+        manifestJson: document.getElementById("crb-manifest-json"),
+        requestHelp: document.getElementById("crb-request-help"),
+        importTags: document.getElementById("crb-import-tags"),
+        importManifest: document.getElementById("crb-import-manifest"),
+        tagsFile: document.getElementById("crb-tags-file"),
+        manifestFile: document.getElementById("crb-manifest-file"),
+      };
+
+      const storageKey = "container-registry-browser-credentials";
+      const manifestAccept = [
+        "application/vnd.oci.image.index.v1+json",
+        "application/vnd.docker.distribution.manifest.list.v2+json",
+        "application/vnd.oci.image.manifest.v1+json",
+        "application/vnd.docker.distribution.manifest.v2+json",
+        "application/vnd.oci.artifact.manifest.v1+json",
+        "application/json",
+      ].join(", ");
+
+      const state = {
+        registryHost: "",
+        registryBase: "",
+        repoPrefix: "",
+        selectedRepo: "",
+        selectedRef: "",
+        repos: [],
+        repoMeta: new Map(),
+        tags: [],
+        tokenCache: new Map(),
+        lastAuthMode: "anonymous",
+        currentManifest: null,
+      };
+
+      function setStatus(message, tone = "") {
+        elements.status.textContent = message;
+        elements.status.className = `crb-pill ${tone}`.trim();
+      }
+
+      function setAuthStatus(message, tone = "") {
+        elements.authStatus.textContent = `Auth: ${message}`;
+        elements.authStatus.className = `crb-pill ${tone}`.trim();
+      }
+
+      function setCounts() {
+        elements.countStatus.textContent = `${state.repos.length} repos, ${state.tags.length} tags`;
+      }
+
+      function updateRegistryStatus() {
+        elements.registryStatus.textContent = state.registryHost ? `Registry: ${state.registryHost}` : "No registry";
+      }
+
+      function revealCredentials() {
+        elements.authPanel.classList.remove("crb-hidden");
+      }
+
+      function getCredentials() {
+        const username = elements.username.value.trim();
+        const password = elements.password.value;
+        if (!username || !password) {
+          return null;
+        }
+        return { username, password };
+      }
+
+      function storeCredentials() {
+        const credentials = getCredentials();
+        if (!credentials) {
+          localStorage.removeItem(storageKey);
+          return;
+        }
+        localStorage.setItem(storageKey, JSON.stringify(credentials));
+        setStatus("Credentials saved.", "good");
+      }
+
+      function loadCredentials() {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) {
+          return;
+        }
+        try {
+          const data = JSON.parse(raw);
+          if (data && typeof data.username === "string" && typeof data.password === "string") {
+            elements.username.value = data.username;
+            elements.password.value = data.password;
+          }
+        } catch (error) {
+          localStorage.removeItem(storageKey);
+        }
+      }
+
+      function clearCredentials() {
+        elements.username.value = "";
+        elements.password.value = "";
+        localStorage.removeItem(storageKey);
+        state.tokenCache.clear();
+        setAuthStatus("anonymous");
+        setStatus("Credentials cleared.", "good");
+      }
+
+      function basicAuthHeader() {
+        const credentials = getCredentials();
+        if (!credentials) {
+          return null;
+        }
+        return `Basic ${btoa(`${credentials.username}:${credentials.password}`)}`;
+      }
+
+      function normalizeInput() {
+        const raw = elements.registryInput.value.trim();
+        const repoRaw = elements.repoInput.value.trim();
+        const tagRaw = elements.tagInput.value.trim();
+        if (!raw && !repoRaw) {
+          throw new Error("Enter a registry or repository URL.");
+        }
+
+        let input = raw || repoRaw;
+        if (!/^https?:\/\//i.test(input) && !input.includes("://")) {
+          input = `https://${input}`;
+        }
+        const url = new URL(input);
+        let host = url.host;
+        const path = url.pathname.replace(/^\/+|\/+$/g, "");
+        let repo = repoRaw;
+        let prefix = "";
+        let ref = tagRaw;
+
+        if (host === "www.docker.elastic.co") {
+          host = "docker.elastic.co";
+        }
+
+        if (!repo && path) {
+          const parts = path.split("/");
+          if (parts[0] === "r" && parts[1]) {
+            prefix = parts[1];
+            repo = parts.length > 2 ? parts.slice(1).join("/") : "";
+          } else if (parts[0] === "v2") {
+            const tagsIndex = parts.indexOf("tags");
+            const manifestsIndex = parts.indexOf("manifests");
+            const end = tagsIndex > -1 ? tagsIndex : manifestsIndex > -1 ? manifestsIndex : parts.length;
+            repo = parts.slice(1, end).join("/");
+            if (manifestsIndex > -1 && parts[manifestsIndex + 1] && !ref) {
+              ref = decodeURIComponent(parts.slice(manifestsIndex + 1).join("/"));
+            }
+          } else {
+            repo = path;
+          }
+        }
+
+        const parsedRepo = splitRepoRef(repo || "");
+        repo = parsedRepo.repo;
+        if (!ref && parsedRepo.ref) {
+          ref = parsedRepo.ref;
+        }
+
+        return {
+          host,
+          base: `${url.protocol}//${host}`,
+          repoPrefix: prefix || repo || "",
+          repo,
+          ref,
+        };
+      }
+
+      function splitRepoRef(value) {
+        let repo = value.trim().replace(/^\/+|\/+$/g, "");
+        let ref = "";
+        const atIndex = repo.indexOf("@");
+        if (atIndex > -1) {
+          ref = repo.slice(atIndex + 1);
+          repo = repo.slice(0, atIndex);
+          return { repo, ref };
+        }
+        const lastSlash = repo.lastIndexOf("/");
+        const lastPart = repo.slice(lastSlash + 1);
+        const colonIndex = lastPart.lastIndexOf(":");
+        if (colonIndex > -1) {
+          ref = lastPart.slice(colonIndex + 1);
+          repo = `${repo.slice(0, lastSlash + 1)}${lastPart.slice(0, colonIndex)}`;
+        }
+        return { repo, ref };
+      }
+
+      function applySource(source) {
+        state.registryHost = source.host;
+        state.registryBase = source.base;
+        state.repoPrefix = source.repoPrefix;
+        state.selectedRepo = source.repo;
+        state.selectedRef = source.ref;
+        elements.repoInput.value = source.repo;
+        elements.tagInput.value = source.ref;
+        updateRegistryStatus();
+        updateHash();
+      }
+
+      function updateHash() {
+        const params = new URLSearchParams();
+        if (state.registryHost) {
+          params.set("registry", state.registryHost);
+        }
+        if (elements.repoInput.value.trim()) {
+          params.set("repo", elements.repoInput.value.trim());
+        }
+        if (elements.tagInput.value.trim()) {
+          params.set("ref", elements.tagInput.value.trim());
+        }
+        window.history.replaceState(null, "", params.toString() ? `#${params.toString()}` : window.location.pathname);
+      }
+
+      function parseAuthenticateHeader(value) {
+        if (!value || !/^Bearer\s+/i.test(value.trim())) {
+          return null;
+        }
+        const input = value.trim().replace(/^Bearer\s+/i, "");
+        const params = {};
+        let key = "";
+        let current = "";
+        let inQuotes = false;
+        const parts = [];
+        for (const char of input) {
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          }
+          if (char === "," && !inQuotes) {
+            parts.push(current);
+            current = "";
+          } else {
+            current += char;
+          }
+        }
+        if (current) {
+          parts.push(current);
+        }
+        parts.forEach((part) => {
+          const index = part.indexOf("=");
+          if (index === -1) {
+            return;
+          }
+          key = part.slice(0, index).trim();
+          const raw = part.slice(index + 1).trim();
+          params[key] = raw.replace(/^"|"$/g, "");
+        });
+        return params.realm ? params : null;
+      }
+
+      function scopeForRepository(repository) {
+        return repository ? `repository:${repository}:pull` : "";
+      }
+
+      function cacheKeyFor(challenge, scope) {
+        const service = challenge && challenge.service ? challenge.service : state.registryHost;
+        const scopeValue = challenge && challenge.scope ? challenge.scope : scope || "";
+        return `${state.registryHost}|${service}|${scopeValue}`;
+      }
+
+      async function requestBearerToken(challenge, scope, withCredentials) {
+        const tokenUrl = new URL(challenge.realm);
+        if (challenge.service) {
+          tokenUrl.searchParams.set("service", challenge.service);
+        }
+        const scopeValue = challenge.scope || scope || "";
+        if (scopeValue) {
+          tokenUrl.searchParams.set("scope", scopeValue);
+        }
+        const headers = new Headers();
+        if (withCredentials) {
+          const basic = basicAuthHeader();
+          if (!basic) {
+            return null;
+          }
+          headers.set("Authorization", basic);
+        }
+        const response = await fetch(tokenUrl.toString(), { mode: "cors", headers });
+        if (!response.ok) {
+          return null;
+        }
+        const data = await response.json();
+        return data.token || data.access_token || null;
+      }
+
+      async function fetchWithRegistryAuth(url, options = {}, repository = "") {
+        const scope = scopeForRepository(repository);
+        const headers = new Headers(options.headers || {});
+        let usedCachedToken = false;
+        for (const [key, token] of state.tokenCache.entries()) {
+          if (key.startsWith(`${state.registryHost}|`) && (!scope || key.endsWith(`|${scope}`))) {
+            headers.set("Authorization", `Bearer ${token}`);
+            usedCachedToken = true;
+            break;
+          }
+        }
+
+        let response = await fetch(url, { ...options, headers, mode: "cors" });
+        if (response.status !== 401) {
+          state.lastAuthMode = usedCachedToken ? "anonymous token" : "anonymous";
+          setAuthStatus(state.lastAuthMode, response.ok ? "good" : "");
+          return response;
+        }
+
+        const challenge = parseAuthenticateHeader(response.headers.get("WWW-Authenticate"));
+        if (!challenge) {
+          revealCredentials();
+          setAuthStatus("credentials required", "warn");
+          return response;
+        }
+
+        const cacheKey = cacheKeyFor(challenge, scope);
+        let token = state.tokenCache.get(cacheKey) || null;
+        if (!token) {
+          token = await requestBearerToken(challenge, scope, false);
+        }
+        if (token) {
+          state.tokenCache.set(cacheKey, token);
+          const retryHeaders = new Headers(options.headers || {});
+          retryHeaders.set("Authorization", `Bearer ${token}`);
+          const retry = await fetch(url, { ...options, headers: retryHeaders, mode: "cors" });
+          if (retry.ok || retry.status !== 401) {
+            state.lastAuthMode = "anonymous token";
+            setAuthStatus("anonymous token", retry.ok ? "good" : "warn");
+            return retry;
+          }
+          response = retry;
+        }
+
+        const basic = basicAuthHeader();
+        if (!basic) {
+          revealCredentials();
+          setAuthStatus("credentials required", "warn");
+          return response;
+        }
+
+        const credentialToken = await requestBearerToken(challenge, scope, true);
+        if (credentialToken) {
+          state.tokenCache.set(cacheKey, credentialToken);
+          const retryHeaders = new Headers(options.headers || {});
+          retryHeaders.set("Authorization", `Bearer ${credentialToken}`);
+          const retry = await fetch(url, { ...options, headers: retryHeaders, mode: "cors" });
+          state.lastAuthMode = "credentials token";
+          setAuthStatus("credentials token", retry.ok ? "good" : "warn");
+          return retry;
+        }
+
+        const basicHeaders = new Headers(options.headers || {});
+        basicHeaders.set("Authorization", basic);
+        const basicRetry = await fetch(url, { ...options, headers: basicHeaders, mode: "cors" });
+        state.lastAuthMode = "basic credentials";
+        setAuthStatus("basic credentials", basicRetry.ok ? "good" : "warn");
+        return basicRetry;
+      }
+
+      async function fetchJson(url, options = {}, repository = "") {
+        const response = await fetchWithRegistryAuth(url, options, repository);
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+        return response.json();
+      }
+
+      function parseLinkHeader(value) {
+        if (!value) {
+          return null;
+        }
+        const match = value.match(/<([^>]+)>;\s*rel="?next"?/i);
+        if (!match) {
+          return null;
+        }
+        return new URL(match[1], state.registryBase).toString();
+      }
+
+      async function probeRegistry() {
+        const response = await fetchWithRegistryAuth(`${state.registryBase}/v2/`, {}, "");
+        if (!response.ok && response.status !== 401) {
+          throw new Error(`Registry probe failed with status ${response.status}`);
+        }
+      }
+
+      async function fetchCatalog() {
+        const repos = [];
+        let nextUrl = `${state.registryBase}/v2/_catalog?n=100`;
+        while (nextUrl) {
+          const response = await fetchWithRegistryAuth(nextUrl, {}, "");
+          if (!response.ok) {
+            throw new Error(`Catalog request failed with status ${response.status}`);
+          }
+          const data = await response.json();
+          if (Array.isArray(data.repositories)) {
+            repos.push(...data.repositories);
+          }
+          nextUrl = parseLinkHeader(response.headers.get("Link"));
+        }
+        return Array.from(new Set(repos)).sort((a, b) => a.localeCompare(b));
+      }
+
+      async function fetchTags(repository) {
+        const tags = [];
+        let nextUrl = `${state.registryBase}/v2/${repository}/tags/list?n=1000`;
+        while (nextUrl) {
+          const response = await fetchWithRegistryAuth(nextUrl, {}, repository);
+          if (!response.ok) {
+            throw new Error(`Tags request failed with status ${response.status}`);
+          }
+          const data = await response.json();
+          if (Array.isArray(data.tags)) {
+            tags.push(...data.tags);
+          }
+          nextUrl = parseLinkHeader(response.headers.get("Link"));
+        }
+        return Array.from(new Set(tags));
+      }
+
+      async function fetchManifest(repository, reference) {
+        const response = await fetchWithRegistryAuth(
+          `${state.registryBase}/v2/${repository}/manifests/${encodeURIComponent(reference)}`,
+          { headers: { Accept: manifestAccept } },
+          repository,
+        );
+        if (!response.ok) {
+          throw new Error(`Manifest request failed with status ${response.status}`);
+        }
+        const digest = response.headers.get("Docker-Content-Digest") || "";
+        const mediaType = response.headers.get("Content-Type") || "";
+        const json = await response.json();
+        return { digest, mediaType, json };
+      }
+
+      async function fetchBlobJson(repository, digest) {
+        const response = await fetchWithRegistryAuth(
+          `${state.registryBase}/v2/${repository}/blobs/${digest}`,
+          { headers: { Accept: "application/json" } },
+          repository,
+        );
+        if (!response.ok) {
+          throw new Error(`Blob request failed with status ${response.status}`);
+        }
+        return response.json();
+      }
+
+      function normalizeVersion(value) {
+        const cleaned = String(value).trim().replace(/^v/i, "").replace(/_/g, "+");
+        const [mainPlus, build] = cleaned.split("+");
+        const [main, pre] = mainPlus.split("-");
+        const nums = main.split(".").map((part) => Number(part));
+        if (!nums.length || nums.some((num) => Number.isNaN(num))) {
+          return null;
+        }
+        return {
+          major: nums[0] || 0,
+          minor: nums[1] || 0,
+          patch: nums[2] || 0,
+          pre: pre ? pre.split(".") : [],
+          build: build || "",
+        };
+      }
+
+      function compareVersions(a, b) {
+        const av = normalizeVersion(a);
+        const bv = normalizeVersion(b);
+        if (av && bv) {
+          for (const key of ["major", "minor", "patch"]) {
+            if (av[key] !== bv[key]) {
+              return av[key] - bv[key];
+            }
+          }
+          if (!av.pre.length && bv.pre.length) {
+            return 1;
+          }
+          if (av.pre.length && !bv.pre.length) {
+            return -1;
+          }
+          return av.pre.join(".").localeCompare(bv.pre.join("."), undefined, { numeric: true });
+        }
+        if (av) {
+          return 1;
+        }
+        if (bv) {
+          return -1;
+        }
+        return String(a).localeCompare(String(b), undefined, { numeric: true });
+      }
+
+      function sortedTags() {
+        const term = elements.tagFilter.value.trim().toLowerCase();
+        let tags = state.tags.filter((tag) => !term || tag.toLowerCase().includes(term));
+        if (elements.tagSort.value === "alpha") {
+          tags = tags.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        } else {
+          tags = tags.sort((a, b) => compareVersions(a, b));
+          if (elements.tagSort.value === "desc") {
+            tags.reverse();
+          }
+        }
+        return tags;
+      }
+
+      function visibleRepos() {
+        const term = elements.repoFilter.value.trim().toLowerCase();
+        return state.repos.filter((repo) => !term || repo.toLowerCase().includes(term));
+      }
+
+      function renderRepos() {
+        const fragment = document.createDocumentFragment();
+        const repos = visibleRepos();
+        repos.forEach((repo) => {
+          const meta = state.repoMeta.get(repo) || {};
+          const tr = document.createElement("tr");
+          tr.appendChild(cell(repo));
+          tr.appendChild(cell(meta.tagCount == null ? "Unknown" : String(meta.tagCount)));
+          tr.appendChild(cell(meta.newestCreated ? `${formatDate(meta.newestCreated)} (${ageLabel(meta.newestCreated)})` : "Not inspected"));
+          const actions = document.createElement("td");
+          const load = button("Load Tags", () => loadTagsForRepo(repo).catch(handleError));
+          actions.appendChild(load);
+          tr.appendChild(actions);
+          fragment.appendChild(tr);
+        });
+        elements.repoList.innerHTML = "";
+        elements.repoList.appendChild(fragment);
+        elements.repoEmpty.hidden = repos.length > 0;
+      }
+
+      function renderTags() {
+        elements.selectedRepo.textContent = state.selectedRepo
+          ? `Selected repository: ${state.registryHost}/${state.selectedRepo}`
+          : "No repository selected.";
+        const fragment = document.createDocumentFragment();
+        const tags = sortedTags();
+        tags.forEach((tag) => {
+          const tr = document.createElement("tr");
+          tr.appendChild(cell(tag));
+          const pullRef = `${state.registryHost}/${state.selectedRepo}:${tag}`;
+          const refCell = document.createElement("td");
+          const code = document.createElement("code");
+          code.textContent = pullRef;
+          refCell.appendChild(code);
+          tr.appendChild(refCell);
+          const actions = document.createElement("td");
+          actions.appendChild(button("Inspect", () => inspectReference(state.selectedRepo, tag).catch(handleError)));
+          actions.appendChild(document.createTextNode(" "));
+          actions.appendChild(button("Copy", () => copyText(pullRef)));
+          tr.appendChild(actions);
+          fragment.appendChild(tr);
+        });
+        elements.tagList.innerHTML = "";
+        elements.tagList.appendChild(fragment);
+        elements.tagEmpty.hidden = tags.length > 0;
+      }
+
+      function renderManifest(payload) {
+        state.currentManifest = payload;
+        elements.copyManifestJson.disabled = false;
+        elements.downloadManifestJson.disabled = false;
+        const { repository, reference, digest, mediaType, json, configJson } = payload;
+        const created = findCreated(json, configJson);
+        const totalSize = Array.isArray(json.layers) ? json.layers.reduce((sum, layer) => sum + (layer.size || 0), 0) : 0;
+
+        elements.manifestSummary.className = "crb-panel";
+        elements.manifestSummary.innerHTML = "";
+        const summary = document.createElement("div");
+        summary.appendChild(row("Repository", repository));
+        summary.appendChild(row("Reference", reference));
+        summary.appendChild(row("Parent digest", digest || "Unavailable; registry did not expose Docker-Content-Digest"));
+        summary.appendChild(row("Media type", json.mediaType || mediaType || "Unknown"));
+        if (created) {
+          summary.appendChild(row("Created", `${formatDate(created)} (${ageLabel(created)})`));
+        }
+        if (totalSize) {
+          summary.appendChild(row("Layer total", formatBytes(totalSize)));
+        }
+        elements.manifestSummary.appendChild(summary);
+
+        const details = document.createDocumentFragment();
+        if (Array.isArray(json.manifests)) {
+          details.appendChild(renderPlatformTable(repository, json.manifests));
+        }
+        if (json.config) {
+          details.appendChild(renderDescriptorPanel("Config", [json.config], repository));
+        }
+        if (Array.isArray(json.layers)) {
+          details.appendChild(renderDescriptorPanel("Layers", json.layers, repository));
+        }
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(json, null, 2);
+        const rawPanel = document.createElement("section");
+        rawPanel.className = "crb-panel";
+        rawPanel.appendChild(heading("Raw manifest JSON"));
+        rawPanel.appendChild(pre);
+        details.appendChild(rawPanel);
+        elements.manifestDetails.innerHTML = "";
+        elements.manifestDetails.appendChild(details);
+      }
+
+      function renderPlatformTable(repository, manifests) {
+        const panel = document.createElement("section");
+        panel.className = "crb-panel";
+        panel.appendChild(heading("Platform manifests"));
+        const wrap = document.createElement("div");
+        wrap.className = "crb-table-wrap";
+        const table = document.createElement("table");
+        table.innerHTML = "<thead><tr><th>Platform</th><th>Digest</th><th>Size</th><th>Actions</th></tr></thead>";
+        const tbody = document.createElement("tbody");
+        manifests.forEach((manifest) => {
+          const platform = manifest.platform || {};
+          const tr = document.createElement("tr");
+          tr.appendChild(cell([platform.os, platform.architecture, platform.variant].filter(Boolean).join("/") || "Unknown"));
+          tr.appendChild(digestCell(manifest.digest));
+          tr.appendChild(cell(formatBytes(manifest.size || 0)));
+          const actions = document.createElement("td");
+          actions.appendChild(button("Inspect Child", () => inspectReference(repository, manifest.digest).catch(handleError)));
+          actions.appendChild(document.createTextNode(" "));
+          actions.appendChild(button("Copy Digest", () => copyText(manifest.digest)));
+          tr.appendChild(actions);
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        wrap.appendChild(table);
+        panel.appendChild(wrap);
+        return panel;
+      }
+
+      function renderDescriptorPanel(title, descriptors, repository) {
+        const panel = document.createElement("section");
+        panel.className = "crb-panel";
+        panel.appendChild(heading(title));
+        const wrap = document.createElement("div");
+        wrap.className = "crb-table-wrap";
+        const table = document.createElement("table");
+        table.innerHTML = "<thead><tr><th>Media type</th><th>Digest</th><th>Size</th><th>Actions</th></tr></thead>";
+        const tbody = document.createElement("tbody");
+        descriptors.forEach((descriptor) => {
+          const tr = document.createElement("tr");
+          tr.appendChild(cell(descriptor.mediaType || "Unknown"));
+          tr.appendChild(digestCell(descriptor.digest || ""));
+          tr.appendChild(cell(formatBytes(descriptor.size || 0)));
+          const actions = document.createElement("td");
+          if (descriptor.digest) {
+            actions.appendChild(button("Copy Digest", () => copyText(descriptor.digest)));
+            if (title === "Config") {
+              actions.appendChild(document.createTextNode(" "));
+              actions.appendChild(button("Fetch Config", () => fetchAndShowConfig(repository, descriptor.digest)));
+            }
+          }
+          tr.appendChild(actions);
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        wrap.appendChild(table);
+        panel.appendChild(wrap);
+        return panel;
+      }
+
+      function row(label, value) {
+        const div = document.createElement("div");
+        const strong = document.createElement("strong");
+        strong.textContent = `${label}: `;
+        const span = document.createElement("span");
+        span.className = label.toLowerCase().includes("digest") ? "crb-digest" : "";
+        span.textContent = value || "";
+        div.appendChild(strong);
+        div.appendChild(span);
+        return div;
+      }
+
+      function heading(text) {
+        const h = document.createElement("h2");
+        h.textContent = text;
+        return h;
+      }
+
+      function cell(text) {
+        const td = document.createElement("td");
+        td.textContent = text;
+        return td;
+      }
+
+      function digestCell(text) {
+        const td = document.createElement("td");
+        td.className = "crb-digest";
+        td.textContent = text;
+        return td;
+      }
+
+      function button(text, onClick) {
+        const buttonEl = document.createElement("button");
+        buttonEl.type = "button";
+        buttonEl.textContent = text;
+        buttonEl.addEventListener("click", onClick);
+        return buttonEl;
+      }
+
+      function findCreated(manifest, config) {
+        const annotations = manifest.annotations || {};
+        return annotations["org.opencontainers.image.created"] || (config && config.created) || "";
+      }
+
+      function formatDate(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+          return value;
+        }
+        return date.toLocaleString();
+      }
+
+      function ageLabel(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+          return "unknown age";
+        }
+        const days = Math.floor((Date.now() - date.getTime()) / 86400000);
+        if (days < 1) {
+          return "today";
+        }
+        if (days === 1) {
+          return "1 day old";
+        }
+        if (days < 365) {
+          return `${days} days old`;
+        }
+        const years = Math.floor(days / 365);
+        return years === 1 ? "1 year old" : `${years} years old`;
+      }
+
+      function formatBytes(value) {
+        if (!value) {
+          return "";
+        }
+        const units = ["B", "KB", "MB", "GB"];
+        let size = value;
+        let unit = 0;
+        while (size >= 1024 && unit < units.length - 1) {
+          size /= 1024;
+          unit += 1;
+        }
+        return `${size.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+      }
+
+      async function copyText(text) {
+        await navigator.clipboard.writeText(text);
+        setStatus("Copied to clipboard.", "good");
+      }
+
+      async function browseRegistry() {
+        try {
+          clearRequestHelp();
+          setStatus("Connecting to registry...");
+          const source = normalizeInput();
+          applySource(source);
+          await probeRegistry();
+          try {
+            const repos = await fetchCatalog();
+            state.repos = state.repoPrefix ? repos.filter((repo) => repo.startsWith(state.repoPrefix)) : repos;
+            setStatus("Catalog loaded.", "good");
+            renderRepos();
+          } catch (error) {
+            state.repos = state.selectedRepo ? [state.selectedRepo] : [];
+            setStatus(`Catalog unavailable: ${error.message}. Manual repository lookup is still available.`, "warn");
+            renderRepos();
+          }
+          if (state.selectedRepo) {
+            await loadTagsForRepo(state.selectedRepo);
+          }
+          setCounts();
+        } catch (error) {
+          handleError(error);
+        }
+      }
+
+      async function loadTagsFromInputs() {
+        try {
+          clearRequestHelp();
+          const source = normalizeInput();
+          applySource(source);
+          if (!state.selectedRepo) {
+            throw new Error("Enter a repository path.");
+          }
+          await loadTagsForRepo(state.selectedRepo);
+        } catch (error) {
+          handleError(error);
+        }
+      }
+
+      async function loadTagsForRepo(repository) {
+        setStatus(`Loading tags for ${repository}...`);
+        state.selectedRepo = repository;
+        elements.repoInput.value = repository;
+        updateHash();
+        const tags = await fetchTags(repository);
+        state.tags = tags;
+        state.repoMeta.set(repository, { ...(state.repoMeta.get(repository) || {}), tagCount: tags.length });
+        setStatus("Tags loaded.", "good");
+        setCounts();
+        renderRepos();
+        renderTags();
+      }
+
+      async function inspectFromInputs() {
+        try {
+          clearRequestHelp();
+          const source = normalizeInput();
+          applySource(source);
+          if (!state.selectedRepo) {
+            throw new Error("Enter a repository path.");
+          }
+          const ref = state.selectedRef || elements.tagInput.value.trim();
+          if (!ref) {
+            throw new Error("Enter a tag or digest.");
+          }
+          await inspectReference(state.selectedRepo, ref);
+        } catch (error) {
+          handleError(error);
+        }
+      }
+
+      async function inspectReference(repository, reference) {
+        try {
+          clearRequestHelp();
+          setStatus(`Inspecting ${repository}:${reference}...`);
+          state.selectedRepo = repository;
+          state.selectedRef = reference;
+          elements.repoInput.value = repository;
+          elements.tagInput.value = reference;
+          updateHash();
+          const manifest = await fetchManifest(repository, reference);
+          let configJson = null;
+          if (manifest.json.config && manifest.json.config.digest) {
+            try {
+              configJson = await fetchBlobJson(repository, manifest.json.config.digest);
+            } catch (error) {
+              configJson = null;
+            }
+          }
+          renderManifest({ repository, reference, configJson, ...manifest });
+          const created = findCreated(manifest.json, configJson);
+          if (created) {
+            const existing = state.repoMeta.get(repository) || {};
+            state.repoMeta.set(repository, { ...existing, newestCreated: created });
+            renderRepos();
+          }
+          setStatus("Manifest loaded.", "good");
+        } catch (error) {
+          handleError(error);
+        }
+      }
+
+      async function fetchAndShowConfig(repository, digest) {
+        try {
+          const config = await fetchBlobJson(repository, digest);
+          const pre = document.createElement("pre");
+          pre.textContent = JSON.stringify(config, null, 2);
+          const panel = document.createElement("section");
+          panel.className = "crb-panel";
+          panel.appendChild(heading("Config JSON"));
+          panel.appendChild(pre);
+          elements.manifestDetails.prepend(panel);
+        } catch (error) {
+          setStatus(error.message, "bad");
+        }
+      }
+
+      async function scanVisibleActivity() {
+        const repos = visibleRepos().slice(0, 25);
+        if (!repos.length) {
+          setStatus("No visible repositories to scan.", "warn");
+          return;
+        }
+        setStatus(`Scanning ${repos.length} visible repositories...`);
+        for (const repo of repos) {
+          try {
+            const tags = await fetchTags(repo);
+            const sorted = tags.slice().sort((a, b) => compareVersions(b, a));
+            const newest = sorted[0] || "";
+            let newestCreated = "";
+            if (newest) {
+              const manifest = await fetchManifest(repo, newest);
+              if (manifest.json.config && manifest.json.config.digest) {
+                try {
+                  const config = await fetchBlobJson(repo, manifest.json.config.digest);
+                  newestCreated = findCreated(manifest.json, config);
+                } catch (error) {
+                  newestCreated = findCreated(manifest.json, null);
+                }
+              }
+            }
+            state.repoMeta.set(repo, { tagCount: tags.length, newestCreated });
+          } catch (error) {
+            state.repoMeta.set(repo, { tagCount: "Error", newestCreated: "" });
+          }
+          renderRepos();
+        }
+        setStatus("Visible repository scan complete.", "good");
+      }
+
+      function handleError(error) {
+        const message = error && error.message ? error.message : String(error);
+        setStatus(message, "bad");
+        if (/failed to fetch|networkerror|load failed/i.test(message)) {
+          showRequestHelp();
+        }
+      }
+
+      function clearRequestHelp() {
+        elements.requestHelp.classList.add("crb-hidden");
+        elements.requestHelp.innerHTML = "";
+      }
+
+      function showRequestHelp() {
+        const repo = elements.repoInput.value.trim() || state.selectedRepo;
+        const ref = elements.tagInput.value.trim() || state.selectedRef;
+        const target = repo
+          ? ref
+            ? `${state.registryBase}/v2/${repo}/manifests/${encodeURIComponent(ref)}`
+            : `${state.registryBase}/v2/${repo}/tags/list`
+          : state.registryBase
+            ? `${state.registryBase}/v2/_catalog`
+            : "";
+        const directCommand = target ? `curl -sS '${target}' | jq .` : "";
+        const tokenCommand =
+          repo && state.registryHost === "docker.elastic.co"
+            ? [
+                `REPO='${repo}'`,
+                'TOKEN="$(curl -sS "https://docker-auth.elastic.co/auth?service=token-service&scope=repository:${REPO}:pull" | jq -r \'.token // .access_token\')"',
+                ref
+                  ? `curl -sS -H "Authorization: Bearer \${TOKEN}" '${state.registryBase}/v2/${repo}/manifests/${encodeURIComponent(ref)}' | jq .`
+                  : `curl -sS -H "Authorization: Bearer \${TOKEN}" '${state.registryBase}/v2/${repo}/tags/list' | jq .`,
+              ].join("\n")
+            : "";
+
+        elements.requestHelp.innerHTML = "";
+        const intro = document.createElement("p");
+        intro.textContent =
+          "The browser could not read this registry response, usually because the registry does not allow CORS. Run a request outside the browser, then paste the JSON below.";
+        elements.requestHelp.appendChild(intro);
+        if (directCommand) {
+          elements.requestHelp.appendChild(commandBlock("Direct request", directCommand));
+        }
+        if (tokenCommand) {
+          elements.requestHelp.appendChild(commandBlock("Anonymous bearer-token request", tokenCommand));
+        }
+        elements.requestHelp.classList.remove("crb-hidden");
+      }
+
+      function commandBlock(label, command) {
+        const wrapper = document.createElement("div");
+        const strong = document.createElement("strong");
+        const pre = document.createElement("pre");
+        const copy = button("Copy", () => copyText(command));
+        strong.textContent = label;
+        pre.textContent = command;
+        wrapper.appendChild(strong);
+        wrapper.appendChild(pre);
+        wrapper.appendChild(copy);
+        return wrapper;
+      }
+
+      function importTagsJson(text) {
+        const data = JSON.parse(text);
+        if (!Array.isArray(data.tags)) {
+          throw new Error("Tags JSON must include a tags array.");
+        }
+        if (data.name) {
+          state.selectedRepo = data.name;
+          elements.repoInput.value = data.name;
+        }
+        state.tags = data.tags;
+        setCounts();
+        renderTags();
+        setStatus("Tags imported.", "good");
+      }
+
+      function importManifestJson(text) {
+        const json = JSON.parse(text);
+        if (!json || typeof json !== "object") {
+          throw new Error("Manifest JSON must be an object.");
+        }
+        const repository = elements.repoInput.value.trim() || state.selectedRepo || "imported";
+        const reference = elements.tagInput.value.trim() || "imported";
+        renderManifest({ repository, reference, digest: "", mediaType: json.mediaType || "", json, configJson: null });
+        setStatus("Manifest imported.", "good");
+      }
+
+      async function readFileAsText(file) {
+        if (!file) {
+          return "";
+        }
+        return file.text();
+      }
+
+      function resetTool() {
+        state.registryHost = "";
+        state.registryBase = "";
+        state.repoPrefix = "";
+        state.selectedRepo = "";
+        state.selectedRef = "";
+        state.repos = [];
+        state.tags = [];
+        state.repoMeta = new Map();
+        state.currentManifest = null;
+        elements.registryInput.value = "";
+        elements.repoInput.value = "";
+        elements.tagInput.value = "";
+        elements.repoFilter.value = "";
+        elements.tagFilter.value = "";
+        elements.manifestDetails.innerHTML = "";
+        elements.manifestSummary.className = "crb-empty";
+        elements.manifestSummary.textContent = "Select a tag or digest to inspect a manifest.";
+        elements.copyManifestJson.disabled = true;
+        elements.downloadManifestJson.disabled = true;
+        updateRegistryStatus();
+        setAuthStatus("anonymous");
+        setStatus("Reset complete.", "good");
+        setCounts();
+        renderRepos();
+        renderTags();
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+
+      elements.loadRegistry.addEventListener("click", browseRegistry);
+      elements.loadTags.addEventListener("click", loadTagsFromInputs);
+      elements.inspectRef.addEventListener("click", inspectFromInputs);
+      elements.reset.addEventListener("click", resetTool);
+      elements.saveCredentials.addEventListener("click", storeCredentials);
+      elements.clearCredentials.addEventListener("click", clearCredentials);
+      elements.repoFilter.addEventListener("input", renderRepos);
+      elements.tagFilter.addEventListener("input", renderTags);
+      elements.tagSort.addEventListener("change", renderTags);
+      elements.scanVisible.addEventListener("click", scanVisibleActivity);
+      elements.importTags.addEventListener("click", () => {
+        try {
+          importTagsJson(elements.tagsJson.value);
+        } catch (error) {
+          setStatus(error.message, "bad");
+        }
+      });
+      elements.importManifest.addEventListener("click", () => {
+        try {
+          importManifestJson(elements.manifestJson.value);
+        } catch (error) {
+          setStatus(error.message, "bad");
+        }
+      });
+      elements.tagsFile.addEventListener("change", async (event) => {
+        try {
+          importTagsJson(await readFileAsText(event.target.files[0]));
+        } catch (error) {
+          setStatus(error.message, "bad");
+        }
+      });
+      elements.manifestFile.addEventListener("change", async (event) => {
+        try {
+          importManifestJson(await readFileAsText(event.target.files[0]));
+        } catch (error) {
+          setStatus(error.message, "bad");
+        }
+      });
+      elements.copyManifestJson.addEventListener("click", () => {
+        if (state.currentManifest) {
+          copyText(JSON.stringify(state.currentManifest.json, null, 2));
+        }
+      });
+      elements.downloadManifestJson.addEventListener("click", () => {
+        if (!state.currentManifest) {
+          return;
+        }
+        const blob = new Blob([JSON.stringify(state.currentManifest.json, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${state.currentManifest.repository.replace(/\//g, "-")}-${state.currentManifest.reference}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
+      window.addEventListener("load", () => {
+        loadCredentials();
+        const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        if (params.get("registry")) {
+          elements.registryInput.value = params.get("registry");
+        }
+        if (params.get("repo")) {
+          elements.repoInput.value = params.get("repo");
+        }
+        if (params.get("ref")) {
+          elements.tagInput.value = params.get("ref");
+        }
+        renderRepos();
+        renderTags();
+        setCounts();
+      });
+    </script>
+    <script src="/analytics.js"></script>
+  </body>
+</html>

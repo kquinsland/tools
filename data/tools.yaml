@@ -33,6 +33,20 @@ tools:
         - "visualization"
         - "waveform"
         - "spectrogram"
+  - html/container-registry-browser:
+      title: "Container Registry Browser"
+      language: "html"
+      description: "Browse OCI and Docker Registry HTTP API v2 repositories, tags, manifests, digests, platforms, and layers from the browser."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "docker"
+        - "oci"
+        - "registry"
+        - "containers"
+        - "html"
   - html/cron-converter:
       title: "Cron Timezone Converter"
       language: "html"
@@ -202,7 +216,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "7d214109e2d24b565d7c8938436012cb6ab1ff0c"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "382c52f530895ae2e7659f8d5cebd8b4c0688b32"
       dependencies:
         - package: "js-yaml"
           version: "4.1.0"
