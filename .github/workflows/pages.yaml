@@ -2,14 +2,20 @@
 name: Deploy to GitHub Pages
 
 on:
-    push:
-        # Merge to `gh-pages`` branch triggers deployments
-        # Note that the "environment" for the repo (set below) must match and the
-        # repo settings that protect the branch must also allow GitHub Actions to push.
-        branches:
-            - gh-pages
+    workflow_call:
+        inputs:
+            ref:
+                description: "Git ref to build and deploy"
+                required: true
+                type: string
     # Or allow manual trigger for testing and break-glass
     workflow_dispatch:
+        inputs:
+            ref:
+                description: "Git ref to build and deploy"
+                required: true
+                default: main
+                type: string
 
 # In the even that I screw something up, kill all but the latest deployment
 concurrency:
@@ -30,16 +36,17 @@ jobs:
     build:
         runs-on: ubuntu-latest
         permissions:
-            # If any tool files have changed or are new, there will be an update to the data file and a commit/push
-            contents: write
+            # Required for workflows in private repositories
+            contents: read
 
         steps:
             - name: Checkout
               id: checkout
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
               with:
-                  persist-credentials: true
+                  persist-credentials: false
                   fetch-depth: 0
+                  ref: ${{ inputs.ref }}
                   # Fetch Hugo theme
                   submodules: recursive
 
@@ -52,11 +59,11 @@ jobs:
                   install: true
                   install_args: python uv hugo-extended
                   cache: true
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  github_token: ${{ github.token }}
                   experimental: false
                   log_level: ${{ env.ACTIONS_STEP_DEBUG && 'debug' || 'info' }}
 
-            - name: Refresh generated files and build site
+            - name: Verify generated files and build site
               id: build_site
               run: mise run release:build-pages
 
