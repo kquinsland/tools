@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">QR Code Generator icon</title>
+  <desc id="desc">A stylized QR code tile with a lightning spark.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#f6ede3" />
+      <stop offset="100%" stop-color="#dce8d6" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="26" fill="url(#bg)" />
+  <rect x="22" y="22" width="84" height="84" rx="14" fill="#fff" stroke="#2f3d2b" stroke-width="4" />
+  <rect x="30" y="30" width="22" height="22" fill="#2f3d2b" />
+  <rect x="36" y="36" width="10" height="10" fill="#fff" />
+  <rect x="76" y="30" width="22" height="22" fill="#2f3d2b" />
+  <rect x="82" y="36" width="10" height="10" fill="#fff" />
+  <rect x="30" y="76" width="22" height="22" fill="#2f3d2b" />
+  <rect x="36" y="82" width="10" height="10" fill="#fff" />
+  <rect x="62" y="62" width="8" height="8" fill="#2f3d2b" />
+  <rect x="74" y="62" width="8" height="8" fill="#2f3d2b" />
+  <rect x="62" y="74" width="8" height="8" fill="#2f3d2b" />
+  <path d="M66 38 58 58h8l-4 14 12-19h-8l4-15Z" fill="#d8703a" />
+</svg>

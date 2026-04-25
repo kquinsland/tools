@@ -200,6 +200,20 @@ tools:
         - "dependencies"
         - "mermaid"
         - "dot"
+  - html/qr-code-generator:
+      title: "QR Code Generator"
+      language: "html"
+      description: "Generate QR codes entirely in your browser, including calendar tasks and common share formats."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "93024de6adec851cd247c21ff37f9c17469ea36b"
+        updated_commit: null
+      tags:
+        - "html"
+        - "qr"
+        - "qrcode"
+        - "calendar"
+        - "offline"
   - html/syncthing-conflict-triage:
       title: "Sync Conflict Triage"
       language: "html"
