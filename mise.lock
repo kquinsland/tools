@@ -164,6 +164,10 @@ url = "https://github.com/kubernetes-sigs/kind/releases/download/v0.31.0/kind-wi
 version = "0.22.1"
 backend = "npm:markdownlint-cli2"
 
+[[tools.npm]]
+version = "11.13.0"
+backend = "npm:npm"
+
 [[tools.pinact]]
 version = "3.9.0"
 backend = "aqua:suzuki-shunsuke/pinact"

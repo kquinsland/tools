@@ -16,3 +16,6 @@ hugo.linux
 
 # Any python related caches
 __pycache__
+
+# Or local testing
+.playwright-mcp/*
