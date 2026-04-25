@@ -39,7 +39,7 @@ tools:
       description: "Browse OCI and Docker Registry HTTP API v2 repositories, tags, manifests, digests, platforms, and layers from the browser."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
+        introduced_commit: "0ecd0555d5a97ba52f0f79228ed3e2d130a7f889"
         updated_commit: null
       tags:
         - "docker"
@@ -188,7 +188,7 @@ tools:
       description: "Scan a folder for SyncThing-style conflict files, compare side-by-side, edit in place, and stage deletions safely."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
+        introduced_commit: "4bfd793064a3ef89122ecf14e3831b96940092df"
         updated_commit: null
       dependencies:
         - package: "diff"
