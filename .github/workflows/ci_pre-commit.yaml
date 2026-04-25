@@ -6,11 +6,19 @@ permissions: {}
 
 on:
     # Should it be needed, allow manual triggering
-    workflow_dispatch:
+    workflow_dispatch: # Validate pull requests, including release-please release PRs.
+
+    pull_request:
+        branches:
+            - main
     # Run on any push to non-master branch
     push:
         branches-ignore:
             - main
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
+    cancel-in-progress: true
 
 jobs:
     pre-commit:
@@ -28,21 +36,52 @@ jobs:
                   persist-credentials: false
                   fetch-depth: 0
 
-            - name: Install uv
-              id: setup_uv
-              uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+            - name: Setup mise toolchain
+              id: setup_mise
+              uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
               with:
-                  enable-cache: true
-                  ignore-nothing-to-cache: true
+                  # renovate: datasource=github-tags depName=jdx/mise versioning=loose
+                  version: 2026.4.18
+                  install: true
+                  install_args: python uv
+                  cache: true
+                  github_token: ${{ github.token }}
+                  experimental: false
+                  log_level: ${{ env.ACTIONS_STEP_DEBUG && 'debug' || 'info' }}
 
-            - name: Set up Python And Pre-Commit
-              id: setup_python_pre-commit
-              run: |
-                  uv python install
-                  uv tool install pre-commit
-
-            # TODO: only if early steps succeeded
             - name: Run pre-commit hooks
               id: check_pre_commit
-              run: |
-                  uv run pre-commit run --all-files
+              run: mise run lint
+    # Not clear if I want to keep this enabled or not.
+    # It might be worth moving this to a release-gate instead?
+    # generated-files:
+    #     name: check generated files
+    #     runs-on: ubuntu-latest
+    #     permissions:
+    #         # Required for workflows in private repositories
+    #         contents: read
+
+    #     steps:
+    #         - name: Checkout Repo
+    #           id: checkout
+    #           uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    #           with:
+    #               persist-credentials: false
+    #               fetch-depth: 0
+
+    #         - name: Setup mise toolchain
+    #           id: setup_mise
+    #           uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+    #           with:
+    #               # renovate: datasource=github-tags depName=jdx/mise versioning=loose
+    #               version: 2026.4.18
+    #               install: true
+    #               install_args: python uv
+    #               cache: true
+    #               github_token: ${{ github.token }}
+    #               experimental: false
+    #               log_level: ${{ env.ACTIONS_STEP_DEBUG && 'debug' || 'info' }}
+
+    #         - name: Check generated files
+    #           id: check_generated
+    #           run: mise run check:generated

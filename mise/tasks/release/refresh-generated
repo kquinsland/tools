@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Compatibility helper: verify generated files are current"
+#MISE depends=["check:generated"]
+
+set -euo pipefail
+
+echo "Generated files are current."

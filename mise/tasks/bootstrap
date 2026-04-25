@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Install the project toolchain and sync Python dependency groups"
+
+set -euo pipefail
+
+mise install
+uv sync --all-groups

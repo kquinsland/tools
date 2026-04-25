@@ -1,3 +1,11 @@
 # See: https://developers.openai.com/codex/config-advanced
 [features]
 multi_agent = true
+
+# For testing HTML tools
+[mcp_servers.playwright]
+command = "npx"
+args = ["@playwright/mcp@latest"]
+# This explicitly _does_ show the browser window, which is useful for testing and debugging, locally.
+# Will need to adjust this conditionally (?) for CI environments.
+env_vars = ["DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY", "XDG_RUNTIME_DIR"]

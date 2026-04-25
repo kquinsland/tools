@@ -20,10 +20,12 @@ on:
                 required: true
                 default: "6"
             delete_workflow_pattern:
-                description: "The name or filename of the workflow. if not set then it will target all workflows."
+                description: "The name or filename of the workflow. if not set then it will
+                    target all workflows."
                 required: false
             delete_workflow_by_state_pattern:
-                description: "Remove workflow by state: active, deleted, disabled_fork, disabled_inactivity, disabled_manually"
+                description: "Remove workflow by state: active, deleted, disabled_fork,
+                    disabled_inactivity, disabled_manually"
                 required: true
                 default: "All"
                 type: choice
@@ -34,7 +36,8 @@ on:
                     - disabled_inactivity
                     - disabled_manually
             delete_run_by_conclusion_pattern:
-                description: "Remove workflow by conclusion: action_required, cancelled, failure, skipped, success"
+                description: "Remove workflow by conclusion: action_required, cancelled,
+                    failure, skipped, success"
                 required: true
                 default: "All"
                 type: choice
@@ -57,7 +60,7 @@ jobs:
             contents: read
         steps:
             - name: Delete workflow runs
-              uses: Mattraks/delete-workflow-runs@5bf9a1dac5c4d041c029f0a8370ddf0c5cb5aeb7 # v2.1.0
+              uses: Mattraks/delete-workflow-runs@b3018382ca039b53d238908238bd35d1fb14f8ee # v2.1.0
               with:
                   token: ${{ github.token }}
                   repository: ${{ github.repository }}

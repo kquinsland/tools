@@ -8,11 +8,21 @@ This is powered by Hugo and the "rendered" site is hosted via [GitHub Pages](htt
 
 // TODO: llm diagram of the deploy process for GitHub Pages and add to this `readme.md`
 
+## Developer workflow
+
+This repo uses [`mise`](https://mise.jdx.dev/) for toolchain and task orchestration, with `uv` handling Python environments and dependencies.
+
+Common commands:
+
+- `mise install`: install the pinned CLI toolchain
+- `mise run bootstrap`: install the toolchain and sync all Python dependency groups
+- `mise run lint`: run the full pre-commit suite
+- `mise run generate`: refresh `data/tools.yaml`, `static/tools.txt`, and per-tool changelogs
+- `mise run site:build`: render the static site into `public/`
+- `mise run site:serve`: run the local Hugo development server
+
 ## TODOs
 
 - more/betteR  `CI` to get:
-  - `hugo` w/ the right binary version made available to LLM/agents
   - `playwright` setup for HTML tool testing
   - screenshot or similar tool to automated screenshotting of docs/tools for use in `data/tools.yaml` (for landing page cards)
-
-(really, `uv`)
