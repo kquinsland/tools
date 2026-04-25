@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QR Code Generator</title>
+    <link rel="stylesheet" href="/common.css" />
+    <style>
+        :root {
+            --bg: #f4efe7;
+            --ink: #1f1d1a;
+            --muted: #63594d;
+            --panel: #fffaf3;
+            --panel-border: #d8cab6;
+            --surface: #fff;
+            --accent: #2f6d62;
+            --accent-soft: rgba(47, 109, 98, 0.14);
+            --accent-strong: #245449;
+            --danger: #b04f2f;
+            --danger-soft: rgba(176, 79, 47, 0.14);
+            --radius: 16px;
+            --shadow: 0 14px 28px rgba(43, 33, 23, 0.12);
+            --font-body: "Source Serif 4", "Georgia", serif;
+            --font-ui: "Avenir Next", "Segoe UI", sans-serif;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                color-scheme: dark;
+                --bg: #1f2225;
+                --ink: #f3efe8;
+                --muted: #bfb4a8;
+                --panel: #2a2e31;
+                --panel-border: #4d5359;
+                --surface: #32363b;
+                --accent: #68b7a7;
+                --accent-soft: rgba(104, 183, 167, 0.16);
+                --accent-strong: #8fd3c6;
+                --danger: #d47a5b;
+                --danger-soft: rgba(212, 122, 91, 0.16);
+                --shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 24px;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 8% 10%, rgba(216, 184, 133, 0.22), transparent 25%),
+                radial-gradient(circle at 90% 95%, rgba(67, 140, 123, 0.16), transparent 22%),
+                var(--bg);
+            font-family: var(--font-body);
+        }
+
+        .tool-shell {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: 18px;
+        }
+
+        .hero {
+            border: 1px solid var(--panel-border);
+            border-radius: 24px;
+            padding: 24px;
+            background: var(--panel);
+            box-shadow: var(--shadow);
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        h1 {
+            font-size: clamp(1.9rem, 4vw, 3rem);
+        }
+
+        .lead {
+            margin: 10px 0 0;
+            max-width: 62ch;
+            color: var(--muted);
+        }
+
+        .layout {
+            display: grid;
+            gap: 18px;
+        }
+
+        .panel {
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius);
+            background: var(--panel);
+            box-shadow: var(--shadow);
+            padding: 16px;
+        }
+
+        .panel-head {
+            margin-bottom: 12px;
+        }
+
+        .panel-copy {
+            margin: 6px 0 0;
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        label {
+            font: 600 0.88rem/1.3 var(--font-ui);
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            margin-top: 6px;
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            background: var(--surface);
+            color: var(--ink);
+            padding: 10px 12px;
+            font: 500 0.95rem/1.3 var(--font-ui);
+        }
+
+        textarea {
+            min-height: 92px;
+            resize: vertical;
+        }
+
+        .chip-row,
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .toggle-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .preview-controls {
+            width: min(100%, 420px);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .toggle-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            padding: 8px 12px;
+            border: 1px solid var(--panel-border);
+            border-radius: 999px;
+            background: var(--surface);
+            font: 600 0.84rem/1 var(--font-ui);
+            color: var(--muted);
+        }
+
+        .toggle-label input {
+            width: auto;
+            margin: 0;
+            accent-color: var(--accent);
+        }
+
+        .chip {
+            border: 1px solid var(--panel-border);
+            border-radius: 999px;
+            padding: 7px 11px;
+            font: 600 0.78rem/1 var(--font-ui);
+            color: var(--muted);
+            background: var(--surface);
+        }
+
+        button {
+            border: 1px solid transparent;
+            border-radius: 999px;
+            padding: 10px 16px;
+            cursor: pointer;
+            font: 700 0.9rem/1 var(--font-ui);
+            color: #fff;
+            background: var(--accent);
+            transition: transform 0.14s ease, background 0.14s ease, opacity 0.14s ease;
+        }
+
+        button.secondary {
+            color: var(--ink);
+            background: var(--surface);
+            border-color: var(--panel-border);
+        }
+
+        button.danger {
+            color: var(--danger);
+            border-color: color-mix(in srgb, var(--danger) 35%, var(--panel-border) 65%);
+            background: color-mix(in srgb, var(--danger-soft) 40%, var(--surface) 60%);
+        }
+
+        button:hover:not(:disabled),
+        button:focus-visible:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 8px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            font: 600 0.8rem/1 var(--font-ui);
+            color: var(--muted);
+            background: color-mix(in srgb, var(--surface) 75%, var(--accent-soft) 25%);
+        }
+
+        .status.error {
+            color: var(--danger);
+            background: color-mix(in srgb, var(--surface) 70%, var(--danger-soft) 30%);
+        }
+
+        .preview-shell {
+            display: grid;
+            gap: 12px;
+            place-items: center;
+        }
+
+        .preview-box {
+            width: 100%;
+            max-width: 960px;
+            min-height: 220px;
+            display: grid;
+            place-items: center;
+            overflow: auto;
+            border: 1px dashed var(--panel-border);
+            border-radius: 16px;
+            background:
+                linear-gradient(45deg, rgba(0, 0, 0, 0.04) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.04) 75%),
+                linear-gradient(45deg, rgba(0, 0, 0, 0.04) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.04) 75%),
+                var(--surface);
+            background-size: 18px 18px;
+            background-position: 0 0, 9px 9px;
+        }
+
+        #qr-canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .payload {
+            margin: 0;
+            max-height: 220px;
+            overflow: auto;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            background: color-mix(in srgb, var(--surface) 82%, var(--accent-soft) 18%);
+            font: 0.84rem/1.45 "SFMono-Regular", "Consolas", monospace;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .payload-meta {
+            width: 100%;
+            max-width: 960px;
+            text-align: right;
+            color: var(--muted);
+            font: 600 0.82rem/1.3 var(--font-ui);
+        }
+
+        .field-group {
+            display: grid;
+            gap: 10px;
+        }
+
+        .cols-2 {
+            display: grid;
+            gap: 10px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (min-width: 900px) {
+            .cols-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="tool-shell">
+        <section class="hero" id="hero-section">
+            <h1>QR Code Generator</h1>
+            <p class="lead">
+                Build QR codes fully in-browser with no backend calls. Pick a format, fill only the essentials, and
+                export as PNG.
+                Includes calendar tasks plus common formats like URL, Wi-Fi, contact, phone, SMS, and events.
+            </p>
+        </section>
+
+        <section class="layout">
+            <section class="panel" id="editor-section">
+                <div class="panel-head">
+                    <h2>Content</h2>
+                    <p class="panel-copy">Minimal knobs by default. Switch formats to get purpose-built fields.</p>
+                </div>
+
+                <div class="grid">
+                    <label for="format-select">
+                        Format
+                        <select id="format-select"></select>
+                    </label>
+                    <div class="chip-row">
+                        <span class="chip">Browser-only</span>
+                        <span class="chip">No uploads</span>
+                        <span class="chip">Calendar task supported</span>
+                    </div>
+                    <div id="dynamic-fields" class="field-group"></div>
+
+                    <label for="size-input">
+                        Output size (px)
+                        <input id="size-input" type="number" min="128" max="1024" step="16" value="320" />
+                    </label>
+
+                    <div class="button-row" id="actions-section">
+                        <button id="generate-button" type="button">Generate</button>
+                        <button id="download-button" class="secondary" type="button" disabled>Download PNG</button>
+                        <button id="copy-payload-button" class="secondary" type="button" disabled>Copy Payload</button>
+                        <button id="clear-button" class="danger" type="button">Clear</button>
+                        <button id="clear-storage-button" class="danger" type="button">Clear All Local Data</button>
+                    </div>
+
+                    <span id="status" class="status" aria-live="polite">Fill a format and click Generate.</span>
+                </div>
+            </section>
+
+            <section class="panel" id="preview-section">
+                <div class="panel-head">
+                    <h2>Preview</h2>
+                    <p class="panel-copy">The generated text payload is shown below for easy verification.</p>
+                </div>
+
+                <div class="preview-shell">
+                    <div class="preview-controls" id="behavior-section">
+                        <label class="toggle-label" for="auto-generate-toggle">
+                            <input id="auto-generate-toggle" type="checkbox" checked />
+                            Auto-generate on input change
+                        </label>
+                    </div>
+                    <div class="preview-box">
+                        <canvas id="qr-canvas" width="320" height="320" aria-label="QR code preview"></canvas>
+                    </div>
+                    <div class="payload-meta" id="payload-size">Encoded size: 0 bytes</div>
+                    <h3 class="sr-only">Encoded payload</h3>
+                    <pre class="payload" id="payload-output"></pre>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <script type="module">
+        import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm";
+
+        const formatDefinitions = [
+            {
+                key: "text",
+                label: "Plain text",
+                fields: [
+                    { key: "text", label: "Text", type: "textarea", required: true, placeholder: "Any message" },
+                ],
+                build(values) {
+                    return values.text;
+                },
+            },
+            {
+                key: "url",
+                label: "URL",
+                fields: [{ key: "url", label: "URL", type: "text", required: true, placeholder: "https://example.com" }],
+                build(values) {
+                    return values.url;
+                },
+            },
+            {
+                key: "email",
+                label: "Email",
+                fields: [
+                    { key: "to", label: "To", type: "text", required: true, placeholder: "name@example.com" },
+                    { key: "subject", label: "Subject", type: "text", required: false, placeholder: "Quick note" },
+                    { key: "body", label: "Body", type: "textarea", required: false, placeholder: "Message" },
+                ],
+                build(values) {
+                    return `MATMSG:TO:${escapeField(values.to)};SUB:${escapeField(values.subject)};BODY:${escapeField(values.body)};;`;
+                },
+            },
+            {
+                key: "phone",
+                label: "Phone",
+                fields: [{ key: "phone", label: "Phone number", type: "text", required: true, placeholder: "+14155552671" }],
+                build(values) {
+                    return `tel:${values.phone}`;
+                },
+            },
+            {
+                key: "sms",
+                label: "SMS",
+                fields: [
+                    { key: "phone", label: "Phone number", type: "text", required: true, placeholder: "+14155552671" },
+                    { key: "message", label: "Message", type: "textarea", required: false, placeholder: "Hello" },
+                ],
+                build(values) {
+                    return `SMSTO:${values.phone}:${values.message || ""}`;
+                },
+            },
+            {
+                key: "wifi",
+                label: "Wi-Fi",
+                fields: [
+                    {
+                        key: "security",
+                        label: "Security",
+                        type: "select",
+                        required: true,
+                        options: [
+                            { label: "WPA/WPA2", value: "WPA" },
+                            { label: "WEP", value: "WEP" },
+                            { label: "Open", value: "nopass" },
+                        ],
+                    },
+                    { key: "ssid", label: "SSID", type: "text", required: true, placeholder: "Network name" },
+                    { key: "password", label: "Password", type: "text", required: false, placeholder: "Password" },
+                    {
+                        key: "hidden",
+                        label: "Hidden network",
+                        type: "select",
+                        required: true,
+                        options: [
+                            { label: "No", value: "false" },
+                            { label: "Yes", value: "true" },
+                        ],
+                    },
+                ],
+                build(values) {
+                    const passPart = values.security === "nopass" ? "" : `P:${escapeWifi(values.password)};`;
+                    return `WIFI:T:${values.security};S:${escapeWifi(values.ssid)};${passPart}H:${values.hidden};;`;
+                },
+            },
+            {
+                key: "vcard",
+                label: "Contact (vCard)",
+                fields: [
+                    { key: "fullName", label: "Full name", type: "text", required: true, placeholder: "Ada Lovelace" },
+                    { key: "org", label: "Organization", type: "text", required: false, placeholder: "Analytical Engines" },
+                    { key: "title", label: "Title", type: "text", required: false, placeholder: "Engineer" },
+                    { key: "phone", label: "Phone", type: "text", required: false, placeholder: "+14155552671" },
+                    { key: "email", label: "Email", type: "text", required: false, placeholder: "ada@example.com" },
+                    { key: "url", label: "Website", type: "text", required: false, placeholder: "https://example.com" },
+                    { key: "note", label: "Note", type: "textarea", required: false, placeholder: "Optional notes" },
+                ],
+                build(values) {
+                    const lines = [
+                        "BEGIN:VCARD",
+                        "VERSION:3.0",
+                        `FN:${escapeIcs(values.fullName)}`,
+                    ];
+                    if (values.org) lines.push(`ORG:${escapeIcs(values.org)}`);
+                    if (values.title) lines.push(`TITLE:${escapeIcs(values.title)}`);
+                    if (values.phone) lines.push(`TEL;TYPE=CELL:${escapeIcs(values.phone)}`);
+                    if (values.email) lines.push(`EMAIL:${escapeIcs(values.email)}`);
+                    if (values.url) lines.push(`URL:${escapeIcs(values.url)}`);
+                    if (values.note) lines.push(`NOTE:${escapeIcs(values.note)}`);
+                    lines.push("END:VCARD");
+                    return lines.join("\r\n");
+                },
+            },
+            {
+                key: "event",
+                label: "Calendar event",
+                fields: [
+                    { key: "summary", label: "Title", type: "text", required: true, placeholder: "Sprint planning" },
+                    { key: "startDateTime", label: "Start date/time", type: "datetime-local", required: true },
+                    { key: "endDateTime", label: "End date/time", type: "datetime-local", required: true },
+                    { key: "location", label: "Location", type: "text", required: false, placeholder: "Room 101" },
+                    { key: "description", label: "Description", type: "textarea", required: false, placeholder: "Agenda..." },
+                ],
+                build(values) {
+                    const startStamp = formatDateTimeForIcs(values.startDateTime);
+                    const endStamp = formatDateTimeForIcs(values.endDateTime);
+                    if (endStamp <= startStamp) {
+                        throw new Error("End date/time must be after start date/time.");
+                    }
+
+                    const uid = buildUid();
+                    const lines = [
+                        "BEGIN:VCALENDAR",
+                        "VERSION:2.0",
+                        "PRODID:-//tools.karlquinsland.com//QR Code Generator//EN",
+                        "BEGIN:VEVENT",
+                        `UID:${uid}`,
+                        `DTSTAMP:${nowUtcStamp()}`,
+                        `DTSTART:${startStamp}`,
+                        `DTEND:${endStamp}`,
+                        `SUMMARY:${escapeIcs(values.summary)}`,
+                    ];
+                    if (values.location) lines.push(`LOCATION:${escapeIcs(values.location)}`);
+                    if (values.description) lines.push(`DESCRIPTION:${escapeIcs(values.description)}`);
+                    lines.push("END:VEVENT", "END:VCALENDAR");
+                    return lines.join("\r\n");
+                },
+            },
+            {
+                key: "task",
+                label: "Calendar task",
+                fields: [
+                    { key: "summary", label: "Task title", type: "text", required: true, placeholder: "Submit expense report" },
+                    { key: "dueDate", label: "Due date", type: "date", required: true },
+                    {
+                        key: "priority",
+                        label: "Priority",
+                        type: "select",
+                        required: true,
+                        options: [
+                            { label: "Low", value: "9" },
+                            { label: "Medium", value: "5" },
+                            { label: "High", value: "1" },
+                        ],
+                    },
+                    {
+                        key: "status",
+                        label: "Status",
+                        type: "select",
+                        required: true,
+                        options: [
+                            { label: "Needs action", value: "NEEDS-ACTION" },
+                            { label: "In process", value: "IN-PROCESS" },
+                            { label: "Completed", value: "COMPLETED" },
+                        ],
+                    },
+                    { key: "description", label: "Description", type: "textarea", required: false, placeholder: "Optional details" },
+                ],
+                build(values) {
+                    const uid = buildUid();
+                    const lines = [
+                        "BEGIN:VCALENDAR",
+                        "VERSION:2.0",
+                        "PRODID:-//tools.karlquinsland.com//QR Code Generator//EN",
+                        "BEGIN:VTODO",
+                        `UID:${uid}`,
+                        `DTSTAMP:${nowUtcStamp()}`,
+                        `DUE;VALUE=DATE:${formatDateForIcs(values.dueDate)}`,
+                        `SUMMARY:${escapeIcs(values.summary)}`,
+                        `PRIORITY:${values.priority}`,
+                        `STATUS:${values.status}`,
+                    ];
+                    if (values.description) lines.push(`DESCRIPTION:${escapeIcs(values.description)}`);
+                    lines.push("END:VTODO", "END:VCALENDAR");
+                    return lines.join("\r\n");
+                },
+            },
+        ];
+
+        const elements = {
+            formatSelect: document.getElementById("format-select"),
+            dynamicFields: document.getElementById("dynamic-fields"),
+            sizeInput: document.getElementById("size-input"),
+            autoGenerateToggle: document.getElementById("auto-generate-toggle"),
+            generateButton: document.getElementById("generate-button"),
+            downloadButton: document.getElementById("download-button"),
+            copyPayloadButton: document.getElementById("copy-payload-button"),
+            clearButton: document.getElementById("clear-button"),
+            clearStorageButton: document.getElementById("clear-storage-button"),
+            status: document.getElementById("status"),
+            payloadSize: document.getElementById("payload-size"),
+            payloadOutput: document.getElementById("payload-output"),
+            qrCanvas: document.getElementById("qr-canvas"),
+        };
+
+        const storageKey = "qr-code-generator-state-v1";
+
+        function createDefaultStoredState() {
+            return {
+                autoGenerate: true,
+                size: 320,
+                lastMode: "text",
+                modes: {},
+            };
+        }
+
+        function loadStoredState() {
+            const fallback = createDefaultStoredState();
+            try {
+                const raw = localStorage.getItem(storageKey);
+                if (!raw) {
+                    return fallback;
+                }
+                const parsed = JSON.parse(raw);
+                if (!parsed || typeof parsed !== "object") {
+                    return fallback;
+                }
+                return {
+                    ...fallback,
+                    ...parsed,
+                    modes: parsed.modes && typeof parsed.modes === "object" ? parsed.modes : {},
+                };
+            } catch (_error) {
+                return fallback;
+            }
+        }
+
+        function saveStoredState(storedState) {
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(storedState));
+            } catch (_error) {
+                // Ignore localStorage write failures (private mode/quota/security policies).
+            }
+        }
+
+        const state = {
+            currentFormatKey: "text",
+            currentPayload: "",
+            hasRendered: false,
+            storedState: loadStoredState(),
+        };
+
+        state.currentFormatKey = state.storedState.lastMode || "text";
+
+        function escapeField(value = "") {
+            return String(value).replaceAll(";", "\\;").replaceAll(":", "\\:");
+        }
+
+        function escapeWifi(value = "") {
+            return String(value).replaceAll("\\", "\\\\").replaceAll(";", "\\;").replaceAll(",", "\\,").replaceAll(":", "\\:");
+        }
+
+        function escapeIcs(value = "") {
+            return String(value)
+                .replaceAll("\\", "\\\\")
+                .replaceAll(";", "\\;")
+                .replaceAll(",", "\\,")
+                .replaceAll("\n", "\\n");
+        }
+
+        function buildUid() {
+            return `${Date.now()}-${Math.random().toString(16).slice(2)}@tools.karlquinsland.com`;
+        }
+
+        function nowUtcStamp() {
+            const d = new Date();
+            const pad = (n) => String(n).padStart(2, "0");
+            return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+        }
+
+        function formatDateForIcs(dateValue) {
+            return String(dateValue).replaceAll("-", "");
+        }
+
+        function formatDateTimeForIcs(dateTimeValue) {
+            const value = String(dateTimeValue || "").trim();
+            const [datePart, timePart] = value.split("T");
+            if (!datePart || !timePart) {
+                throw new Error("Invalid date/time value.");
+            }
+
+            const compactDate = datePart.replaceAll("-", "");
+            const timeMatch = timePart.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+            if (!timeMatch) {
+                throw new Error("Invalid date/time value.");
+            }
+
+            const hhNum = Number.parseInt(timeMatch[1], 10);
+            const mmNum = Number.parseInt(timeMatch[2], 10);
+            const ssNum = Number.parseInt(timeMatch[3] || "0", 10);
+            if (hhNum < 0 || hhNum > 23 || mmNum < 0 || mmNum > 59 || ssNum < 0 || ssNum > 59) {
+                throw new Error("Invalid date/time value.");
+            }
+
+            const hh = String(hhNum).padStart(2, "0");
+            const mm = String(mmNum).padStart(2, "0");
+            const ss = String(ssNum).padStart(2, "0");
+            return `${compactDate}T${hh}${mm}${ss}`;
+        }
+
+        function currentFormat() {
+            return formatDefinitions.find((item) => item.key === state.currentFormatKey) || formatDefinitions[0];
+        }
+
+        function clearCanvasOnly() {
+            const ctx = elements.qrCanvas.getContext("2d");
+            if (ctx) {
+                ctx.clearRect(0, 0, elements.qrCanvas.width, elements.qrCanvas.height);
+            }
+        }
+
+        function setRenderedState(hasRendered) {
+            state.hasRendered = hasRendered;
+            elements.downloadButton.disabled = !hasRendered;
+            elements.copyPayloadButton.disabled = !hasRendered;
+        }
+
+        function encodedByteLength(payload) {
+            if (!payload) {
+                return 0;
+            }
+            return new TextEncoder().encode(payload).length;
+        }
+
+        function updatePayloadSize(payload) {
+            const byteCount = encodedByteLength(payload);
+            const suffix = byteCount === 1 ? "byte" : "bytes";
+            elements.payloadSize.textContent = `Encoded size: ${byteCount} ${suffix}`;
+        }
+
+        function currentModeValues() {
+            const values = {};
+            for (const field of currentFormat().fields) {
+                const input = elements.dynamicFields.querySelector(`[data-field-key="${field.key}"]`);
+                values[field.key] = input ? String(input.value || "") : "";
+            }
+            return values;
+        }
+
+        function saveCurrentModeValues() {
+            state.storedState.modes[state.currentFormatKey] = currentModeValues();
+            state.storedState.lastMode = state.currentFormatKey;
+            saveStoredState(state.storedState);
+        }
+
+        function loadModeValuesIntoFields() {
+            const persistedValues = state.storedState.modes[state.currentFormatKey] || {};
+            for (const field of currentFormat().fields) {
+                const input = elements.dynamicFields.querySelector(`[data-field-key="${field.key}"]`);
+                if (!input) {
+                    continue;
+                }
+                const value = persistedValues[field.key];
+                if (value !== undefined && value !== null) {
+                    input.value = String(value);
+                } else if (field.type !== "select") {
+                    input.value = "";
+                }
+            }
+        }
+
+        function saveGlobalSettings() {
+            const parsedSize = Number.parseInt(elements.sizeInput.value, 10) || 320;
+            state.storedState.size = parsedSize;
+            state.storedState.autoGenerate = elements.autoGenerateToggle.checked;
+            state.storedState.lastMode = state.currentFormatKey;
+            saveStoredState(state.storedState);
+        }
+
+        function clearCurrentModeData() {
+            state.storedState.modes[state.currentFormatKey] = {};
+            saveStoredState(state.storedState);
+        }
+
+        function clearRenderedOutput() {
+            state.currentPayload = "";
+            elements.payloadOutput.textContent = "";
+            updatePayloadSize("");
+            setRenderedState(false);
+            clearCanvasOnly();
+        }
+
+        function hasMissingRequiredFields() {
+            const format = currentFormat();
+            for (const field of format.fields) {
+                if (!field.required) {
+                    continue;
+                }
+                const input = elements.dynamicFields.querySelector(`[data-field-key="${field.key}"]`);
+                const value = input ? String(input.value || "").trim() : "";
+                if (!value) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function setStatus(message, isError = false) {
+            elements.status.textContent = message;
+            elements.status.classList.toggle("error", isError);
+        }
+
+        function createFieldMarkup(field) {
+            const required = field.required ? "required" : "";
+            const placeholder = field.placeholder ? `placeholder="${escapeHtml(field.placeholder)}"` : "";
+            const id = `field-${field.key}`;
+
+            if (field.type === "textarea") {
+                return `
+            <label for="${id}">
+              ${escapeHtml(field.label)}${field.required ? " *" : ""}
+              <textarea id="${id}" data-field-key="${field.key}" ${required} ${placeholder}></textarea>
+            </label>
+          `;
+            }
+
+            if (field.type === "select") {
+                const options = (field.options || [])
+                    .map((option) => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`)
+                    .join("");
+                return `
+            <label for="${id}">
+              ${escapeHtml(field.label)}${field.required ? " *" : ""}
+              <select id="${id}" data-field-key="${field.key}" ${required}>${options}</select>
+            </label>
+          `;
+            }
+
+            const type = field.type || "text";
+            return `
+          <label for="${id}">
+            ${escapeHtml(field.label)}${field.required ? " *" : ""}
+            <input id="${id}" data-field-key="${field.key}" type="${escapeHtml(type)}" ${required} ${placeholder} />
+          </label>
+        `;
+        }
+
+        function renderDynamicFields() {
+            const format = currentFormat();
+            const useTwoCols = format.fields.length >= 4 ? " cols-2" : "";
+            const fieldsMarkup = format.fields.map((field) => createFieldMarkup(field)).join("");
+            elements.dynamicFields.className = `field-group${useTwoCols}`;
+            elements.dynamicFields.innerHTML = fieldsMarkup;
+            loadModeValuesIntoFields();
+        }
+
+        function buildPayload() {
+            const format = currentFormat();
+            const values = {};
+
+            for (const field of format.fields) {
+                const input = elements.dynamicFields.querySelector(`[data-field-key="${field.key}"]`);
+                const value = input ? String(input.value || "").trim() : "";
+                if (field.required && !value) {
+                    throw new Error(`Missing required field: ${field.label}`);
+                }
+                values[field.key] = value;
+            }
+
+            const payload = format.build(values);
+            if (!payload || !payload.trim()) {
+                throw new Error("Generated payload is empty.");
+            }
+            return payload;
+        }
+
+        async function renderQr(options = {}) {
+            const quiet = options.quiet === true;
+            try {
+                const size = Number.parseInt(elements.sizeInput.value, 10) || 320;
+                if (size < 128 || size > 1024) {
+                    throw new Error("Output size must be between 128 and 1024 pixels.");
+                }
+
+                const payload = buildPayload();
+                elements.qrCanvas.width = size;
+                elements.qrCanvas.height = size;
+                await QRCode.toCanvas(elements.qrCanvas, payload, {
+                    margin: 1,
+                    width: size,
+                    errorCorrectionLevel: "M",
+                    color: {
+                        dark: "#000000",
+                        light: "#ffffff",
+                    },
+                });
+
+                state.currentPayload = payload;
+                setRenderedState(true);
+                elements.payloadOutput.textContent = payload;
+                updatePayloadSize(payload);
+                setStatus("QR code generated.");
+                saveCurrentModeValues();
+                saveGlobalSettings();
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "Failed to generate QR code.";
+                if (message.startsWith("Missing required field:")) {
+                    clearRenderedOutput();
+                    setStatus(quiet ? "Waiting for required fields..." : message, !quiet);
+                    return;
+                }
+                clearRenderedOutput();
+                setStatus(message, true);
+            }
+        }
+
+        function clearTool() {
+            clearRenderedOutput();
+            clearCurrentModeData();
+            renderDynamicFields();
+            setStatus("Cleared. Fill fields and generate again.");
+            saveGlobalSettings();
+        }
+
+        function clearAllLocalData() {
+            try {
+                localStorage.removeItem(storageKey);
+            } catch (_error) {
+                // Ignore localStorage failures.
+            }
+            state.storedState = createDefaultStoredState();
+            state.currentFormatKey = "text";
+            elements.formatSelect.value = state.currentFormatKey;
+            elements.sizeInput.value = String(state.storedState.size);
+            elements.autoGenerateToggle.checked = state.storedState.autoGenerate;
+            clearRenderedOutput();
+            renderDynamicFields();
+            setStatus("Cleared all saved local data.");
+        }
+
+        function downloadPng() {
+            if (!state.hasRendered) return;
+            const anchor = document.createElement("a");
+            anchor.href = elements.qrCanvas.toDataURL("image/png");
+            anchor.download = `qr-${state.currentFormatKey}.png`;
+            anchor.click();
+        }
+
+        async function copyPayload() {
+            if (!state.currentPayload) return;
+            try {
+                await navigator.clipboard.writeText(state.currentPayload);
+                setStatus("Payload copied to clipboard.");
+            } catch (_error) {
+                setStatus("Clipboard copy failed in this browser.", true);
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function populateFormats() {
+            elements.formatSelect.innerHTML = formatDefinitions
+                .map((format) => `<option value="${escapeHtml(format.key)}">${escapeHtml(format.label)}</option>`)
+                .join("");
+        }
+
+        function bootstrap() {
+            populateFormats();
+            if (!formatDefinitions.some((format) => format.key === state.currentFormatKey)) {
+                state.currentFormatKey = "text";
+            }
+            elements.formatSelect.value = state.currentFormatKey;
+            elements.sizeInput.value = String(state.storedState.size || 320);
+            elements.autoGenerateToggle.checked = state.storedState.autoGenerate !== false;
+            renderDynamicFields();
+            elements.payloadOutput.textContent = "";
+            updatePayloadSize("");
+            setRenderedState(false);
+
+            elements.formatSelect.addEventListener("change", () => {
+                state.currentFormatKey = elements.formatSelect.value;
+                renderDynamicFields();
+                clearRenderedOutput();
+                setStatus("Format updated.");
+                saveGlobalSettings();
+                if (elements.autoGenerateToggle.checked) {
+                    void renderQr({ quiet: true });
+                } else if (hasMissingRequiredFields()) {
+                    setStatus("Waiting for required fields...");
+                }
+            });
+
+            elements.dynamicFields.addEventListener("input", () => {
+                saveCurrentModeValues();
+                if (hasMissingRequiredFields()) {
+                    clearRenderedOutput();
+                    setStatus("Waiting for required fields...");
+                    return;
+                }
+                if (elements.autoGenerateToggle.checked) {
+                    void renderQr({ quiet: true });
+                }
+            });
+
+            elements.dynamicFields.addEventListener("change", () => {
+                saveCurrentModeValues();
+                if (hasMissingRequiredFields()) {
+                    clearRenderedOutput();
+                    setStatus("Waiting for required fields...");
+                    return;
+                }
+                if (elements.autoGenerateToggle.checked) {
+                    void renderQr({ quiet: true });
+                }
+            });
+
+            elements.sizeInput.addEventListener("input", () => {
+                saveGlobalSettings();
+                if (elements.autoGenerateToggle.checked) {
+                    void renderQr({ quiet: true });
+                }
+            });
+
+            elements.autoGenerateToggle.addEventListener("change", () => {
+                saveGlobalSettings();
+                if (elements.autoGenerateToggle.checked) {
+                    if (hasMissingRequiredFields()) {
+                        clearRenderedOutput();
+                        setStatus("Waiting for required fields...");
+                    } else {
+                        void renderQr({ quiet: true });
+                        setStatus("Auto-generate enabled.");
+                    }
+                } else {
+                    setStatus("Auto-generate disabled.");
+                }
+            });
+
+            elements.generateButton.addEventListener("click", () => {
+                void renderQr();
+            });
+
+            elements.downloadButton.addEventListener("click", () => {
+                downloadPng();
+            });
+
+            elements.copyPayloadButton.addEventListener("click", () => {
+                void copyPayload();
+            });
+
+            elements.clearButton.addEventListener("click", () => {
+                clearTool();
+            });
+
+            elements.clearStorageButton.addEventListener("click", () => {
+                clearAllLocalData();
+            });
+
+            saveGlobalSettings();
+
+            if (elements.autoGenerateToggle.checked) {
+                if (hasMissingRequiredFields()) {
+                    clearRenderedOutput();
+                    setStatus("Waiting for required fields...");
+                } else {
+                    void renderQr({ quiet: true });
+                }
+            } else {
+                clearRenderedOutput();
+                setStatus("Auto-generate disabled.");
+            }
+        }
+
+        bootstrap();
+    </script>
+    <script src="/analytics.js"></script>
+</body>
+
+</html>
