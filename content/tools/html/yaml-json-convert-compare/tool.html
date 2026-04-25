@@ -242,8 +242,8 @@
     <div class="tool-wrap">
       <h1>YAML ↔ JSON Convert & Compare</h1>
       <p>
-        Drop or paste YAML/JSON, convert between formats, or compare two documents
-        for logical equality.
+        Drop or paste YAML, JSON, JSONC, or JSON5, convert between formats, or
+        compare two documents for logical equality.
       </p>
 
       <section id="mode-selector" class="mode-selector" aria-label="Mode selection">
@@ -259,12 +259,12 @@
         <article class="pane" id="pane-left">
           <h2>Left Pane</h2>
           <div class="drop-zone" id="left-drop">
-            Drag & drop a YAML/JSON file or use the file picker.
+            Drag & drop a YAML, JSON, JSONC, or JSON5 file or use the file picker.
             <div style="margin-top: 8px;">
-              <input type="file" id="left-file" accept=".yaml,.yml,.json" />
+              <input type="file" id="left-file" accept=".yaml,.yml,.json,.jsonc,.json5" />
             </div>
           </div>
-          <textarea id="left-text" placeholder="Paste YAML or JSON here..."></textarea>
+          <textarea id="left-text" placeholder="Paste YAML, JSON, JSONC, or JSON5 here..."></textarea>
 
           <details id="left-formatting" open>
             <summary>Formatting options</summary>
@@ -301,12 +301,12 @@
         <article class="pane" id="pane-right">
           <h2>Right Pane</h2>
           <div class="drop-zone" id="right-drop">
-            Drag & drop a YAML/JSON file or use the file picker.
+            Drag & drop a YAML, JSON, JSONC, or JSON5 file or use the file picker.
             <div style="margin-top: 8px;">
-              <input type="file" id="right-file" accept=".yaml,.yml,.json" />
+              <input type="file" id="right-file" accept=".yaml,.yml,.json,.jsonc,.json5" />
             </div>
           </div>
-          <textarea id="right-text" placeholder="Paste YAML or JSON here..."></textarea>
+          <textarea id="right-text" placeholder="Paste YAML, JSON, JSONC, or JSON5 here..."></textarea>
 
           <details id="right-formatting" open>
             <summary>Formatting options</summary>
@@ -348,6 +348,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/json5@2.2.3/dist/index.min.js"></script>
     <script>
       const modeButtons = document.querySelectorAll(".mode-button");
       const leftText = document.getElementById("left-text");
@@ -436,7 +437,7 @@
       }
 
       function parseJson(text) {
-        return JSON.parse(text);
+        return JSON5.parse(text);
       }
 
       function sortKeysDeep(value) {
@@ -580,7 +581,7 @@
         if (mode === "convert") {
           rightText.setAttribute("placeholder", "Converted output appears here...");
         } else {
-          rightText.setAttribute("placeholder", "Paste YAML or JSON here...");
+          rightText.setAttribute("placeholder", "Paste YAML, JSON, JSONC, or JSON5 here...");
         }
         render();
         scheduleUrlUpdate();
