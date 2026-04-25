@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/kquinsland/tools/compare/tools-site-v0.2.1...tools-site-v0.2.2) (2026-04-25)
+
+
+### Bug Fixes
+
+* gate releases on generated files ([315cc32](https://github.com/kquinsland/tools/commit/315cc327202a2d81b614b2b61dc92ebe8a1fe1c9))
+
 ## [0.2.1](https://github.com/kquinsland/tools/compare/tools-site-v0.2.0...tools-site-v0.2.1) (2026-04-25)
 
 
