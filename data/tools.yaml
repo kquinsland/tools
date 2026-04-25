@@ -67,7 +67,7 @@ tools:
       description: "Inspect EXIF and related image metadata locally in the browser with drag-and-drop support."
       toolbox:
         file: "tool.html"
-        introduced_commit: null
+        introduced_commit: "352f381df95f3c61f669f4e6af423d6344859a5d"
         updated_commit: null
       dependencies:
         - package: "exifr"

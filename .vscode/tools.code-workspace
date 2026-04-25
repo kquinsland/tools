@@ -31,6 +31,10 @@
             "pyyaml",
             "screenshotting",
             "shpak"
-        ]
+        ],
+        "chat.tools.terminal.autoApprove": {
+            "gh": true,
+            "git add": true
+        }
     }
 }
