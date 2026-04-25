@@ -1,0 +1,38 @@
+# https://mise.jdx.dev/dev-tools/mise-lock.html#enabling-lockfiles
+[settings]
+# Push the MISE managed path to the front of the PATH variable
+activate_aggressive = true
+env_cache = true
+exec_auto_install = true
+github_attestations = true
+lockfile = true
+pin = true
+slsa = true
+
+[task_config]
+includes = ["mise/tasks"]
+
+[tools]
+python = "3.14.3"
+hugo-extended = "0.160.0"
+pinact = "3.9.0"
+
+
+markdownlint-cli2 = "0.22.0"
+prek = "0.3.8"
+ruff = "0.15.11"
+
+
+# Let uv manage project environments and dependencies while mise pins the CLI.
+uv = "0.11.7"
+
+# For simulating/running some of the GH/A actions locally.
+act = "0.2.87"
+kind = "0.31.0"
+
+# Render changelogs and GitHub release bodies.
+# See: https://github.com/orhun/git-cliff
+git-cliff = "2.12.0"
+
+[settings.pipx]
+uvx = true

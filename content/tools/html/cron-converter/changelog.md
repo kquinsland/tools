@@ -1,3 +1,11 @@
+## `abfb121` - February 26, 2026 11:49
+
+- Restore cron converter formatting and keep calendar fix
+
+## `22745c0` - February 26, 2026 11:48
+
+- Fix cron calendar panel centering
+
 ---
 title: Changelog - Cron Timezone Converter
 bookHidden: true

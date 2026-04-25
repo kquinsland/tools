@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Refresh per-tool changelog.md files from git history"
+
+set -euo pipefail
+
+uv run ci/build_tool_changelogs.py

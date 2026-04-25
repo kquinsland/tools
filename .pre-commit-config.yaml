@@ -70,7 +70,7 @@ repos:
       hooks:
           - id: check-tool-analytics
             name: Check HTML tools include analytics.js
-            entry: uv run ci/check_tool_analytics.py
+            entry: mise run check:analytics --
             language: system
-            files: ^content/tools/html/.*/tool\\.html$
+            files: ^content/tools/html/.*/tool\.html$
             pass_filenames: true
