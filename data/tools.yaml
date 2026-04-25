@@ -198,7 +198,7 @@ tools:
   - html/yaml-json-convert-compare:
       title: "YAML ↔ JSON Convert & Compare"
       language: "html"
-      description: "Convert YAML to JSON (and back), or compare two files for logical equality with formatting controls."
+      description: "Convert YAML, JSON, JSONC, and JSON5 documents, or compare two files for logical equality with formatting controls."
       toolbox:
         file: "tool.html"
         introduced_commit: "7d214109e2d24b565d7c8938436012cb6ab1ff0c"
@@ -207,10 +207,15 @@ tools:
         - package: "js-yaml"
           version: "4.1.0"
           via: "https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"
+        - package: "json5"
+          version: "2.2.3"
+          via: "https://cdn.jsdelivr.net/npm/json5@2.2.3/dist/index.min.js"
       tags:
         - "html"
         - "yaml"
         - "json"
+        - "jsonc"
+        - "json5"
         - "convert"
         - "compare"
   - python/gha-tree-builder:
