@@ -35,6 +35,7 @@ kind = "0.31.0"
 git-cliff = "2.12.0"
 ty = "0.0.32"
 hugo = "0.160.1"
+npm = "11.13.0"
 
 [settings.pipx]
 uvx = true
