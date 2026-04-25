@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-#MISE description="CI helper: refresh generated files and build the Pages artifact"
-#MISE depends=["release:refresh-generated"]
+#MISE description="CI helper: verify generated files and build the Pages artifact"
+#MISE depends=["check:generated"]
 
 set -euo pipefail
 

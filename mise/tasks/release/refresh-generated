@@ -1,55 +1,7 @@
 #!/usr/bin/env bash
-#MISE description="CI helper: regenerate tracked files and push if they changed"
-#MISE depends=["generate"]
+#MISE description="Compatibility helper: verify generated files are current"
+#MISE depends=["check:generated"]
 
 set -euo pipefail
 
-join_by() {
-    local separator="$1"
-    shift
-    local first=1
-    for item in "$@"; do
-        if [[ $first -eq 1 ]]; then
-            printf '%s' "$item"
-            first=0
-        else
-            printf '%s%s' "$separator" "$item"
-        fi
-    done
-}
-
-changes=()
-
-if ! git diff --quiet HEAD -- data/tools.yaml; then
-    tools_changes="$(uv run ci/detect_tools_changes.py || true)"
-    if [[ -z "$tools_changes" ]]; then
-        tools_changes="data/tools.yaml updated"
-    fi
-    changes+=("$tools_changes")
-fi
-
-if ! git diff --quiet HEAD -- static/tools.txt; then
-    changes+=("static/tools.txt updated")
-fi
-
-if ! git diff --quiet HEAD -- 'content/tools/**/changelog.md'; then
-    changelog_count="$(git diff --name-only HEAD -- 'content/tools/**/changelog.md' | wc -l | tr -d ' ')"
-    changes+=("${changelog_count} changelog(s) updated")
-fi
-
-if [[ ${#changes[@]} -eq 0 ]]; then
-    echo "No generated file changes detected."
-    exit 0
-fi
-
-summary="$(join_by '; ' "${changes[@]}")"
-echo "Generated file changes: ${summary}"
-
-if [[ "${DRY_RUN:-0}" == "1" ]]; then
-    echo "DRY_RUN=1 set, skipping commit and push."
-    exit 0
-fi
-
-git add data/tools.yaml static/tools.txt 'content/tools/**/changelog.md'
-git -c user.name=Automated -c user.email=actions@users.noreply.github.com commit -m "Update generated site data: ${summary}" || exit 0
-git push
+echo "Generated files are current."

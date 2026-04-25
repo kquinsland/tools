@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+#MISE description="Verify generated site files are up to date"
+
+set -euo pipefail
+
+mise run generate
+
+generated_paths=(data/tools.yaml static/tools.txt)
+while IFS= read -r changelog_path; do
+    generated_paths+=("$changelog_path")
+done < <(git ls-files 'content/tools/*/*/changelog.md')
+
+if git diff --quiet --exit-code -- "${generated_paths[@]}"; then
+    echo "Generated files are up to date."
+    exit 0
+fi
+
+echo "Generated files are out of date. Run 'mise run generate' and commit the result."
+git diff --name-only -- "${generated_paths[@]}"
+exit 1
