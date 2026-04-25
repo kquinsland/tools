@@ -61,6 +61,24 @@ tools:
         - "timezone"
         - "scheduling"
         - "convert"
+  - html/exif-inspector:
+      title: "EXIF Inspector"
+      language: "html"
+      description: "Inspect EXIF and related image metadata locally in the browser with drag-and-drop support."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      dependencies:
+        - package: "exifr"
+          version: "7.1.3"
+          via: "https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"
+      tags:
+        - "html"
+        - "image"
+        - "exif"
+        - "metadata"
+        - "photography"
   - html/gemini-nano-interface:
       title: "Gemini Nano Interface"
       language: "html"
