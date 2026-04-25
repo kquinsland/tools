@@ -40,7 +40,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "5c2c9aa8c6cde866191c8a1316111ce67acaeb17"
-        updated_commit: "abfb1216472b1464848b00f2b6a0e7b93c2e7096"
+        updated_commit: "a061a8de0442438970499028ad6b14b3361a5780"
       tags:
         - "html"
         - "cron"

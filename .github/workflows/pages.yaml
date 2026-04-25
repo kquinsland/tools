@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 
 on:
     push:
-        # Merge to `gh-pages`` branch triggers deployments
+        # Merge to `gh-pages` branch triggers deployments
         # Note that the "environment" for the repo (set below) must match and the
         # repo settings that protect the branch must also allow GitHub Actions to push.
         branches:
@@ -11,7 +11,7 @@ on:
     # Or allow manual trigger for testing and break-glass
     workflow_dispatch:
 
-# In the even that I screw something up, kill all but the latest deployment
+        # In the even that I screw something up, kill all but the latest deployment
 concurrency:
     group: pages
     cancel-in-progress: true
