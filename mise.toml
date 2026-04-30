@@ -34,7 +34,7 @@ kind = "0.31.0"
 # See: https://github.com/orhun/git-cliff
 git-cliff = "2.12.0"
 ty = "0.0.32"
-hugo = "0.160.1"
+hugo = "0.161.1"
 npm = "11.13.0"
 
 [settings.pipx]
