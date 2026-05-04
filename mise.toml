@@ -27,7 +27,7 @@ ruff = "0.15.11"
 uv = "0.11.7"
 
 # For simulating/running some of the GH/A actions locally.
-act = "0.2.87"
+act = "0.2.88"
 kind = "0.31.0"
 
 # Render changelogs and GitHub release bodies.
