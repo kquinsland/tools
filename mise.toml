@@ -15,7 +15,7 @@ includes = ["mise/tasks"]
 [tools]
 python = "3.14.3"
 hugo-extended = "0.160.0"
-pinact = "3.9.0"
+pinact = "3.9.2"
 
 
 markdownlint-cli2 = "0.22.1"
