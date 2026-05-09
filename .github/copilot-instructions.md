@@ -92,6 +92,7 @@ This means:
   - Use plain `\n` newlines consistently (avoid mixing `\r\n`).
   - Put each bullet on its own line; do not embed literal `\n` inside a bullet.
   - Prefer `--body-file` with a prepared text file to avoid escape mishaps.
+- When committing changes in this repository, always use [Conventional Commits](https://www.conventionalcommits.org/) format, e.g. `feat: add qr shortcut controls`, `fix: correct generated tool metadata`, or `docs: update agent guidance`.
 
 - The `.github/skills` directory contains "skills" which are instructions for creating or modifying parts of the repository.
   - The skills should be used in addition to the general tool design guidelines above.
