@@ -1,10 +1,10 @@
-# https://mise.jdx.dev/dev-tools/mise-lock.html#enabling-lockfiles
 [settings]
 # Push the MISE managed path to the front of the PATH variable
 activate_aggressive = true
 env_cache = true
 exec_auto_install = true
 github_attestations = true
+# https://mise.jdx.dev/dev-tools/mise-lock.html#enabling-lockfiles
 lockfile = true
 pin = true
 slsa = true
@@ -12,13 +12,21 @@ slsa = true
 [task_config]
 includes = ["mise/tasks"]
 
+[settings.python]
+uv_venv_auto = "create|source" # create .venv if missing, then activate
+
+[settings.npm]
+package_manager = "bun"
+
+[settings.pipx]
+uvx = true
+
+
 [tools]
-python = "3.14.3"
 hugo-extended = "0.160.0"
 pinact = "3.9.0"
 
-
-markdownlint-cli2 = "0.22.1"
+"npm:markdownlint-cli2" = "0.22.1"
 prek = "0.3.8"
 ruff = "0.15.11"
 
@@ -34,8 +42,4 @@ kind = "0.31.0"
 # See: https://github.com/orhun/git-cliff
 git-cliff = "2.12.0"
 ty = "0.0.32"
-hugo = "0.160.1"
-npm = "11.13.0"
-
-[settings.pipx]
-uvx = true
+bun = "1.3.13"
