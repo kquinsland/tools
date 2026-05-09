@@ -140,7 +140,6 @@
             resize: vertical;
         }
 
-        .chip-row,
         .button-row {
             display: flex;
             flex-wrap: wrap;
@@ -177,15 +176,6 @@
             width: auto;
             margin: 0;
             accent-color: var(--accent);
-        }
-
-        .chip {
-            border: 1px solid var(--panel-border);
-            border-radius: 999px;
-            padding: 7px 11px;
-            font: 600 0.78rem/1 var(--font-ui);
-            color: var(--muted);
-            background: var(--surface);
         }
 
         button {
@@ -291,6 +281,12 @@
             gap: 10px;
         }
 
+        .date-shortcuts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
         .cols-2 {
             display: grid;
             gap: 10px;
@@ -311,6 +307,10 @@
         @media (min-width: 900px) {
             .cols-2 {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .date-shortcuts {
+                grid-column: 1 / -1;
             }
         }
     </style>
@@ -339,11 +339,6 @@
                         Format
                         <select id="format-select"></select>
                     </label>
-                    <div class="chip-row">
-                        <span class="chip">Browser-only</span>
-                        <span class="chip">No uploads</span>
-                        <span class="chip">Calendar task supported</span>
-                    </div>
                     <div id="dynamic-fields" class="field-group"></div>
 
                     <label for="size-input">
@@ -708,6 +703,43 @@
             return `${compactDate}T${hh}${mm}${ss}`;
         }
 
+        function pad2(value) {
+            return String(value).padStart(2, "0");
+        }
+
+        function formatLocalDate(date) {
+            return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+        }
+
+        function formatLocalTime(date) {
+            return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+        }
+
+        function formatLocalDateTime(date) {
+            return `${formatLocalDate(date)}T${formatLocalTime(date)}`;
+        }
+
+        function roundToClosestFiveMinutes(date) {
+            const rounded = new Date(date);
+            rounded.setSeconds(0, 0);
+            rounded.setMinutes(Math.round(rounded.getMinutes() / 5) * 5);
+            return rounded;
+        }
+
+        function timeFromDateTimeLocal(value) {
+            const match = String(value || "").match(/^\d{4}-\d{2}-\d{2}T(\d{2}:\d{2})/);
+            return match ? match[1] : "";
+        }
+
+        function addMinutesToTime(time, minutesToAdd) {
+            const [hours = "0", minutes = "0"] = String(time).split(":");
+            const totalMinutes = (Number.parseInt(hours, 10) || 0) * 60
+                + (Number.parseInt(minutes, 10) || 0)
+                + minutesToAdd;
+            const clampedMinutes = Math.min(Math.max(totalMinutes, 0), (24 * 60) - 1);
+            return `${pad2(Math.floor(clampedMinutes / 60))}:${pad2(clampedMinutes % 60)}`;
+        }
+
         function currentFormat() {
             return formatDefinitions.find((item) => item.key === state.currentFormatKey) || formatDefinitions[0];
         }
@@ -810,6 +842,18 @@
             elements.status.classList.toggle("error", isError);
         }
 
+        function handleDynamicFieldUpdate() {
+            saveCurrentModeValues();
+            if (hasMissingRequiredFields()) {
+                clearRenderedOutput();
+                setStatus("Waiting for required fields...");
+                return;
+            }
+            if (elements.autoGenerateToggle.checked) {
+                void renderQr({ quiet: true });
+            }
+        }
+
         function createFieldMarkup(field) {
             const required = field.required ? "required" : "";
             const placeholder = field.placeholder ? `placeholder="${escapeHtml(field.placeholder)}"` : "";
@@ -848,10 +892,87 @@
         function renderDynamicFields() {
             const format = currentFormat();
             const useTwoCols = format.fields.length >= 4 ? " cols-2" : "";
-            const fieldsMarkup = format.fields.map((field) => createFieldMarkup(field)).join("");
+            const shortcutsMarkup = `
+            <div class="date-shortcuts" id="calendar-date-shortcuts" aria-label="Calendar date shortcuts">
+              <button class="secondary" type="button" data-date-shortcut="today">Today</button>
+              <button class="secondary" type="button" data-date-shortcut="now">Now</button>
+            </div>
+          `;
+            const fieldsMarkup = format.fields
+                .map((field) => {
+                    const markup = createFieldMarkup(field);
+                    const shouldAddShortcuts = (format.key === "event" && field.key === "endDateTime")
+                        || (format.key === "task" && field.key === "dueDate");
+                    return shouldAddShortcuts ? markup + shortcutsMarkup : markup;
+                })
+                .join("");
             elements.dynamicFields.className = `field-group${useTwoCols}`;
             elements.dynamicFields.innerHTML = fieldsMarkup;
             loadModeValuesIntoFields();
+        }
+
+        function eventDateTimeInputs() {
+            return {
+                start: elements.dynamicFields.querySelector('[data-field-key="startDateTime"]'),
+                end: elements.dynamicFields.querySelector('[data-field-key="endDateTime"]'),
+            };
+        }
+
+        function setEventDatesToToday() {
+            const { start, end } = eventDateTimeInputs();
+            if (!start || !end) return;
+
+            const today = formatLocalDate(new Date());
+            const startTime = timeFromDateTimeLocal(start.value) || "00:00";
+            const endTime = timeFromDateTimeLocal(end.value) || addMinutesToTime(startTime, 45);
+            start.value = `${today}T${startTime}`;
+            end.value = `${today}T${endTime}`;
+            handleDynamicFieldUpdate();
+            setStatus("Event date set to today.");
+        }
+
+        function setEventDatesToNow() {
+            const { start, end } = eventDateTimeInputs();
+            if (!start || !end) return;
+
+            const roundedStart = roundToClosestFiveMinutes(new Date());
+            const roundedEnd = new Date(roundedStart);
+            roundedEnd.setMinutes(roundedEnd.getMinutes() + 45);
+            start.value = formatLocalDateTime(roundedStart);
+            end.value = formatLocalDateTime(roundedEnd);
+            handleDynamicFieldUpdate();
+            setStatus("Event time set to now.");
+        }
+
+        function taskDueDateInput() {
+            return elements.dynamicFields.querySelector('[data-field-key="dueDate"]');
+        }
+
+        function setTaskDueDateToToday() {
+            const dueDate = taskDueDateInput();
+            if (!dueDate) return;
+
+            dueDate.value = formatLocalDate(new Date());
+            handleDynamicFieldUpdate();
+            setStatus("Task due date set to today.");
+        }
+
+        function setCalendarShortcutToday() {
+            const formatKey = currentFormat().key;
+            if (formatKey === "event") {
+                setEventDatesToToday();
+            } else if (formatKey === "task") {
+                setTaskDueDateToToday();
+            }
+        }
+
+        function setCalendarShortcutNow() {
+            const formatKey = currentFormat().key;
+            if (formatKey === "event") {
+                setEventDatesToNow();
+            } else if (formatKey === "task") {
+                setTaskDueDateToToday();
+            }
         }
 
         function buildPayload() {
@@ -998,26 +1119,24 @@
             });
 
             elements.dynamicFields.addEventListener("input", () => {
-                saveCurrentModeValues();
-                if (hasMissingRequiredFields()) {
-                    clearRenderedOutput();
-                    setStatus("Waiting for required fields...");
-                    return;
-                }
-                if (elements.autoGenerateToggle.checked) {
-                    void renderQr({ quiet: true });
-                }
+                handleDynamicFieldUpdate();
             });
 
             elements.dynamicFields.addEventListener("change", () => {
-                saveCurrentModeValues();
-                if (hasMissingRequiredFields()) {
-                    clearRenderedOutput();
-                    setStatus("Waiting for required fields...");
+                handleDynamicFieldUpdate();
+            });
+
+            elements.dynamicFields.addEventListener("click", (event) => {
+                const target = event.target instanceof Element ? event.target : null;
+                const button = target ? target.closest("[data-date-shortcut]") : null;
+                if (!button) {
                     return;
                 }
-                if (elements.autoGenerateToggle.checked) {
-                    void renderQr({ quiet: true });
+
+                if (button.dataset.dateShortcut === "today") {
+                    setCalendarShortcutToday();
+                } else if (button.dataset.dateShortcut === "now") {
+                    setCalendarShortcutNow();
                 }
             });
 
