@@ -33,7 +33,7 @@ kind = "0.31.0"
 # Render changelogs and GitHub release bodies.
 # See: https://github.com/orhun/git-cliff
 git-cliff = "2.12.0"
-ty = "0.0.32"
+ty = "0.0.35"
 hugo = "0.160.1"
 npm = "11.13.0"
 
