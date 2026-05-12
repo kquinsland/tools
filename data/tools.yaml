@@ -207,7 +207,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "93024de6adec851cd247c21ff37f9c17469ea36b"
-        updated_commit: null
+        updated_commit: "2f1d3fc3ff3448b7660e47163f499f08d98a43a8"
       tags:
         - "html"
         - "qr"
