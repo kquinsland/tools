@@ -24,22 +24,22 @@ uvx = true
 
 [tools]
 hugo-extended = "0.160.0"
-pinact = "3.9.0"
+pinact = "3.9.2"
 
 "npm:markdownlint-cli2" = "0.22.1"
-prek = "0.3.8"
+prek = "0.3.13"
 ruff = "0.15.11"
 
 
 # Let uv manage project environments and dependencies while mise pins the CLI.
-uv = "0.11.7"
+uv = "0.11.13"
 
 # For simulating/running some of the GH/A actions locally.
-act = "0.2.87"
+act = "0.2.88"
 kind = "0.31.0"
 
 # Render changelogs and GitHub release bodies.
 # See: https://github.com/orhun/git-cliff
 git-cliff = "2.12.0"
-ty = "0.0.32"
+ty = "0.0.35"
 bun = "1.3.13"
