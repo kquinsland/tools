@@ -29,7 +29,7 @@ pinact = "3.9.2"
 
 "npm:markdownlint-cli2" = "0.22.1"
 prek = "0.3.13"
-ruff = "0.15.11"
+ruff = "0.15.18"
 
 
 # Let uv manage project environments and dependencies while mise pins the CLI.
