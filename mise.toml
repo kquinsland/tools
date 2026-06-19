@@ -24,7 +24,7 @@ uvx = true
 
 [tools]
 python = "3.14.3"
-hugo-extended = "0.160.0"
+hugo-extended = "0.163.3"
 pinact = "3.9.2"
 
 "npm:markdownlint-cli2" = "0.22.1"
