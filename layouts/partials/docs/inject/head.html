@@ -1,0 +1,7 @@
+{{- with .OutputFormats.Get "markdown" -}}
+  {{- $title := or $.Title $.LinkTitle $.Site.Title -}}
+  <link rel="alternate" href="{{ .Permalink }}" type="{{ .MediaType.Type }}" title="{{ $title }} Markdown">
+{{- end -}}
+{{- with .Site.Home.OutputFormats.Get "llms" -}}
+  <link rel="alternate" href="{{ .Permalink }}" type="{{ .MediaType.Type }}" title="{{ $.Site.Title }} llms.txt">
+{{- end -}}
