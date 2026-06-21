@@ -24,12 +24,12 @@ uvx = true
 
 [tools]
 python = "3.14.6"
-hugo-extended = "0.160.0"
+hugo-extended = "0.163.3"
 pinact = "3.9.2"
 
 "npm:markdownlint-cli2" = "0.22.1"
 prek = "0.3.13"
-ruff = "0.15.11"
+ruff = "0.15.18"
 
 
 # Let uv manage project environments and dependencies while mise pins the CLI.
@@ -43,4 +43,4 @@ kind = "0.31.0"
 # See: https://github.com/orhun/git-cliff
 git-cliff = "2.12.0"
 ty = "0.0.35"
-bun = "1.3.13"
+bun = "1.3.14"

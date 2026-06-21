@@ -21,6 +21,8 @@ ignores:
     - archetypes/*.md
     # And the entire PROBLEM.md
     - PROBLEM.md
+    # Hugo layout templates can emit Markdown but are not standalone Markdown.
+    - layouts/**/*.md
     # Ci/script generated changelog
     - content/tools/**/changelog.md
     # Release Please changelogs

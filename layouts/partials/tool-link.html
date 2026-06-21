@@ -16,7 +16,9 @@
 {{- end -}}
 
 {{- $href := "" -}}
-{{- with .Resources.GetMatch $file -}}
+{{- with .Resources.GetMatch "tool-file" -}}
+  {{- $href = .RelPermalink -}}
+{{- else with .Resources.GetMatch $file -}}
   {{- $href = .RelPermalink -}}
 {{- else -}}
   {{- if hasPrefix $file "/" -}}

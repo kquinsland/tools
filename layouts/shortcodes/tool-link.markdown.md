@@ -1,14 +1,3 @@
-{{- /* Shortcode: outputs a URL or anchor to the tool asset defined in front matter at `toolbox.file`.
-     - Prefers `toolbox.file`, but supports legacy `tool.file`.
-     - If the file is a page bundle resource, links to that resource.
-     - Otherwise, treats the file as a site-root/static path.
-
-     Usage examples in markdown:
-       [link text]({{< tool-link >}})               -> emits just the URL
-       {{< tool-link link_text="link text" >}}      -> emits <a href="...">link text</a>
-       {{< tool-link "link text" >}}                -> positional text
-  */ -}}
-
 {{- $ctx := . -}}
 {{- $params := $ctx.Page.Params -}}
 
@@ -21,8 +10,6 @@
   {{- $lang := lower (default "" $params.language) -}}
   {{- if eq $lang "python" -}}
     {{- $file = "tool.py" -}}
-  {{- else if eq $lang "html" -}}
-    {{- $file = "tool.html" -}}
   {{- else -}}
     {{- $file = "tool.html" -}}
   {{- end -}}
@@ -30,14 +17,17 @@
 
 {{- $href := "" -}}
 {{- with $ctx.Page.Resources.GetMatch "tool-file" -}}
-  {{- $href = .RelPermalink -}}
+  {{- $href = .Permalink -}}
 {{- else with $ctx.Page.Resources.GetMatch $file -}}
-  {{- $href = .RelPermalink -}}
+  {{- $href = .Permalink -}}
 {{- else -}}
+  {{- $base := site.BaseURL | default "/" -}}
+  {{- $base = strings.TrimSuffix "/" $base -}}
   {{- if hasPrefix $file "/" -}}
-    {{- $href = $file | relURL -}}
+    {{- $href = printf "%s%s" $base $file -}}
   {{- else -}}
-    {{- $href = (printf "/%s" $file) | relURL -}}
+    {{- $rel := strings.TrimSuffix "/" $ctx.Page.RelPermalink -}}
+    {{- $href = printf "%s%s/%s" $base $rel $file -}}
   {{- end -}}
 {{- end -}}
 
@@ -49,7 +39,7 @@
 {{- end -}}
 
 {{- if $text -}}
-<a class="tool-link" href="{{ $href }}">{{ $text }}</a>
+[{{ $text }}]({{ $href }})
 {{- else -}}
 {{- $href -}}
 {{- end -}}

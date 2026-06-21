@@ -64,6 +64,51 @@ contentTypes:
     text/pandoc: {}
     text/rst: {}
 
+# Publish AI-readable Markdown variants beside Hugo pages and an llms.txt index
+# at the site root.
+mediaTypes:
+    text/markdown:
+        suffixes:
+            - md
+    text/plain:
+        suffixes:
+            - txt
+
+outputFormats:
+    markdown:
+        baseName: index
+        mediaType: text/markdown
+        isPlainText: true
+        isHTML: false
+    llms:
+        baseName: llms
+        mediaType: text/plain
+        isPlainText: true
+        isHTML: false
+
+outputs:
+    home:
+        - HTML
+        - RSS
+        - markdown
+        - llms
+    section:
+        - HTML
+        - RSS
+        - markdown
+    page:
+        - HTML
+        - markdown
+
+server:
+    headers:
+        - for: "**.md"
+          values:
+              Content-Type: "text/markdown; charset=utf-8"
+        - for: "**.txt"
+          values:
+              Content-Type: "text/plain; charset=utf-8"
+
 params:
     # (Optional, default light) Sets color theme: light, dark or auto.
     # Theme 'auto' switches between dark and light modes based on browser/os preferences

@@ -17,7 +17,7 @@ resources:
 
 {{< tool-image >}}
 
-Access it [here]({{< tool-link >}}).
+Access it {{< tool-link link_text="here" >}}.
 
 or {{< tool-link link_text="here">}}.
 
