@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#MISE description="Rebuild data/tools.yaml and static/tools.txt"
+#MISE description="Rebuild data/tools.yaml, static/tools.yaml, and static/tools.txt"
 
 set -euo pipefail
 

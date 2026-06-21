@@ -5,7 +5,7 @@ set -euo pipefail
 
 mise run generate
 
-generated_paths=(data/tools.yaml static/tools.txt)
+generated_paths=(data/tools.yaml static/tools.yaml static/tools.txt)
 while IFS= read -r changelog_path; do
     generated_paths+=("$changelog_path")
 done < <(git ls-files 'content/tools/*/*/changelog.md')

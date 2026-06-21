@@ -20,6 +20,7 @@ import logging
 import re
 import subprocess
 import tempfile
+from collections import Counter
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path
@@ -426,8 +427,171 @@ def _extract_dependencies(*, language: str, tool_path: Path) -> tuple[Dependency
     return ()
 
 
+def _dependency_host(dependency: Dependency) -> str | None:
+    if dependency.via is None:
+        return None
+    parsed = urlparse(dependency.via)
+    return parsed.netloc.lower() or None
+
+
+def _build_tools_stats(entries: list[ToolEntry]) -> dict[str, Any]:
+    language_counts: Counter[str] = Counter()
+    host_counts: Counter[str] = Counter()
+    dependency_counts: dict[str, Counter[tuple[str, str | None]]] = {}
+    dependency_tools: dict[str, list[ToolEntry]] = {}
+
+    tools_with_dependencies = 0
+    for entry in entries:
+        language_counts[entry.language] += 1
+
+        if not entry.dependencies:
+            continue
+
+        tools_with_dependencies += 1
+        dependency_tools.setdefault(entry.language, []).append(entry)
+
+        seen_for_tool: set[tuple[str, str | None]] = set()
+        for dependency in entry.dependencies:
+            if host := _dependency_host(dependency):
+                host_counts[host] += 1
+
+            dep_key = (dependency.package, dependency.version)
+            if dep_key in seen_for_tool:
+                continue
+            seen_for_tool.add(dep_key)
+            counts_for_language = dependency_counts.setdefault(
+                entry.language, Counter()
+            )
+            counts_for_language[dep_key] += 1
+
+    dependencies_by_language = []
+    for language in sorted(dependency_counts):
+        dependency_items = []
+        for (package, version), count in sorted(
+            dependency_counts[language].items(),
+            key=lambda item: (-item[1], item[0][0], item[0][1] or ""),
+        ):
+            dependency_items.append(
+                {
+                    "package": package,
+                    "version": version,
+                    "count": count,
+                }
+            )
+        dependencies_by_language.append(
+            {
+                "language": language,
+                "dependencies": dependency_items,
+            }
+        )
+
+    dependency_tools_by_language = []
+    for language in sorted(dependency_tools):
+        tools = []
+        for entry in sorted(
+            dependency_tools[language],
+            key=lambda tool: (tool.title.lower(), tool.slug),
+        ):
+            tools.append(
+                {
+                    "slug": entry.slug,
+                    "title": entry.title,
+                    "dependencies": entry.dependencies,
+                }
+            )
+        dependency_tools_by_language.append({"language": language, "tools": tools})
+
+    return {
+        "total_tools": len(entries),
+        "tools_with_dependencies": tools_with_dependencies,
+        "tools_without_dependencies": len(entries) - tools_with_dependencies,
+        "languages": [
+            {"language": language, "count": count}
+            for language, count in sorted(language_counts.items())
+        ],
+        "dependency_hosts": [
+            {"host": host, "count": count}
+            for host, count in sorted(
+                host_counts.items(),
+                key=lambda item: (-item[1], item[0]),
+            )
+        ],
+        "dependencies_by_language": dependencies_by_language,
+        "dependency_tools_by_language": dependency_tools_by_language,
+    }
+
+
+def _append_dependency_yaml(
+    lines: list[str], dependency: Dependency, indent: str
+) -> None:
+    lines.append(f"{indent}- package: {_yaml_quote(dependency.package)}")
+    if dependency.version is not None:
+        lines.append(f"{indent}  version: {_yaml_quote(dependency.version)}")
+    if dependency.via is not None:
+        lines.append(f"{indent}  via: {_yaml_quote(dependency.via)}")
+
+
+def _append_stats_yaml(lines: list[str], stats: dict[str, Any]) -> None:
+    lines.append("stats:")
+    lines.append(f"  total_tools: {stats['total_tools']}")
+    lines.append(f"  tools_with_dependencies: {stats['tools_with_dependencies']}")
+    lines.append(f"  tools_without_dependencies: {stats['tools_without_dependencies']}")
+
+    lines.append("  languages:")
+    for language in stats["languages"]:
+        lines.append(f"    - language: {_yaml_quote(language['language'])}")
+        lines.append(f"      count: {language['count']}")
+    if not stats["languages"]:
+        lines[-1] = "  languages: []"
+
+    lines.append("  dependency_hosts:")
+    for host in stats["dependency_hosts"]:
+        lines.append(f"    - host: {_yaml_quote(host['host'])}")
+        lines.append(f"      count: {host['count']}")
+    if not stats["dependency_hosts"]:
+        lines[-1] = "  dependency_hosts: []"
+
+    lines.append("  dependencies_by_language:")
+    for language_group in stats["dependencies_by_language"]:
+        lines.append(f"    - language: {_yaml_quote(language_group['language'])}")
+        dependencies = language_group["dependencies"]
+        if not dependencies:
+            lines.append("      dependencies: []")
+            continue
+        lines.append("      dependencies:")
+        for dependency in dependencies:
+            lines.append(f"        - package: {_yaml_quote(dependency['package'])}")
+            if dependency["version"] is not None:
+                lines.append(f"          version: {_yaml_quote(dependency['version'])}")
+            lines.append(f"          count: {dependency['count']}")
+    if not stats["dependencies_by_language"]:
+        lines[-1] = "  dependencies_by_language: []"
+
+    lines.append("  dependency_tools_by_language:")
+    for language_group in stats["dependency_tools_by_language"]:
+        lines.append(f"    - language: {_yaml_quote(language_group['language'])}")
+        tools = language_group["tools"]
+        if not tools:
+            lines.append("      tools: []")
+            continue
+        lines.append("      tools:")
+        for tool in tools:
+            lines.append(f"        - slug: {_yaml_quote(tool['slug'])}")
+            lines.append(f"          title: {_yaml_quote(tool['title'])}")
+            dependencies = tool["dependencies"]
+            if not dependencies:
+                lines.append("          dependencies: []")
+                continue
+            lines.append("          dependencies:")
+            for dependency in dependencies:
+                _append_dependency_yaml(lines, dependency, "            ")
+    if not stats["dependency_tools_by_language"]:
+        lines[-1] = "  dependency_tools_by_language: []"
+
+
 def _render_tools_yaml(entries: list[ToolEntry]) -> str:
-    lines: list[str] = ["---", "version: 1"]
+    lines: list[str] = ["---", "version: 2"]
+    _append_stats_yaml(lines, _build_tools_stats(entries))
 
     if not entries:
         lines.append("tools: []")
@@ -456,13 +620,7 @@ def _render_tools_yaml(entries: list[ToolEntry]) -> str:
         if entry.dependencies:
             lines.append("      dependencies:")
             for dependency in entry.dependencies:
-                lines.append(f"        - package: {_yaml_quote(dependency.package)}")
-                if dependency.version is not None:
-                    lines.append(
-                        f"          version: {_yaml_quote(dependency.version)}"
-                    )
-                if dependency.via is not None:
-                    lines.append(f"          via: {_yaml_quote(dependency.via)}")
+                _append_dependency_yaml(lines, dependency, "        ")
         if entry.tags:
             lines.append("      tags:")
             for tag in entry.tags:
@@ -616,6 +774,172 @@ def test_parse_requirement_with_extras() -> None:
     assert dependency == Dependency(package="requests[socks]", version=">=2.31")
 
 
+def _stats_test_entry(
+    *,
+    slug: str,
+    title: str,
+    language: str,
+    dependencies: tuple[Dependency, ...] = (),
+) -> ToolEntry:
+    return ToolEntry(
+        slug=slug,
+        title=title,
+        language=language,
+        description="",
+        toolbox_file="tool.html",
+        introduced_commit=None,
+        updated_commit=None,
+        dependencies=dependencies,
+        tags=(),
+    )
+
+
+def test_build_tools_stats_counts_tools_and_languages() -> None:
+    entries = [
+        _stats_test_entry(
+            slug="python/beta",
+            title="Beta",
+            language="python",
+            dependencies=(Dependency(package="click", version=">=8.1"),),
+        ),
+        _stats_test_entry(slug="html/alpha", title="Alpha", language="html"),
+        _stats_test_entry(slug="html/gamma", title="Gamma", language="html"),
+    ]
+
+    stats = _build_tools_stats(entries)
+
+    assert stats["total_tools"] == 3
+    assert stats["tools_with_dependencies"] == 1
+    assert stats["tools_without_dependencies"] == 2
+    assert stats["languages"] == [
+        {"language": "html", "count": 2},
+        {"language": "python", "count": 1},
+    ]
+
+
+def test_build_tools_stats_dedupes_dependency_counts_per_tool() -> None:
+    entries = [
+        _stats_test_entry(
+            slug="html/alpha",
+            title="Alpha",
+            language="html",
+            dependencies=(
+                Dependency(package="jszip", version="3.10.1"),
+                Dependency(package="jszip", version="3.10.1"),
+                Dependency(package="exifr", version="7.1.3"),
+            ),
+        ),
+        _stats_test_entry(
+            slug="html/beta",
+            title="Beta",
+            language="html",
+            dependencies=(Dependency(package="jszip", version="3.10.1"),),
+        ),
+    ]
+
+    stats = _build_tools_stats(entries)
+
+    assert stats["dependencies_by_language"] == [
+        {
+            "language": "html",
+            "dependencies": [
+                {"package": "jszip", "version": "3.10.1", "count": 2},
+                {"package": "exifr", "version": "7.1.3", "count": 1},
+            ],
+        }
+    ]
+
+
+def test_build_tools_stats_counts_dependency_hosts_from_via() -> None:
+    entries = [
+        _stats_test_entry(
+            slug="html/alpha",
+            title="Alpha",
+            language="html",
+            dependencies=(
+                Dependency(
+                    package="one",
+                    version="1.0.0",
+                    via="https://cdn.jsdelivr.net/npm/one@1.0.0/index.js",
+                ),
+                Dependency(
+                    package="two",
+                    version="1.0.0",
+                    via="https://cdnjs.cloudflare.com/ajax/libs/two/1.0.0/two.js",
+                ),
+                Dependency(
+                    package="three",
+                    version="1.0.0",
+                    via="https://cdn.jsdelivr.net/npm/three@1.0.0/index.js",
+                ),
+            ),
+        )
+    ]
+
+    stats = _build_tools_stats(entries)
+
+    assert stats["dependency_hosts"] == [
+        {"host": "cdn.jsdelivr.net", "count": 2},
+        {"host": "cdnjs.cloudflare.com", "count": 1},
+    ]
+
+
+def test_build_tools_stats_sorts_dependencies_and_tools_deterministically() -> None:
+    entries = [
+        _stats_test_entry(
+            slug="html/zulu",
+            title="Zulu",
+            language="html",
+            dependencies=(
+                Dependency(package="beta", version="1.0.0"),
+                Dependency(package="alpha", version="2.0.0"),
+                Dependency(package="alpha", version="1.0.0"),
+            ),
+        ),
+        _stats_test_entry(
+            slug="html/alpha",
+            title="Alpha",
+            language="html",
+            dependencies=(
+                Dependency(package="beta", version="1.0.0"),
+                Dependency(package="alpha", version="1.0.0"),
+            ),
+        ),
+        _stats_test_entry(
+            slug="python/bravo",
+            title="Bravo",
+            language="python",
+            dependencies=(Dependency(package="click", version=">=8.1"),),
+        ),
+    ]
+
+    stats = _build_tools_stats(entries)
+
+    assert stats["dependencies_by_language"] == [
+        {
+            "language": "html",
+            "dependencies": [
+                {"package": "alpha", "version": "1.0.0", "count": 2},
+                {"package": "beta", "version": "1.0.0", "count": 2},
+                {"package": "alpha", "version": "2.0.0", "count": 1},
+            ],
+        },
+        {
+            "language": "python",
+            "dependencies": [
+                {"package": "click", "version": ">=8.1", "count": 1},
+            ],
+        },
+    ]
+    assert [
+        (group["language"], [tool["slug"] for tool in group["tools"]])
+        for group in stats["dependency_tools_by_language"]
+    ] == [
+        ("html", ["html/alpha", "html/zulu"]),
+        ("python", ["python/bravo"]),
+    ]
+
+
 def _git(args: list[str], *, cwd: Path) -> None:
     subprocess.run(["git", *args], cwd=cwd, check=True, text=True)
 
@@ -667,6 +991,7 @@ def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
     tools_root = repo_root / "content" / "tools"
     out_path = repo_root / "data" / "tools.yaml"
+    static_yaml_path = repo_root / "static" / "tools.yaml"
     tools_txt_path = repo_root / "static" / "tools.txt"
 
     log.info("building tools data", tools_root=tools_root)
@@ -678,9 +1003,12 @@ def main() -> int:
         raise
 
     out_path.write_text(yaml_text, encoding="utf-8")
+    static_yaml_path.write_text(yaml_text, encoding="utf-8")
     tools_txt_path.write_text(tools_txt, encoding="utf-8")
-    tool_count = yaml_text.count("\n  - ")
+    parsed_tools_data = yaml.safe_load(yaml_text) or {}
+    tool_count = parsed_tools_data.get("stats", {}).get("total_tools", 0)
     log.info("wrote tools data", path=str(out_path), tools=tool_count)
+    log.info("wrote public tools data", path=str(static_yaml_path))
     log.info("wrote tools listing", path=str(tools_txt_path))
     return 0
 
