@@ -315,3 +315,25 @@ tools:
         file: "tool.py"
         introduced_commit: "dc47d301b4ad8c2b59a7d607af6b239499a3b646"
         updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+  - python/obsidian-icon-folder-migrator:
+      title: "Obsidian Icon Folder Migrator"
+      language: "python"
+      description: "Move Obsidian Icon Folder plugin icon assignments from data.json into note YAML frontmatter."
+      toolbox:
+        file: "tool.py"
+        introduced_commit: "dbdf1e2fdb2fcf31dcc5dc583e73d0b4c8b30499"
+        updated_commit: null
+      dependencies:
+        - package: "click"
+          version: ">=8.1"
+        - package: "ruamel.yaml"
+          version: ">=0.18"
+        - package: "structlog"
+          version: ">=24"
+      tags:
+        - "obsidian"
+        - "markdown"
+        - "yaml"
+        - "frontmatter"
+        - "migration"
+        - "python"
