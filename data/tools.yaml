@@ -254,7 +254,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "eee81257ad54ff8cf9d9c21400203d238cbfbb36"
-        updated_commit: "138614d7170f9bc2b37262fd77a158bda904a37e"
+        updated_commit: "2de1c45c20b1dd91602b51c7d22a9ba48d006c29"
       tags:
         - "html"
         - "url"
