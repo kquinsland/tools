@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/kquinsland/tools/compare/tools-site-v0.5.0...tools-site-v0.5.1) (2026-06-21)
+
+
+### Bug Fixes
+
+* avoid duplicate pep 723 fixture blocks ([5818c10](https://github.com/kquinsland/tools/commit/5818c10d98172f488f1e95fff12eab654cc1d22c))
+
 ## [0.5.0](https://github.com/kquinsland/tools/compare/tools-site-v0.4.0...tools-site-v0.5.0) (2026-06-21)
 
 
