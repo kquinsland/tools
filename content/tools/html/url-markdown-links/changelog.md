@@ -2,6 +2,10 @@
 title: Changelog - URL to Markdown Links
 bookHidden: true
 ---
+## `2de1c45` - June 21, 2026 16:35
+
+- feat: add bulk URL parameter removal
+
 ## `ce1dbba` - January 12, 2026 17:42
 
 - feat: Dark Mode:

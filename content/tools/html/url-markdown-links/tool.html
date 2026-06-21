@@ -336,6 +336,9 @@
           </div>
           <div class="option-group" style="justify-items: start;">
             <label><input type="checkbox" id="option-dedupe" /> Dedupe URLs</label>
+            <button id="strip-params-button" class="secondary" type="button" disabled>
+              Remove URL params
+            </button>
           </div>
         </div>
         <ul id="url-list" class="url-list"></ul>
@@ -397,6 +400,7 @@
       const clearButton = document.getElementById("clear-button");
       const clearInputTop = document.getElementById("clear-input-top");
       const clearLogButton = document.getElementById("clear-log");
+      const stripParamsButton = document.getElementById("strip-params-button");
       const logList = document.getElementById("log-list");
       const logEmpty = document.getElementById("log-empty");
       const linkTextOptions = document.querySelectorAll("input[name='link-text']");
@@ -514,9 +518,45 @@
         return cleaned;
       }
 
+      function hasUrlParams(value) {
+        try {
+          return Boolean(new URL(value).search);
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function stripUrlParams(value) {
+        try {
+          const parsed = new URL(value);
+          if (!parsed.search) return value;
+          parsed.search = "";
+          return parsed.toString();
+        } catch (error) {
+          return value;
+        }
+      }
+
+      function stripParamsFromInput(value) {
+        const regex = /https?:\/\/[^\s<>'"`]+/gi;
+        let changed = 0;
+        const text = value.replace(regex, (match) => {
+          const suffixMatch = match.match(/[)\],.!?:;>]+$/);
+          const suffix = suffixMatch ? suffixMatch[0] : "";
+          const url = suffix ? match.slice(0, -suffix.length) : match;
+          const stripped = stripUrlParams(url);
+          if (stripped !== url) {
+            changed += 1;
+          }
+          return `${stripped}${suffix}`;
+        });
+        return { text, changed };
+      }
+
       function renderUrlList() {
         urlListEl.innerHTML = "";
         urlCountEl.textContent = urls.length.toString();
+        stripParamsButton.disabled = !urls.some(hasUrlParams);
         if (!urls.length) {
           urlListEl.innerHTML = "<li>Paste text above to extract URLs.</li>";
           return;
@@ -790,8 +830,26 @@
         refresh();
       }
 
+      function removeAllUrlParams() {
+        const result = stripParamsFromInput(inputEl.value);
+        if (!result.changed) {
+          addLog("No URL parameters found to remove.");
+          return;
+        }
+
+        inputEl.value = result.text;
+        saveInput(inputEl.value);
+        titleCache.clear();
+        pendingTitles.clear();
+        addLog(
+          `Removed URL parameters from ${result.changed} URL${result.changed === 1 ? "" : "s"}.`,
+        );
+        refresh();
+      }
+
       clearButton.addEventListener("click", clearInput);
       clearInputTop.addEventListener("click", clearInput);
+      stripParamsButton.addEventListener("click", removeAllUrlParams);
 
       clearLogButton.addEventListener("click", clearLog);
 
