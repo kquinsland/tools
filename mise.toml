@@ -41,6 +41,6 @@ kind = "0.31.0"
 
 # Render changelogs and GitHub release bodies.
 # See: https://github.com/orhun/git-cliff
-git-cliff = "2.12.0"
+git-cliff = "2.13.1"
 ty = "0.0.35"
 bun = "1.3.14"
