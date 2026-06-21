@@ -13,7 +13,7 @@
     <p>No changelog entries yet.</p>
   </section>
 {{- else if $raw -}}
-{{- $raw = replaceRE `(?s)^---\n.*?\n---\n` "" $raw | strings.TrimSpace -}}
+{{- $raw = replaceRE `(?s)^---\n.*?\n---(?:\n|$)` "" $raw | strings.TrimSpace -}}
 {{- end -}}
 {{- if $raw -}}
 {{- $raw = $raw | strings.TrimPrefix "## " -}}

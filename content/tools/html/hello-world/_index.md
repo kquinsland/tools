@@ -30,7 +30,7 @@ This the the first tool.
 
 This theme offers up a few different ways to link to tools.
 
-Access it [here]({{< tool-link >}}).
+Access it {{< tool-link link_text="here" >}}.
 
 or {{< tool-link link_text="here">}}.
 
