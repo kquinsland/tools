@@ -8,7 +8,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f78e582ac9cb67a84843a088bfaf1d1d765c6cc0"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "138614d7170f9bc2b37262fd77a158bda904a37e"
       dependencies:
         - package: "jszip"
           version: "3.10.1"
@@ -26,7 +26,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "d4f23b11a63b2dd20360084c15abf7f3eb570427"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "138614d7170f9bc2b37262fd77a158bda904a37e"
       tags:
         - "html"
         - "audio"
@@ -86,7 +86,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "abfb0035989950f667bc57bd717b24fd4bf7ff29"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "ce1dbba963e062b742b3ebba46f8cb39c81b6ee6"
       tags:
         - "html"
         - "ai"
@@ -137,7 +137,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "dc47d301b4ad8c2b59a7d607af6b239499a3b646"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "138614d7170f9bc2b37262fd77a158bda904a37e"
       tags:
         - "demo"
         - "html"
@@ -150,7 +150,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "99e68e059b2bbb2bdfe8aa758dd595054fab542a"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "ce1dbba963e062b742b3ebba46f8cb39c81b6ee6"
       dependencies:
         - package: "js-yaml"
           version: "4.1.0"
@@ -168,7 +168,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "b16836b801ee3cc927c18127249dc0f7a5e5c11d"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "138614d7170f9bc2b37262fd77a158bda904a37e"
       tags:
         - "html"
         - "logs"
@@ -182,7 +182,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "9caaf23a6bb4696806e9ce08105bcf668c9a1841"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "23eaecd92b51ba53d49cb1956b6e1a7ed94d1d65"
       dependencies:
         - package: "viz.js"
           version: "2.1.2"
@@ -240,7 +240,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "f97c3182bd7aae8170b009bc82aba87960a4ce6d"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "138614d7170f9bc2b37262fd77a158bda904a37e"
       tags:
         - "html"
         - "url"
@@ -254,7 +254,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "eee81257ad54ff8cf9d9c21400203d238cbfbb36"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "138614d7170f9bc2b37262fd77a158bda904a37e"
       tags:
         - "html"
         - "url"
@@ -290,7 +290,7 @@ tools:
       toolbox:
         file: "tool.py"
         introduced_commit: "3b09a940e1835d0f0b7be11c080224bb46b57227"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "f24d92345f03cc31b8432014367618c443710ab3"
       dependencies:
         - package: "click"
           version: ">=8.1"
@@ -314,7 +314,7 @@ tools:
       toolbox:
         file: "tool.py"
         introduced_commit: "dc47d301b4ad8c2b59a7d607af6b239499a3b646"
-        updated_commit: "d24e9d9051d2035edab93d7350edb0e3586a6162"
+        updated_commit: "138614d7170f9bc2b37262fd77a158bda904a37e"
   - python/obsidian-icon-folder-migrator:
       title: "Obsidian Icon Folder Migrator"
       language: "python"
