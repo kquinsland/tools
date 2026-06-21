@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Obsidian Icon Folder Migrator icon</title>
+  <desc id="desc">A markdown note receiving an icon value from a plugin data file.</desc>
+  <defs>
+    <linearGradient id="bg" x1="72" y1="48" x2="440" y2="464" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#dbe4ee"/>
+    </linearGradient>
+    <linearGradient id="note" x1="174" y1="80" x2="366" y2="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eef3f8"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#1f2937" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <path d="M166 76h142l70 72v284H166z" fill="url(#note)"/>
+    <path d="M308 76v72h70z" fill="#d5dde8"/>
+    <path d="M166 76h142l70 72v284H166z" fill="none" stroke="#334155" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M308 76v72h70" fill="none" stroke="#334155" stroke-width="12" stroke-linejoin="round"/>
+  </g>
+  <rect x="202" y="178" width="132" height="44" rx="12" fill="#6d5dfc" opacity=".92"/>
+  <rect x="202" y="246" width="104" height="16" rx="8" fill="#94a3b8"/>
+  <rect x="202" y="282" width="136" height="16" rx="8" fill="#94a3b8"/>
+  <rect x="202" y="318" width="82" height="16" rx="8" fill="#94a3b8"/>
+  <path d="M82 180h112a24 24 0 0 1 24 24v64a24 24 0 0 1-24 24H82a24 24 0 0 1-24-24v-64a24 24 0 0 1 24-24z" fill="#1f2937"/>
+  <path d="M94 211h70M94 237h94M94 263h56" stroke="#cbd5e1" stroke-width="12" stroke-linecap="round"/>
+  <path d="M221 236h98" stroke="#f59e0b" stroke-width="18" stroke-linecap="round"/>
+  <path d="M304 205l52 31-52 31" fill="none" stroke="#f59e0b" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="398" cy="342" r="46" fill="#f59e0b"/>
+  <path d="M398 316l8 17 19 3-14 14 3 19-16-9-17 9 3-19-14-14 19-3z" fill="#fff7ed"/>
+</svg>
