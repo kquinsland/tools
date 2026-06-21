@@ -1,3 +1,7 @@
+---
+title: Changelog - Cron Timezone Converter
+bookHidden: true
+---
 ## `abfb121` - February 26, 2026 11:49
 
 - Restore cron converter formatting and keep calendar fix
@@ -6,10 +10,6 @@
 
 - Fix cron calendar panel centering
 
----
-title: Changelog - Cron Timezone Converter
-bookHidden: true
----
 ## `5c2c9aa` - February 12, 2026 17:11
 
 - feat: add cron timezone converter tool with icon and calendar
