@@ -321,7 +321,7 @@ tools:
       description: "Move Obsidian Icon Folder plugin icon assignments from data.json into note YAML frontmatter."
       toolbox:
         file: "tool.py"
-        introduced_commit: null
+        introduced_commit: "dbdf1e2fdb2fcf31dcc5dc583e73d0b4c8b30499"
         updated_commit: null
       dependencies:
         - package: "click"
