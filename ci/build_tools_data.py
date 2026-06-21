@@ -588,16 +588,21 @@ def test_parse_html_dependencies_dedupes() -> None:
 
 
 def test_parse_pep723_dependencies() -> None:
-    script_text = """#!/usr/bin/env -S uv run
-# /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#   "click>=8.1",
-#   "structlog>=24.0",
-#   "pyyaml>=6.0",
-# ]
-# ///
-"""
+    marker = "# " + "///"
+    script_text = "\n".join(
+        [
+            "#!/usr/bin/env -S uv run",
+            f"{marker} script",
+            '# requires-python = ">=3.11"',
+            "# dependencies = [",
+            '#   "click>=8.1",',
+            '#   "structlog>=24.0",',
+            '#   "pyyaml>=6.0",',
+            "# ]",
+            marker,
+            "",
+        ]
+    )
     dependencies = _parse_python_dependencies(script_text)
     assert dependencies == [
         Dependency(package="click", version=">=8.1"),
