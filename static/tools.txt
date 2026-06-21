@@ -24,3 +24,4 @@
 
 - [GHA Tree Builder](https://tools.karlquinsland.com/tools/python/gha-tree-builder/): Generate DOT dependency graphs for GitHub Actions workflows, triggers, and jobs.
 - [Hello, Python](https://tools.karlquinsland.com/tools/python/hello-python/): This is the first tool description here.
+- [Obsidian Icon Folder Migrator](https://tools.karlquinsland.com/tools/python/obsidian-icon-folder-migrator/): Move Obsidian Icon Folder plugin icon assignments from data.json into note YAML frontmatter.

@@ -1,0 +1,64 @@
+# {{ .Site.Title }}
+
+> A Hugo-powered site of small, self-contained tools for quick tasks.
+
+{{ .Site.BaseURL }}
+
+## Site
+
+{{- $sitePages := slice
+    (dict "page" .Site.Home "title" .Site.Title "summary" "Landing page with generated cards for all tools.")
+-}}
+{{- with .Site.GetPage "/tools" }}{{ $sitePages = $sitePages | append (dict "page" . "title" "Tools" "summary" "Browse all tools grouped by implementation language.") }}{{ end -}}
+{{- with .Site.GetPage "/tools/html" }}{{ $sitePages = $sitePages | append (dict "page" . "title" "HTML tools" "summary" "Browser-based tools that run locally from self-contained HTML and JavaScript.") }}{{ end -}}
+{{- with .Site.GetPage "/tools/python" }}{{ $sitePages = $sitePages | append (dict "page" . "title" "Python tools" "summary" "Python command-line tools that can be run locally with uv.") }}{{ end -}}
+{{- with .Site.GetPage "/about" }}{{ $sitePages = $sitePages | append (dict "page" . "title" "About" "summary" "Background on the tools site.") }}{{ end -}}
+{{- with .Site.GetPage "/analytics" }}{{ $sitePages = $sitePages | append (dict "page" . "title" "Analytics" "summary" "Local-only analytics behavior and controls.") }}{{ end -}}
+{{- range $item := $sitePages }}
+{{- $page := $item.page -}}
+{{- $title := $item.title -}}
+{{- $summary := $item.summary -}}
+{{- with $page.OutputFormats.Get "markdown" }}
+- [{{ $title }}]({{ .Permalink }}){{ with $summary }}: {{ . | htmlUnescape | safeHTML }}{{ end }}
+{{- else }}
+- [{{ $title }}]({{ $page.Permalink }}){{ with $summary }}: {{ . | htmlUnescape | safeHTML }}{{ end }}
+{{- end }}
+{{- end }}
+
+## Tools
+
+{{- $tools := slice -}}
+{{- range $item := site.Data.tools.tools -}}
+{{- range $slug, $tool := $item -}}
+{{- $tools = $tools | append (dict
+    "slug" $slug
+    "title" ($tool.title | default $slug)
+    "description" ($tool.description | default "")
+    "language" ($tool.language | default "")
+) -}}
+{{- end -}}
+{{- end -}}
+{{- $tools = sort $tools "title" -}}
+{{- range $tool := $tools -}}
+{{- $page := site.GetPage (printf "/tools/%s" $tool.slug) -}}
+{{- $href := printf "%stools/%s/" site.BaseURL $tool.slug -}}
+{{- if $page -}}
+{{- with $page.OutputFormats.Get "markdown" -}}
+{{- $href = .Permalink -}}
+{{- else -}}
+{{- $href = $page.Permalink -}}
+{{- end -}}
+{{- end }}
+- [{{ $tool.title }}]({{ $href }}){{ with $tool.description }}: {{ . | htmlUnescape | safeHTML }}{{ end }}
+{{- end }}
+
+## Optional
+
+- [tools.txt]({{ "tools.txt" | absURL }}): Plain-text generated tool list.
+- [Analytics UI]({{ "analytics.html" | absURL }}): View, export, or clear local analytics data.
+- [Source repository](https://github.com/kquinsland/tools): Hugo source, tool files, and build scripts.
+
+## Notes
+
+- Per-page Markdown is published as `index.md` beside each HTML page.
+- HTML and Python tools remain linked from their generated Markdown pages.
