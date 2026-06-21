@@ -88,7 +88,9 @@ def _get_tool_git_commits(
 
     If there is no git history, returns (None, None).
     If the most recent commit matches the introduction commit, updated_commit is None.
-    Generated per-tool changelogs are excluded to avoid self-referential updates.
+    Generated per-tool changelogs and Hugo bundle landing pages are excluded to
+    avoid self-referential updates from generated metadata or documentation-only
+    tool page edits.
     """
 
     if repo_root is None:
@@ -96,6 +98,8 @@ def _get_tool_git_commits(
     rel_path = tool_dir.relative_to(repo_root)
     pathspecs = [
         str(rel_path),
+        f":(exclude){(rel_path / '_index.md').as_posix()}",
+        f":(exclude){(rel_path / 'index.md').as_posix()}",
         f":(exclude){(rel_path / 'changelog.md').as_posix()}",
     ]
 
@@ -629,6 +633,15 @@ def test_tool_git_commits_ignore_generated_changelog() -> None:
         (tool_dir / "changelog.md").write_text("## generated\n", encoding="utf-8")
         _git(["add", "."], cwd=repo)
         _git(["commit", "-m", "Refresh changelog"], cwd=repo)
+
+        assert _get_tool_git_commits(tool_dir, repo_root=repo) == (introduced, None)
+
+        (tool_dir / "_index.md").write_text(
+            "---\ntitle: Demo\n---\n\nUpdated page copy.\n",
+            encoding="utf-8",
+        )
+        _git(["add", "."], cwd=repo)
+        _git(["commit", "-m", "Update tool page copy"], cwd=repo)
 
         assert _get_tool_git_commits(tool_dir, repo_root=repo) == (introduced, None)
 
