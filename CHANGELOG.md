@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0](https://github.com/kquinsland/tools/compare/tools-site-v0.4.0...tools-site-v0.5.0) (2026-06-21)
+
+
+### Features
+
+* add hugo markdown outputs ([e87349b](https://github.com/kquinsland/tools/commit/e87349b40de04ec5c2623be469ee3922164130bb))
+* add obsidian icon folder migrator ([dbdf1e2](https://github.com/kquinsland/tools/commit/dbdf1e2fdb2fcf31dcc5dc583e73d0b4c8b30499))
+* update QR calendar shortcuts ([2f1d3fc](https://github.com/kquinsland/tools/commit/2f1d3fc3ff3448b7660e47163f499f08d98a43a8))
+
+
+### Bug Fixes
+
+* ignore tool page copy for metadata commits ([7dc5550](https://github.com/kquinsland/tools/commit/7dc55500b4ae894cb75ae23b2969171f5ec84ff3))
+* keep python pinned for ci setup ([a266ac7](https://github.com/kquinsland/tools/commit/a266ac70f00547d5f88818cbae5d8c107b19761b))
+* tweak mise config ([8061440](https://github.com/kquinsland/tools/commit/8061440b07a19b7e8a32555d5def2db98c85c0b3))
+
 ## [0.4.0](https://github.com/kquinsland/tools/compare/tools-site-v0.3.0...tools-site-v0.4.0) (2026-04-25)
 
 
