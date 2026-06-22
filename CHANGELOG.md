@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://github.com/kquinsland/tools/compare/tools-site-v0.5.1...tools-site-v0.6.0) (2026-06-22)
+
+
+### Features
+
+* add bulk URL parameter removal ([4a9d7aa](https://github.com/kquinsland/tools/commit/4a9d7aaa096f12f1f3219c7e644e36c6a81e4853))
+* add bulk URL parameter removal ([2de1c45](https://github.com/kquinsland/tools/commit/2de1c45c20b1dd91602b51c7d22a9ba48d006c29))
+* add generated tool stats data ([aed8921](https://github.com/kquinsland/tools/commit/aed8921e72a0af0d0d06cb13dd506e4bd318ca36))
+
+
+### Bug Fixes
+
+* backfill front matter only changelogs ([c0b4ac6](https://github.com/kquinsland/tools/commit/c0b4ac699908a0c78bab54be9d46c68926d72e85))
+
 ## [0.5.1](https://github.com/kquinsland/tools/compare/tools-site-v0.5.0...tools-site-v0.5.1) (2026-06-21)
 
 
