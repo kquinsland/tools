@@ -1,47 +1,12 @@
-{{- $tools := site.Data.tools.tools -}}
-{{- $toolList := slice -}}
-{{- range $item := $tools -}}
-{{- range $slug, $tool := $item -}}
-{{- $toolList = $toolList | append (dict
-    "slug" $slug
-    "title" $tool.title
-    "language" ($tool.language | default "unknown")
-    "dependencies" ($tool.dependencies | default (slice))
-) -}}
-{{- end -}}
-{{- end -}}
+{{- $stats := site.Data.tools.stats | default dict -}}
+{{- $groups := $stats.dependency_tools_by_language | default (slice) -}}
 
-{{- $byLanguage := dict -}}
-{{- range $tool := $toolList -}}
-{{- $lang := $tool.language -}}
-{{- $list := index $byLanguage $lang | default (slice) -}}
-{{- $list = $list | append $tool -}}
-{{- $byLanguage = merge $byLanguage (dict $lang $list) -}}
-{{- end -}}
+{{- range $group := $groups }}
 
-{{- $languages := slice -}}
-{{- range $lang, $toolsForLang := $byLanguage -}}
-{{- $hasDeps := false -}}
-{{- range $tool := $toolsForLang -}}
-{{- if gt (len $tool.dependencies) 0 -}}
-{{- $hasDeps = true -}}
-{{- end -}}
-{{- end -}}
-{{- if $hasDeps -}}
-{{- $languages = $languages | append $lang -}}
-{{- end -}}
-{{- end -}}
-{{- $languages = sort $languages -}}
+### {{ title $group.language }}
 
-{{- range $lang := $languages -}}
-{{- $toolsForLang := index $byLanguage $lang -}}
-{{- $toolsForLang = sort $toolsForLang "title" }}
-
-### {{ title $lang }}
-
-{{- range $tool := $toolsForLang -}}
-{{- $deps := $tool.dependencies -}}
-{{- if gt (len $deps) 0 -}}
+{{- range $tool := $group.tools -}}
+{{- $deps := $tool.dependencies | default (slice) -}}
 {{- $page := site.GetPage (printf "/tools/%s" $tool.slug) -}}
 {{- $href := printf "%stools/%s/" site.BaseURL $tool.slug -}}
 {{- if $page -}}
@@ -69,7 +34,6 @@ This tool relies on {{ len $deps }} dependencies.
 {{- end -}}
 {{- end }}
 | {{ add $idx 1 }} | {{ $package }} | {{ $version }} | {{ if ne $via "-" }}[{{ $viaText }}]({{ $via }}){{ else }}-{{ end }} |
-{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
