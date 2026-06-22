@@ -285,6 +285,16 @@ def _split_front_matter(text: str) -> tuple[str, str]:
     return "", text
 
 
+def _has_unrecognized_changelog_body(*, text: str, history_link: str) -> bool:
+    _, body = _split_front_matter(text)
+    meaningful_lines = [
+        line.strip()
+        for line in body.splitlines()
+        if line.strip() and line.strip() != history_link
+    ]
+    return bool(meaningful_lines)
+
+
 def _update_changelog(
     *,
     repo_root: Path,
@@ -309,7 +319,10 @@ def _update_changelog(
         )
 
     top_hash = _extract_top_hash(existing_text)
-    if top_hash is None and existing_text.strip():
+    if top_hash is None and _has_unrecognized_changelog_body(
+        text=existing_text,
+        history_link=_render_history_link(repo_root=repo_root, tool_dir=tool_dir),
+    ):
         LOG.warning(
             "changelog missing heading hash; skipping",
             tool=str(tool_dir),
@@ -458,6 +471,26 @@ def test_render_history_link_uses_tool_file() -> None:
         assert link.endswith("content/tools/html/demo/custom.html)")
 
 
+def test_has_unrecognized_changelog_body_ignores_front_matter_and_history_link() -> (
+    None
+):
+    history_link = "[view history on github](https://example.com/history)"
+    text = "\n".join(
+        [
+            "---",
+            "title: Changelog - Demo",
+            "bookHidden: true",
+            "---",
+            "",
+            history_link,
+            "",
+        ]
+    )
+    assert (
+        _has_unrecognized_changelog_body(text=text, history_link=history_link) is False
+    )
+
+
 def _git(args: list[str], *, cwd: Path) -> None:
     subprocess.run(["git", *args], cwd=cwd, check=True, text=True)
 
@@ -567,6 +600,42 @@ def test_update_changelog_preserves_front_matter() -> None:
         )
         assert f"---\n## `{second_hash}`" in updated
         assert f"## `{first_hash}`" in updated
+
+
+def test_update_changelog_backfills_front_matter_only_file() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp)
+        _git(["init"], cwd=repo)
+        _git(["config", "user.email", "test@example.com"], cwd=repo)
+        _git(["config", "user.name", "Test User"], cwd=repo)
+
+        tool_dir = repo / "content" / "tools" / "html" / "demo"
+        tool_dir.mkdir(parents=True)
+        (tool_dir / "_index.md").write_text("---\ntitle: Demo\n---\n", encoding="utf-8")
+        (tool_dir / "tool.html").write_text("<html></html>", encoding="utf-8")
+        _git(["add", "."], cwd=repo)
+        _git(["commit", "-m", "Init tool"], cwd=repo)
+        first_hash = _run_git(["rev-parse", "--short", "HEAD"], cwd=repo)
+
+        changelog = tool_dir / "changelog.md"
+        changelog.write_text(
+            "---\ntitle: Changelog - Demo\nbookHidden: true\n---\n",
+            encoding="utf-8",
+        )
+
+        changed = _update_changelog(
+            repo_root=repo,
+            tool_dir=tool_dir,
+            changelog_path=changelog,
+            init=False,
+        )
+        assert changed is True
+        updated = changelog.read_text(encoding="utf-8")
+        assert updated.startswith(
+            "---\ntitle: Changelog - Demo\nbookHidden: true\n---\n"
+        )
+        assert f"## `{first_hash}`" in updated
+        assert HISTORY_LINK_TEXT in updated
 
 
 def test_init_creates_changelog() -> None:
