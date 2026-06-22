@@ -321,7 +321,7 @@ tools:
       description: "Turn dense Kustomize build errors into readable cause chains, path highlights, and conflict resource summaries."
       toolbox:
         file: "tool.html"
-        introduced_commit: "b85208e59a22fcceb635672b463355413e3b9112"
+        introduced_commit: "9e4e5bdfb3c1c0908af256a09ef0046dbad14f20"
         updated_commit: null
       tags:
         - "html"

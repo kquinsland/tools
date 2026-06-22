@@ -2,7 +2,7 @@
 title: Changelog - Kustomize Error Formatter
 bookHidden: true
 ---
-## `b85208e` - June 22, 2026 13:58
+## `9e4e5bd` - June 22, 2026 13:58
 
 - feat: add kustomize error formatter
 
