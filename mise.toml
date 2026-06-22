@@ -28,7 +28,7 @@ python = "3.14.6"
 hugo-extended = "0.163.3"
 
 "npm:markdownlint-cli2" = "0.22.1"
-prek = "0.3.13"
+prek = "0.4.5"
 ruff = "0.15.18"
 
 
