@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Kustomize Error Formatter icon</title>
+  <desc id="desc">Layered Kubernetes-style resource pages with an alert marker and formatted lines.</desc>
+  <rect width="128" height="128" rx="20" fill="#f4f7f5"/>
+  <path d="M31 22h52l18 18v65a9 9 0 0 1-9 9H31a9 9 0 0 1-9-9V31a9 9 0 0 1 9-9Z" fill="#ffffff" stroke="#254e58" stroke-width="6"/>
+  <path d="M83 23v18h18" fill="#d7ece8" stroke="#254e58" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M39 52h50M39 68h34M39 84h46" stroke="#6f7f76" stroke-width="7" stroke-linecap="round"/>
+  <path d="M29 99 51 61l22 38H29Z" fill="#d66543" stroke="#254e58" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M51 75v11" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="51" cy="94" r="3.5" fill="#ffffff"/>
+</svg>

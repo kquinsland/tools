@@ -13,6 +13,7 @@
 - [Hello, World](https://tools.karlquinsland.com/tools/html/hello-world/): This is the first tool description here.
 - [Helm Chart Discovery](https://tools.karlquinsland.com/tools/html/helm-chart-discovery/): Fetch a Helm repository index.yaml or OCI chart reference to explore chart metadata with search and filters.
 - [K9s Log Cleaner](https://tools.karlquinsland.com/tools/html/k9s-log-cleaner/): Clean up terminal-copied log lines by removing wrap artifacts and border pipes.
+- [Kustomize Error Formatter](https://tools.karlquinsland.com/tools/html/kustomize-error-formatter/): Turn dense Kustomize build errors into readable cause chains, path highlights, and conflict resource summaries.
 - [Makefile Dependency Graph](https://tools.karlquinsland.com/tools/html/makefile-dependency-graph/): Paste a Makefile and instantly view target dependencies as DOT and Mermaid state diagrams.
 - [QR Code Generator](https://tools.karlquinsland.com/tools/html/qr-code-generator/): Generate QR codes entirely in your browser, including calendar tasks and common share formats.
 - [Sync Conflict Triage](https://tools.karlquinsland.com/tools/html/syncthing-conflict-triage/): Scan a folder for SyncThing-style conflict files, compare side-by-side, edit in place, and stage deletions safely.

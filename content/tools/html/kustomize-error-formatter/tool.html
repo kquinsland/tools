@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kustomize Error Formatter</title>
+    <link rel="stylesheet" href="/common.css" />
+    <style>
+        :root {
+            --bg: #f6f7f4;
+            --panel: #ffffff;
+            --ink: #1f2729;
+            --muted: #5f6b6d;
+            --border: #d3dad4;
+            --accent: #1d6f73;
+            --accent-strong: #15565a;
+            --accent-soft: #e1f0ee;
+            --warn: #9c4a24;
+            --warn-soft: #fff1e8;
+            --chip: #edf3ee;
+            --code-bg: #f7faf7;
+            --button-bg: #eef3ef;
+            --shadow: 0 14px 32px rgba(27, 42, 44, 0.08);
+            --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                color-scheme: dark;
+                --bg: #262c31;
+                --panel: #333b40;
+                --ink: #e8edf0;
+                --muted: #bdc7c8;
+                --border: #566267;
+                --accent: #76c9c5;
+                --accent-strong: #9ddbd8;
+                --accent-soft: #28474a;
+                --warn: #f0b389;
+                --warn-soft: #3d302a;
+                --chip: #2c4544;
+                --code-bg: #293035;
+                --button-bg: #3c464b;
+                --shadow: 0 14px 32px rgba(0, 0, 0, 0.26);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            background: var(--bg);
+            color: var(--ink);
+            line-height: 1.5;
+        }
+
+        .tool-shell {
+            max-width: 1120px;
+            margin: 0 auto;
+            display: grid;
+            gap: 18px;
+        }
+
+        header,
+        .panel,
+        .cause-card,
+        .resource-card,
+        .notice {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        header,
+        .panel {
+            padding: 18px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        h1 {
+            font-size: clamp(1.6rem, 2.2vw, 2.2rem);
+        }
+
+        h2 {
+            font-size: 1.18rem;
+        }
+
+        h3 {
+            font-size: 1rem;
+        }
+
+        p {
+            margin: 0;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .stack {
+            display: grid;
+            gap: 12px;
+        }
+
+        .toolbar,
+        .section-title,
+        .resource-meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .section-title {
+            justify-content: space-between;
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 260px;
+            resize: vertical;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            background: var(--code-bg);
+            color: var(--ink);
+            font-family: var(--font-mono);
+            font-size: 0.92rem;
+            line-height: 1.45;
+        }
+
+        textarea:focus,
+        button:focus-visible,
+        .drop-zone:focus-visible {
+            outline: 3px solid var(--accent-soft);
+            border-color: var(--accent);
+        }
+
+        button {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            background: var(--button-bg);
+            color: var(--ink);
+            cursor: pointer;
+            font: inherit;
+            font-weight: 650;
+        }
+
+        button.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        button:disabled {
+            opacity: 0.48;
+            cursor: not-allowed;
+        }
+
+        .drop-zone {
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            background: var(--code-bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .drop-zone.dragging {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+
+        input[type="file"] {
+            max-width: 100%;
+        }
+
+        .notice {
+            padding: 12px 14px;
+            border-color: var(--warn);
+            background: var(--warn-soft);
+            color: var(--warn);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .metric {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: var(--code-bg);
+        }
+
+        .metric strong {
+            display: block;
+            font-size: 1.35rem;
+            color: var(--accent-strong);
+        }
+
+        .cause-list,
+        .resource-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .cause-card,
+        .resource-card {
+            padding: 14px;
+            display: grid;
+            gap: 10px;
+            box-shadow: none;
+        }
+
+        .cause-type,
+        .pill,
+        .path-chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 26px;
+            border-radius: 999px;
+            padding: 3px 9px;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .cause-type {
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+        }
+
+        .pill {
+            background: var(--button-bg);
+            color: var(--muted);
+        }
+
+        .path-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .path-chip {
+            background: var(--chip);
+            color: var(--ink);
+            font-family: var(--font-mono);
+            word-break: break-word;
+        }
+
+        .message,
+        pre {
+            margin: 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            background: var(--code-bg);
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .resource-title {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        dl {
+            display: grid;
+            grid-template-columns: minmax(120px, 180px) 1fr;
+            gap: 6px 12px;
+            margin: 0;
+        }
+
+        dt {
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        dd {
+            margin: 0;
+            word-break: break-word;
+        }
+
+        .history {
+            display: grid;
+            gap: 6px;
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .empty-state {
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            color: var(--muted);
+            background: var(--code-bg);
+        }
+
+        @media (max-width: 720px) {
+            body {
+                padding: 14px;
+            }
+
+            .toolbar button {
+                flex: 1 1 180px;
+            }
+
+            dl {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="tool-shell">
+        <header class="stack">
+            <h1>Kustomize Error Formatter</h1>
+            <p class="muted">Format dense <code>kustomize build</code> errors into a cause chain, path references, and Kubernetes resource conflicts. Everything runs locally in this page.</p>
+        </header>
+
+        <section class="panel stack" id="input-section">
+            <div>
+                <label for="error-input">Kustomize error text</label>
+                <textarea id="error-input" spellcheck="false" placeholder="Paste stderr or an Error: message here"></textarea>
+            </div>
+            <div class="drop-zone" id="drop-zone" tabindex="0">
+                <span class="muted">Drop a local text file here, or choose one.</span>
+                <input type="file" id="file-input" accept=".txt,.log,.err,.yaml,.yml,text/*" />
+            </div>
+            <div class="toolbar">
+                <button class="primary" id="format-button" type="button">Format</button>
+                <button id="copy-button" type="button" disabled>Copy formatted text</button>
+                <button id="download-button" type="button" disabled>Download .txt</button>
+                <button id="sample-button" type="button">Load sample</button>
+                <button id="clear-button" type="button">Clear</button>
+            </div>
+            <p class="muted" id="status-line">No input is stored in local storage or added to the URL.</p>
+        </section>
+
+        <section class="panel stack" id="summary-section" hidden>
+            <div class="section-title">
+                <h2>Summary</h2>
+                <span class="pill" id="conflict-pill">No conflict detected</span>
+            </div>
+            <div class="summary-grid" id="summary-grid"></div>
+        </section>
+
+        <section class="panel stack" id="causes-section" hidden>
+            <div class="section-title">
+                <h2>Cause chain</h2>
+                <span class="muted" id="cause-count"></span>
+            </div>
+            <div class="cause-list" id="cause-list"></div>
+        </section>
+
+        <section class="panel stack" id="resources-section" hidden>
+            <div class="section-title">
+                <h2>Conflict resources</h2>
+                <span class="muted" id="resource-count"></span>
+            </div>
+            <div class="resource-list" id="resource-list"></div>
+        </section>
+
+        <section class="panel stack" id="plain-section" hidden>
+            <div class="section-title">
+                <h2>Plain-text output</h2>
+                <span class="muted">Same content as the cards, ready for an issue or chat.</span>
+            </div>
+            <pre id="plain-output"></pre>
+        </section>
+    </main>
+
+    <script>
+        const inputEl = document.getElementById("error-input");
+        const formatButton = document.getElementById("format-button");
+        const copyButton = document.getElementById("copy-button");
+        const downloadButton = document.getElementById("download-button");
+        const sampleButton = document.getElementById("sample-button");
+        const clearButton = document.getElementById("clear-button");
+        const fileInput = document.getElementById("file-input");
+        const dropZone = document.getElementById("drop-zone");
+        const statusLine = document.getElementById("status-line");
+        const summarySection = document.getElementById("summary-section");
+        const summaryGrid = document.getElementById("summary-grid");
+        const conflictPill = document.getElementById("conflict-pill");
+        const causesSection = document.getElementById("causes-section");
+        const causeList = document.getElementById("cause-list");
+        const causeCount = document.getElementById("cause-count");
+        const resourcesSection = document.getElementById("resources-section");
+        const resourceList = document.getElementById("resource-list");
+        const resourceCount = document.getElementById("resource-count");
+        const plainSection = document.getElementById("plain-section");
+        const plainOutput = document.getElementById("plain-output");
+
+        const sampleText = `Error: accumulating resources: accumulation err='accumulating resources from '../base': recursed accumulation of path '../base': namespace transformation produces ID conflict: [{\"apiVersion\":\"v1\",\"kind\":\"Namespace\",\"metadata\":{\"annotations\":{\"config.kubernetes.io/origin\":\"path: namespaces/team-a.yaml\",\"internal.config.kubernetes.io/previousKinds\":\"Namespace\",\"internal.config.kubernetes.io/previousNames\":\"team-a\",\"internal.config.kubernetes.io/previousNamespaces\":\"_non_namespaceable_\",\"internal.config.kubernetes.io/transformations\":\"[{\\\"configuredIn\\\":\\\"kustomization.yaml\\\",\\\"configuredBy\\\":{\\\"apiVersion\\\":\\\"builtin\\\",\\\"kind\\\":\\\"NamespaceTransformer\\\"}}]\"},\"labels\":{\"app.kubernetes.io/part-of\":\"platform\"},\"name\":\"team-a\"}} {\"apiVersion\":\"v1\",\"kind\":\"Namespace\",\"metadata\":{\"annotations\":{\"config.kubernetes.io/origin\":\"path: overlays/dev/namespace.yaml\",\"internal.config.kubernetes.io/previousKinds\":\"Namespace\",\"internal.config.kubernetes.io/previousNames\":\"team-a-dev\",\"internal.config.kubernetes.io/previousNamespaces\":\"_non_namespaceable_\"},\"name\":\"team-a\"}}]`;
+        let lastPlainText = "";
+
+        function scanStateStep(state, char, previous) {
+            if (state.escape) {
+                state.escape = false;
+                return;
+            }
+            if (state.quote) {
+                if (char === "\\") {
+                    state.escape = true;
+                } else if (char === state.quote) {
+                    state.quote = "";
+                }
+                return;
+            }
+            if (char === "\"") {
+                state.quote = char;
+            } else if (char === "{" || char === "[") {
+                state.depth += 1;
+            } else if ((char === "}" || char === "]") && state.depth > 0) {
+                state.depth -= 1;
+            }
+            state.previous = previous;
+        }
+
+        function splitTopLevelMessage(text) {
+            const separators = [
+                ": accumulation err=",
+                ": recursed accumulation of path",
+                ": namespace transformation produces ID conflict",
+                ": evalsymlink failure on",
+                ": must build at directory",
+                ": no such file or directory",
+                ": may not add resource with an already registered id",
+            ];
+            const parts = [];
+            let start = 0;
+            const state = { quote: "", escape: false, depth: 0, previous: "" };
+            for (let i = 0; i < text.length; i += 1) {
+                if (!state.quote && state.depth === 0) {
+                    const matched = separators.find((separator) => text.startsWith(separator, i));
+                    if (matched) {
+                        const before = text.slice(start, i).trim();
+                        if (before) {
+                            parts.push(before);
+                        }
+                        start = i + 2;
+                        i = start - 1;
+                        continue;
+                    }
+                }
+                scanStateStep(state, text[i], text[i - 1] || "");
+            }
+            const rest = text.slice(start).trim();
+            if (rest) {
+                parts.push(rest);
+            }
+            return parts.map(cleanCauseText).filter(Boolean);
+        }
+
+        function cleanCauseText(text) {
+            const cleaned = text
+                .replace(/^Error:\s*/i, "")
+                .replace(/^accumulation err=['"]?/i, "")
+                .trim();
+            const wrapped = cleaned.match(/^(['"])(.*)\1$/s);
+            return wrapped ? wrapped[2].trim() : cleaned;
+        }
+
+        function classifyCause(text) {
+            const lower = text.toLowerCase();
+            if (lower.includes("namespace transformation produces id conflict")) {
+                return "Namespace ID conflict";
+            }
+            if (lower.includes("recursed accumulation of path")) {
+                return "Recursive accumulation";
+            }
+            if (lower.includes("accumulating resources")) {
+                return "Accumulating resources";
+            }
+            if (lower.includes("no such file or directory") || lower.includes("evalsymlink")) {
+                return "Path resolution";
+            }
+            if (lower.includes("already registered id")) {
+                return "Duplicate resource ID";
+            }
+            return "Cause";
+        }
+
+        function extractPaths(text) {
+            const paths = new Set();
+            const addPath = (value) => {
+                const cleaned = value.replace(/\\+$/g, "").replace(/[.']+$/g, "");
+                if (cleaned.length > 1) {
+                    paths.add(cleaned);
+                }
+            };
+            const quoted = text.matchAll(/['"]((?:\.{1,2}\/|\/)[^'"]+|[^'"]*(?:\.ya?ml|kustomization)[^'"]*)['"]/gi);
+            for (const match of quoted) {
+                addPath(match[1]);
+            }
+            const bare = text.matchAll(/(?:^|\s)((?:\.{1,2}\/|\/)[^\s:,;\])}]+)/g);
+            for (const match of bare) {
+                addPath(match[1]);
+            }
+            return Array.from(paths);
+        }
+
+        function extractArrayPayloads(text) {
+            const payloads = [];
+            for (let i = 0; i < text.length; i += 1) {
+                if (text[i] !== "[") {
+                    continue;
+                }
+                const state = { quote: "", escape: false, depth: 0, previous: "" };
+                for (let j = i; j < text.length; j += 1) {
+                    scanStateStep(state, text[j], text[j - 1] || "");
+                    if (!state.quote && state.depth === 0) {
+                        const candidate = text.slice(i, j + 1);
+                        if (candidate.includes("\"apiVersion\"") || candidate.includes("apiVersion:")) {
+                            payloads.push(candidate);
+                        }
+                        i = j;
+                        break;
+                    }
+                }
+            }
+            return payloads;
+        }
+
+        function summarizeCauseText(text) {
+            let summarized = text;
+            for (const payload of extractArrayPayloads(text)) {
+                summarized = summarized.replace(payload, "[embedded resource payload parsed below]");
+            }
+            return summarized;
+        }
+
+        function normalizeAdjacentObjects(payload) {
+            return payload.replace(/}\s+{/g, "},{");
+        }
+
+        function parseResourcePayload(payload) {
+            const normalized = normalizeAdjacentObjects(payload);
+            try {
+                const parsed = JSON.parse(normalized);
+                return Array.isArray(parsed) ? parsed.filter(isKubernetesResource) : [];
+            } catch (error) {
+                return extractObjectsFromPayload(payload);
+            }
+        }
+
+        function extractObjectsFromPayload(payload) {
+            const resources = [];
+            for (let i = 0; i < payload.length; i += 1) {
+                if (payload[i] !== "{") {
+                    continue;
+                }
+                const state = { quote: "", escape: false, depth: 0, previous: "" };
+                for (let j = i; j < payload.length; j += 1) {
+                    scanStateStep(state, payload[j], payload[j - 1] || "");
+                    if (!state.quote && state.depth === 0) {
+                        const candidate = payload.slice(i, j + 1);
+                        try {
+                            const parsed = JSON.parse(candidate);
+                            if (isKubernetesResource(parsed)) {
+                                resources.push(parsed);
+                            }
+                        } catch (error) {
+                            // Keep scanning; malformed fragments are shown in the raw fallback.
+                        }
+                        i = j;
+                        break;
+                    }
+                }
+            }
+            return resources;
+        }
+
+        function isKubernetesResource(value) {
+            return Boolean(value && typeof value === "object" && value.apiVersion && value.kind && value.metadata);
+        }
+
+        function parseTransformationHistory(value) {
+            if (!value || typeof value !== "string") {
+                return [];
+            }
+            try {
+                const parsed = JSON.parse(value);
+                if (!Array.isArray(parsed)) {
+                    return [value];
+                }
+                return parsed.map((entry) => {
+                    if (!entry || typeof entry !== "object") {
+                        return String(entry);
+                    }
+                    const by = entry.configuredBy || {};
+                    const parts = [];
+                    if (entry.configuredIn) {
+                        parts.push(`configured in ${entry.configuredIn}`);
+                    }
+                    if (by.kind) {
+                        parts.push(`by ${by.kind}${by.apiVersion ? ` (${by.apiVersion})` : ""}`);
+                    }
+                    return parts.join(" ") || JSON.stringify(entry);
+                });
+            } catch (error) {
+                return value.split(/,\s*(?=\{|\w)/).map((item) => item.trim()).filter(Boolean);
+            }
+        }
+
+        function parseError(rawInput) {
+            const raw = rawInput.trim();
+            if (!raw) {
+                return null;
+            }
+            const hasTopLevelError = /^Error:\s*/i.test(raw);
+            const looksKustomize = hasTopLevelError || /accumulat|kustomize|namespace transformation|already registered id|evalsymlink/i.test(raw);
+            if (!looksKustomize) {
+                return {
+                    raw,
+                    hasTopLevelError,
+                    conflictDetected: false,
+                    causes: [{ index: 1, type: "Raw input", text: raw, paths: extractPaths(raw) }],
+                    resources: [],
+                    rawFallbacks: [raw],
+                };
+            }
+            const causes = splitTopLevelMessage(raw).map((text, index) => ({
+                index: index + 1,
+                type: classifyCause(text),
+                text: summarizeCauseText(text),
+                paths: extractPaths(text),
+            }));
+            const payloads = extractArrayPayloads(raw);
+            const resources = payloads.flatMap(parseResourcePayload);
+            const conflictDetected = /ID conflict|already registered id|namespace transformation produces ID conflict/i.test(raw);
+            const rawFallbacks = [];
+            if (payloads.length && resources.length === 0) {
+                rawFallbacks.push(...payloads);
+            }
+            if (!causes.length) {
+                rawFallbacks.push(raw);
+            }
+            return {
+                raw,
+                hasTopLevelError,
+                conflictDetected,
+                causes: causes.length ? causes : [{ index: 1, type: "Raw input", text: raw, paths: extractPaths(raw) }],
+                resources,
+                rawFallbacks,
+            };
+        }
+
+        function annotation(resource, key) {
+            return resource.metadata?.annotations?.[key] || "";
+        }
+
+        function labelsText(resource) {
+            const labels = resource.metadata?.labels || {};
+            return Object.keys(labels).length
+                ? Object.entries(labels).map(([key, value]) => `${key}=${value}`).join(", ")
+                : "";
+        }
+
+        function resourceFields(resource) {
+            return [
+                ["apiVersion", resource.apiVersion],
+                ["kind", resource.kind],
+                ["metadata.name", resource.metadata?.name],
+                ["origin", annotation(resource, "config.kubernetes.io/origin")],
+                ["previous name", annotation(resource, "internal.config.kubernetes.io/previousNames")],
+                ["previous kind", annotation(resource, "internal.config.kubernetes.io/previousKinds")],
+                ["previous namespace", annotation(resource, "internal.config.kubernetes.io/previousNamespaces")],
+                ["labels", labelsText(resource)],
+            ].filter(([, value]) => value);
+        }
+
+        function render(parsed) {
+            if (!parsed) {
+                clearOutput();
+                statusLine.textContent = "Paste an error, drop a local file, or load the sample.";
+                return;
+            }
+            summarySection.hidden = false;
+            causesSection.hidden = false;
+            resourcesSection.hidden = parsed.resources.length === 0;
+            plainSection.hidden = false;
+
+            summaryGrid.replaceChildren(
+                metric("Top-level Error prefix", parsed.hasTopLevelError ? "Yes" : "No"),
+                metric("Cause sections", String(parsed.causes.length)),
+                metric("Conflict resources", String(parsed.resources.length)),
+                metric("Raw fallback blocks", String(parsed.rawFallbacks.length)),
+            );
+            conflictPill.textContent = parsed.conflictDetected ? "Conflict detected" : "No conflict detected";
+            conflictPill.style.background = parsed.conflictDetected ? "var(--warn-soft)" : "var(--button-bg)";
+            conflictPill.style.color = parsed.conflictDetected ? "var(--warn)" : "var(--muted)";
+
+            causeCount.textContent = `${parsed.causes.length} section${parsed.causes.length === 1 ? "" : "s"}`;
+            causeList.replaceChildren(...parsed.causes.map(renderCause));
+
+            resourceCount.textContent = `${parsed.resources.length} resource${parsed.resources.length === 1 ? "" : "s"}`;
+            resourceList.replaceChildren(...parsed.resources.map(renderResource));
+
+            if (parsed.rawFallbacks.length) {
+                const fallback = document.createElement("div");
+                fallback.className = "notice stack";
+                fallback.append(el("strong", {}, "Raw fallback"));
+                parsed.rawFallbacks.forEach((block) => fallback.append(el("pre", {}, block)));
+                causeList.append(fallback);
+            }
+
+            lastPlainText = buildPlainText(parsed);
+            plainOutput.textContent = lastPlainText;
+            copyButton.disabled = false;
+            downloadButton.disabled = false;
+            statusLine.textContent = "Formatted locally. Pasted content was not stored.";
+        }
+
+        function metric(label, value) {
+            const node = document.createElement("div");
+            node.className = "metric";
+            node.append(el("strong", {}, value), document.createTextNode(label));
+            return node;
+        }
+
+        function renderCause(cause) {
+            const card = document.createElement("article");
+            card.className = "cause-card";
+            const title = document.createElement("div");
+            title.className = "section-title";
+            title.append(el("h3", {}, `Cause ${cause.index}`), el("span", { className: "cause-type" }, cause.type));
+            card.append(title, el("pre", { className: "message" }, cause.text));
+            if (cause.paths.length) {
+                const row = document.createElement("div");
+                row.className = "path-row";
+                cause.paths.forEach((path) => row.append(el("span", { className: "path-chip" }, path)));
+                card.append(row);
+            }
+            return card;
+        }
+
+        function renderResource(resource, index) {
+            const card = document.createElement("article");
+            card.className = "resource-card";
+            const title = document.createElement("div");
+            title.className = "resource-title";
+            title.append(
+                el("h3", {}, `${resource.kind || "Resource"} / ${resource.metadata?.name || "(unnamed)"}`),
+                el("span", { className: "pill" }, `Resource ${index + 1}`),
+            );
+            const dl = document.createElement("dl");
+            for (const [key, value] of resourceFields(resource)) {
+                dl.append(el("dt", {}, key), el("dd", {}, value));
+            }
+            card.append(title, dl);
+            const history = parseTransformationHistory(annotation(resource, "internal.config.kubernetes.io/transformations"));
+            if (history.length) {
+                card.append(el("h3", {}, "Transformation history"));
+                const list = document.createElement("ol");
+                list.className = "history";
+                history.forEach((item) => list.append(el("li", {}, item)));
+                card.append(list);
+            }
+            return card;
+        }
+
+        function buildPlainText(parsed) {
+            const lines = [];
+            lines.push("Kustomize Error Summary");
+            lines.push("=======================");
+            lines.push(`Top-level Error prefix: ${parsed.hasTopLevelError ? "yes" : "no"}`);
+            lines.push(`Conflict detected: ${parsed.conflictDetected ? "yes" : "no"}`);
+            lines.push(`Cause sections: ${parsed.causes.length}`);
+            lines.push(`Conflict resources: ${parsed.resources.length}`);
+            lines.push("");
+            lines.push("Cause chain:");
+            parsed.causes.forEach((cause) => {
+                lines.push(`  ${cause.index}. ${cause.type}`);
+                lines.push(indent(cause.text, "     "));
+                if (cause.paths.length) {
+                    lines.push("     Paths:");
+                    cause.paths.forEach((path) => lines.push(`       - ${path}`));
+                }
+            });
+            if (parsed.resources.length) {
+                lines.push("");
+                lines.push("Conflict resources:");
+                parsed.resources.forEach((resource, index) => {
+                    lines.push(`  ${index + 1}. ${resource.kind || "Resource"} / ${resource.metadata?.name || "(unnamed)"}`);
+                    resourceFields(resource).forEach(([key, value]) => lines.push(`     ${key}: ${value}`));
+                    const history = parseTransformationHistory(annotation(resource, "internal.config.kubernetes.io/transformations"));
+                    if (history.length) {
+                        lines.push("     transformation history:");
+                        history.forEach((item) => lines.push(`       - ${item}`));
+                    }
+                });
+            }
+            if (parsed.rawFallbacks.length) {
+                lines.push("");
+                lines.push("Raw fallback:");
+                parsed.rawFallbacks.forEach((block) => lines.push(indent(block, "  ")));
+            }
+            return lines.join("\n");
+        }
+
+        function indent(text, prefix) {
+            return text.split("\n").map((line) => `${prefix}${line}`).join("\n");
+        }
+
+        function el(tag, attrs, text) {
+            const node = document.createElement(tag);
+            Object.entries(attrs || {}).forEach(([key, value]) => {
+                if (key === "className") {
+                    node.className = value;
+                } else {
+                    node.setAttribute(key, value);
+                }
+            });
+            if (text !== undefined) {
+                node.textContent = text;
+            }
+            return node;
+        }
+
+        function clearOutput() {
+            summarySection.hidden = true;
+            causesSection.hidden = true;
+            resourcesSection.hidden = true;
+            plainSection.hidden = true;
+            summaryGrid.replaceChildren();
+            causeList.replaceChildren();
+            resourceList.replaceChildren();
+            plainOutput.textContent = "";
+            lastPlainText = "";
+            copyButton.disabled = true;
+            downloadButton.disabled = true;
+        }
+
+        async function readFile(file) {
+            if (!file) {
+                return;
+            }
+            inputEl.value = await file.text();
+            statusLine.textContent = `Loaded local file: ${file.name}`;
+            render(parseError(inputEl.value));
+        }
+
+        formatButton.addEventListener("click", () => render(parseError(inputEl.value)));
+        inputEl.addEventListener("keydown", (event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                render(parseError(inputEl.value));
+            }
+        });
+        sampleButton.addEventListener("click", () => {
+            inputEl.value = sampleText;
+            render(parseError(inputEl.value));
+        });
+        clearButton.addEventListener("click", () => {
+            inputEl.value = "";
+            fileInput.value = "";
+            clearOutput();
+            statusLine.textContent = "Cleared.";
+            inputEl.focus();
+        });
+        copyButton.addEventListener("click", async () => {
+            await navigator.clipboard.writeText(lastPlainText);
+            statusLine.textContent = "Formatted text copied.";
+        });
+        downloadButton.addEventListener("click", () => {
+            const blob = new Blob([lastPlainText], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "kustomize-error-formatted.txt";
+            link.click();
+            URL.revokeObjectURL(url);
+            statusLine.textContent = "Downloaded formatted text.";
+        });
+        fileInput.addEventListener("change", () => readFile(fileInput.files[0]));
+
+        ["dragenter", "dragover"].forEach((eventName) => {
+            dropZone.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                dropZone.classList.add("dragging");
+            });
+        });
+        ["dragleave", "drop"].forEach((eventName) => {
+            dropZone.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                dropZone.classList.remove("dragging");
+            });
+        });
+        dropZone.addEventListener("drop", (event) => readFile(event.dataTransfer.files[0]));
+    </script>
+    <script src="/analytics.js"></script>
+</body>
+
+</html>

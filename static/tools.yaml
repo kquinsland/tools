@@ -1,12 +1,12 @@
 ---
 version: 2
 stats:
-  total_tools: 20
+  total_tools: 21
   tools_with_dependencies: 10
-  tools_without_dependencies: 10
+  tools_without_dependencies: 11
   languages:
     - language: "html"
-      count: 17
+      count: 18
     - language: "python"
       count: 3
   dependency_hosts:
@@ -315,6 +315,21 @@ tools:
         - "cleanup"
         - "text"
         - "terminal"
+  - html/kustomize-error-formatter:
+      title: "Kustomize Error Formatter"
+      language: "html"
+      description: "Turn dense Kustomize build errors into readable cause chains, path highlights, and conflict resource summaries."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "b85208e59a22fcceb635672b463355413e3b9112"
+        updated_commit: null
+      tags:
+        - "html"
+        - "kustomize"
+        - "kubernetes"
+        - "errors"
+        - "debugging"
+        - "text"
   - html/makefile-dependency-graph:
       title: "Makefile Dependency Graph"
       language: "html"
