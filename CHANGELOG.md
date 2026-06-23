@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/kquinsland/tools/compare/tools-site-v0.6.0...tools-site-v0.7.0) (2026-06-23)
+
+
+### Features
+
+* add kustomize error formatter ([9e4e5bd](https://github.com/kquinsland/tools/commit/9e4e5bdfb3c1c0908af256a09ef0046dbad14f20))
+
 ## [0.6.0](https://github.com/kquinsland/tools/compare/tools-site-v0.5.1...tools-site-v0.6.0) (2026-06-22)
 
 
