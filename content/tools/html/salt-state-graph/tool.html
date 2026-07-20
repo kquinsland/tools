@@ -189,6 +189,7 @@
             }
 
             .panel {
+                min-width: 0;
                 border: 1px solid var(--border);
                 border-radius: var(--radius);
                 padding: clamp(16px, 2vw, 24px);
@@ -433,6 +434,9 @@
 
             .graph-viewport {
                 position: relative;
+                width: 100%;
+                min-width: 0;
+                max-width: 100%;
                 min-height: 440px;
                 max-height: 72vh;
                 overflow: auto;
