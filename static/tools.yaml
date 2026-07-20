@@ -1,12 +1,12 @@
 ---
 version: 2
 stats:
-  total_tools: 21
+  total_tools: 22
   tools_with_dependencies: 10
-  tools_without_dependencies: 11
+  tools_without_dependencies: 12
   languages:
     - language: "html"
-      count: 18
+      count: 19
     - language: "python"
       count: 3
   dependency_hosts:
@@ -369,6 +369,21 @@ tools:
         - "qrcode"
         - "calendar"
         - "offline"
+  - html/salt-state-graph:
+      title: "Salt State Graph"
+      language: "html"
+      description: "Paste or open Salt highstate JSON and explore its requisite graph entirely in your browser."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "dc0982f95e007aa8398feb58cd39111b347ad315"
+        updated_commit: null
+      tags:
+        - "html"
+        - "salt"
+        - "highstate"
+        - "graph"
+        - "dependencies"
+        - "json"
   - html/syncthing-conflict-triage:
       title: "Sync Conflict Triage"
       language: "html"
