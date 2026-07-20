@@ -376,7 +376,7 @@ tools:
       toolbox:
         file: "tool.html"
         introduced_commit: "dc0982f95e007aa8398feb58cd39111b347ad315"
-        updated_commit: null
+        updated_commit: "5173956a546e7127419aaf219214b8f00f4e2bfa"
       tags:
         - "html"
         - "salt"
