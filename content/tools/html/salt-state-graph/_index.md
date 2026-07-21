@@ -23,8 +23,9 @@ tags:
 {{< tool-image >}}
 
 Paste, select, or drop JSON from Salt's `state.show_highstate` or
-`state.show_sls` output to build an interactive requisite graph. Input stays in
-your browser and is never uploaded or saved.
+`state.show_sls` output to build an interactive requisite graph. Smaller inputs
+and their active filters are mirrored into the URL fragment so the graph can be
+shared or bookmarked.
 
 {{< tool-link link_text="Open the tool" >}}
 
@@ -33,7 +34,8 @@ your browser and is never uploaded or saved.
 - Supports typed, module-less, SLS, glob, and `_in` requisites.
 - Handles `__extend__` declarations and output containing multiple minions.
 - Fuzzy-searches states and filters by minion, connection status, or requisite family.
-- Loads smaller inputs directly from a local-only `#state=<base64>` URL fragment.
+- Automatically saves smaller valid inputs and active filters in a shareable URL fragment.
+- Opens the source state JSON, including matching `__extend__` blocks, when a node is selected.
 - Downloads the visible graph as SVG, PNG, WebP, DOT, or normalized JSON.
 - Uses browser-native JavaScript and SVG with no external dependencies.
 

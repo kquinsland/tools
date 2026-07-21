@@ -167,27 +167,6 @@
                 line-height: 1.55;
             }
 
-            .privacy-badge {
-                flex: 0 0 auto;
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                border: 1px solid color-mix(in srgb, var(--success) 34%, var(--border));
-                border-radius: 999px;
-                padding: 8px 12px;
-                color: var(--success);
-                background: var(--success-soft);
-                font-size: 0.86rem;
-                font-weight: 700;
-            }
-
-            .privacy-dot {
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                background: currentColor;
-            }
-
             .panel {
                 min-width: 0;
                 border: 1px solid var(--border);
@@ -218,6 +197,28 @@
                 margin-top: 4px;
                 color: var(--muted);
                 font-size: 0.92rem;
+            }
+
+            .command-example {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 6px 8px;
+            }
+
+            .command-example code {
+                border-radius: 6px;
+                padding: 4px 7px;
+                color: var(--ink);
+                background: var(--surface-muted);
+                font-family: var(--mono);
+                font-size: 0.8rem;
+            }
+
+            .command-example button {
+                min-height: 30px;
+                padding: 4px 9px;
+                font-size: 0.78rem;
             }
 
             .input-layout {
@@ -354,7 +355,7 @@
                 display: grid;
                 grid-template-columns: minmax(220px, 1.2fr) repeat(2, minmax(170px, 0.6fr));
                 gap: 10px;
-                align-items: end;
+                align-items: start;
                 margin-bottom: 14px;
             }
 
@@ -464,6 +465,24 @@
                 flex: none;
             }
 
+            .graph-host g[data-node-id] {
+                cursor: pointer;
+            }
+
+            .graph-host g[data-node-id] rect {
+                transition: filter 120ms ease, stroke-width 120ms ease;
+            }
+
+            .graph-host g[data-node-id]:hover rect,
+            .graph-host g[data-node-id]:focus rect {
+                stroke-width: 3;
+                filter: drop-shadow(0 2px 3px rgba(15, 23, 42, 0.2));
+            }
+
+            .graph-host g[data-node-id]:focus {
+                outline: none;
+            }
+
             .empty-graph {
                 width: 100%;
                 min-height: 438px;
@@ -546,6 +565,73 @@
                 font-size: 0.78rem;
             }
 
+            .node-dialog {
+                width: min(760px, calc(100% - 24px));
+                max-height: min(82vh, 820px);
+                border: 1px solid var(--border-strong);
+                border-radius: var(--radius);
+                padding: 0;
+                color: var(--ink);
+                background: var(--surface);
+                box-shadow: var(--shadow);
+            }
+
+            .node-dialog::backdrop {
+                background: rgba(15, 23, 42, 0.58);
+                backdrop-filter: blur(2px);
+            }
+
+            .node-dialog-header,
+            .node-dialog-actions {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+
+            .node-dialog-header {
+                border-bottom: 1px solid var(--border);
+                padding: 16px 18px;
+            }
+
+            .node-dialog-header h2,
+            .node-dialog-summary {
+                margin: 0;
+            }
+
+            .node-dialog-header h2 {
+                overflow-wrap: anywhere;
+                font-size: 1.08rem;
+            }
+
+            .node-dialog-body {
+                padding: 16px 18px 18px;
+            }
+
+            .node-dialog-summary {
+                color: var(--muted);
+                font-size: 0.84rem;
+            }
+
+            .node-dialog-actions {
+                margin-bottom: 10px;
+            }
+
+            .node-dialog pre {
+                max-height: min(58vh, 590px);
+                margin: 0;
+                border: 1px solid var(--border);
+                border-radius: var(--radius-small);
+                padding: 14px;
+                overflow: auto;
+                color: var(--ink);
+                background: var(--surface-muted);
+                font-family: var(--mono);
+                font-size: 0.8rem;
+                line-height: 1.5;
+                white-space: pre;
+            }
+
             @media (max-width: 900px) {
                 .input-layout,
                 .controls {
@@ -600,17 +686,17 @@
                         base64 URL fragment to begin.
                     </p>
                 </div>
-                <div class="privacy-badge" title="No input leaves this browser tab">
-                    <span class="privacy-dot" aria-hidden="true"></span>
-                    Local-only processing
-                </div>
             </header>
 
             <section class="panel" id="ssg-input" aria-labelledby="input-heading">
                 <div class="panel-heading">
                     <div>
                         <h2 id="input-heading">Salt JSON input</h2>
-                        <p>Pasted and uploaded input is kept only in memory and never sent to a server.</p>
+                        <p class="command-example">
+                            <span>Generate input:</span>
+                            <code id="salt-command">salt '*' state.show_highstate --out=json &gt; my-output.json</code>
+                            <button type="button" id="copy-command">Copy command</button>
+                        </p>
                     </div>
                 </div>
                 <div class="input-layout">
@@ -640,11 +726,12 @@
                     </div>
                 </div>
                 <details class="url-help">
-                    <summary>Load JSON from a URL fragment</summary>
+                    <summary>Share or load JSON with the URL fragment</summary>
                     <p>
-                        Add UTF-8 JSON encoded as base64 after <code>#state=</code>. URL fragments are
-                        processed locally and are not sent with the page request. This works best for
-                        smaller outputs because browser and shell URL-length limits vary.
+                        After a successful render, compact JSON is automatically encoded into
+                        <code>#state=</code> with the active filters when the fragment is at most 64 KiB.
+                        Copy the updated address to share the same graph view. You can also construct a
+                        URL from the command line:
                     </p>
                     <code>open "https://tools.karlquinsland.com/tools/html/salt-state-graph/tool.html#state=$(base64 &lt; my-output.json | tr -d '\n')"</code>
                 </details>
@@ -739,11 +826,30 @@
                     <ul class="diagnostic-list" id="diagnostic-list"></ul>
                 </details>
                 <p class="privacy-note">
-                    Pasted and uploaded data is not stored. Data supplied in <code>#state=</code>
-                    remains in the address bar until you clear the tool or navigate away.
+                    Generated URLs contain decodable Salt data. Larger inputs are not added to the
+                    address. Clear the tool to remove <code>#state=</code>.
                 </p>
             </section>
         </main>
+
+        <dialog
+            class="node-dialog"
+            id="node-dialog"
+            aria-labelledby="node-dialog-title"
+            aria-describedby="node-dialog-summary"
+        >
+            <div class="node-dialog-header">
+                <h2 id="node-dialog-title">State JSON</h2>
+                <button type="button" id="close-node-dialog" aria-label="Close state JSON">Close</button>
+            </div>
+            <div class="node-dialog-body">
+                <div class="node-dialog-actions">
+                    <p class="node-dialog-summary" id="node-dialog-summary"></p>
+                    <button type="button" id="copy-node-json">Copy JSON</button>
+                </div>
+                <pre id="node-dialog-json" tabindex="0"></pre>
+            </div>
+        </dialog>
 
         <script>
             (() => {
@@ -751,8 +857,10 @@
 
                 const SVG_NS = "http://www.w3.org/2000/svg";
                 const MAX_FILE_BYTES = 25 * 1024 * 1024;
+                const MAX_URL_FRAGMENT_CHARACTERS = 64 * 1024;
                 const MAX_RASTER_PIXELS = 64_000_000;
                 const MAX_RASTER_DIMENSION = 12_000;
+                const URL_PAYLOAD_TOOL = "salt-state-graph";
 
                 const RULES = Object.freeze({
                     require: { color: "blue", inverse: false },
@@ -800,6 +908,8 @@
 
                 const elements = {
                     input: document.getElementById("json-input"),
+                    saltCommand: document.getElementById("salt-command"),
+                    copyCommand: document.getElementById("copy-command"),
                     fileInput: document.getElementById("file-input"),
                     dropZone: document.getElementById("drop-zone"),
                     renderButton: document.getElementById("render-button"),
@@ -825,6 +935,12 @@
                     metricNodes: document.getElementById("metric-nodes"),
                     metricEdges: document.getElementById("metric-edges"),
                     metricDiagnostics: document.getElementById("metric-diagnostics"),
+                    nodeDialog: document.getElementById("node-dialog"),
+                    nodeDialogTitle: document.getElementById("node-dialog-title"),
+                    nodeDialogSummary: document.getElementById("node-dialog-summary"),
+                    nodeDialogJson: document.getElementById("node-dialog-json"),
+                    closeNodeDialog: document.getElementById("close-node-dialog"),
+                    copyNodeJson: document.getElementById("copy-node-json"),
                 };
 
                 const state = {
@@ -835,6 +951,8 @@
                     zoom: 1,
                     sourceName: "salt-state-graph",
                     searchTimer: null,
+                    inputData: null,
+                    selectedNodeJson: "",
                 };
 
                 function isObject(value) {
@@ -1534,7 +1652,12 @@
                         const box = layout.boxes.get(node.id);
                         if (!box) continue;
                         const searchMatch = graph.matchIds?.has(node.id) ?? false;
-                        const group = svgElement("g", { "data-node-id": node.id });
+                        const group = svgElement("g", {
+                            "data-node-id": node.id,
+                            role: "button",
+                            tabindex: 0,
+                            "aria-label": `Show source JSON for ${node.label}`,
+                        });
                         const details = [node.label, `minion: ${node.minion}`];
                         if (node.name) details.push(`name: ${node.name}`);
                         if (node.sls) details.push(`sls: ${node.sls}`);
@@ -1652,6 +1775,20 @@
                     };
                 }
 
+                function applyFilterOptions(filters) {
+                    const candidate = isObject(filters) ? filters : {};
+                    elements.searchInput.value = typeof candidate.search === "string" ? candidate.search : "";
+                    elements.minionFilter.value = state.graph?.minions.includes(candidate.minion)
+                        ? candidate.minion
+                        : "";
+                    const requestedView = typeof candidate.view === "string" ? candidate.view : "all";
+                    elements.graphView.value = Array.from(elements.graphView.options).some(
+                        (option) => option.value === requestedView,
+                    )
+                        ? requestedView
+                        : "all";
+                }
+
                 function updateMetrics(graph, visibleGraph) {
                     elements.metricMinions.textContent = String(graph.minions.length);
                     elements.metricNodes.textContent = String(visibleGraph.nodes.length);
@@ -1716,16 +1853,22 @@
                     requestAnimationFrame(fitGraph);
                 }
 
-                function resetFilters() {
-                    elements.searchInput.value = "";
-                    elements.minionFilter.value = "";
-                    elements.graphView.value = "all";
+                function renderAndSyncUrlState() {
                     renderFilteredGraph();
+                    if (state.inputData) syncCurrentUrlState();
                 }
 
-                function parseAndRender() {
+                function resetFilters(options = {}) {
+                    applyFilterOptions(null);
+                    renderFilteredGraph();
+                    if (options.updateUrl !== false && state.inputData) syncCurrentUrlState();
+                }
+
+                function parseAndRender(options = {}) {
+                    const updateUrl = options.updateUrl !== false;
                     const text = elements.input.value.trim();
                     if (!text) {
+                        if (updateUrl) clearUrlState();
                         setInputStatus("Paste or choose a JSON file first.", "warning");
                         return;
                     }
@@ -1733,21 +1876,34 @@
                         const decoded = JSON.parse(text);
                         const graph = buildGraph(decoded);
                         state.graph = graph;
+                        state.inputData = decoded;
                         elements.results.hidden = false;
                         populateMinions(graph.minions);
                         renderDiagnostics(graph);
-                        resetFilters();
+                        applyFilterOptions(options.filters);
+                        renderFilteredGraph();
+                        const urlState = updateUrl ? syncCurrentUrlState() : "loaded";
                         const externalCount = graph.nodes.filter((node) => node.external).length;
                         const suffix = externalCount > 0 ? `, including ${externalCount} unresolved targets` : "";
+                        const urlMessages = {
+                            updated: " Shareable URL updated.",
+                            loaded: " Loaded from the URL fragment.",
+                            "too-large": " The encoded input exceeds 64 KiB, so it was not added to the URL.",
+                            unavailable: " The browser would not allow the URL fragment to be updated.",
+                        };
                         setInputStatus(
-                            `Parsed ${graph.minions.length} minion(s), ${graph.nodes.length} nodes, and ${graph.edges.length} edges${suffix}.`,
-                            externalCount > 0 ? "warning" : "success",
+                            `Parsed ${graph.minions.length} minion(s), ${graph.nodes.length} nodes, and ${graph.edges.length} edges${suffix}.${urlMessages[urlState]}`,
+                            externalCount > 0 || ["too-large", "unavailable"].includes(urlState)
+                                ? "warning"
+                                : "success",
                         );
                     } catch (error) {
+                        if (updateUrl) clearUrlState();
                         state.graph = null;
                         state.visibleGraph = null;
                         state.layout = null;
                         state.svg = null;
+                        state.inputData = null;
                         elements.results.hidden = true;
                         const message = error instanceof Error ? error.message : String(error);
                         setInputStatus(`Could not render this input: ${message}`, "error");
@@ -1793,6 +1949,74 @@
                     return null;
                 }
 
+                function clearUrlState() {
+                    if (!window.location.hash) return true;
+                    try {
+                        history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+                        return true;
+                    } catch {
+                        return false;
+                    }
+                }
+
+                function encodeBase64UrlUtf8(value) {
+                    const bytes = new TextEncoder().encode(value);
+                    let binary = "";
+                    const chunkSize = 0x8000;
+                    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+                        binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+                    }
+                    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+                }
+
+                function syncUrlState(value) {
+                    const fragment = `state=${encodeBase64UrlUtf8(value)}`;
+                    if (fragment.length > MAX_URL_FRAGMENT_CHARACTERS) {
+                        return clearUrlState() ? "too-large" : "unavailable";
+                    }
+                    try {
+                        history.replaceState(
+                            null,
+                            "",
+                            `${window.location.pathname}${window.location.search}#${fragment}`,
+                        );
+                        return "updated";
+                    } catch {
+                        return "unavailable";
+                    }
+                }
+
+                function makeUrlPayload() {
+                    return {
+                        tool: URL_PAYLOAD_TOOL,
+                        version: 1,
+                        highstate: state.inputData,
+                        filters: currentFilterOptions(),
+                    };
+                }
+
+                function syncCurrentUrlState() {
+                    if (!state.inputData) return "unavailable";
+                    return syncUrlState(JSON.stringify(makeUrlPayload()));
+                }
+
+                function unpackUrlPayload(value) {
+                    if (!isObject(value) || value.tool !== URL_PAYLOAD_TOOL) {
+                        return { highstate: value, filters: null, wrapped: false };
+                    }
+                    if (value.version !== 1) {
+                        throw new GraphInputError(`Unsupported Salt State Graph URL version: ${value.version}.`);
+                    }
+                    if (!isObject(value.highstate)) {
+                        throw new GraphInputError("The Salt State Graph URL does not contain highstate data.");
+                    }
+                    return {
+                        highstate: value.highstate,
+                        filters: isObject(value.filters) ? value.filters : null,
+                        wrapped: true,
+                    };
+                }
+
                 function decodeBase64Utf8(encoded) {
                     const compact = encoded.replace(/\s+/g, "").replace(/-/g, "+").replace(/_/g, "/");
                     if (!compact) throw new GraphInputError("The #state URL value is empty.");
@@ -1824,9 +2048,13 @@
                     try {
                         encoded = hashParameter("state");
                         if (encoded === null) return;
-                        elements.input.value = decodeBase64Utf8(encoded);
+                        const decodedText = decodeBase64Utf8(encoded);
+                        const payload = unpackUrlPayload(JSON.parse(decodedText));
+                        elements.input.value = payload.wrapped
+                            ? JSON.stringify(payload.highstate, null, 2)
+                            : decodedText;
                         state.sourceName = "salt-state-graph-url";
-                        parseAndRender();
+                        parseAndRender({ updateUrl: false, filters: payload.filters });
                     } catch (error) {
                         const message = error instanceof Error ? error.message : String(error);
                         setInputStatus(`Could not load URL state: ${message}`, "error");
@@ -1841,11 +2069,15 @@
                     state.visibleGraph = null;
                     state.layout = null;
                     state.svg = null;
+                    state.inputData = null;
                     state.sourceName = "salt-state-graph";
-                    if (window.location.hash) {
-                        history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
-                    }
-                    setInputStatus("Input cleared. No Salt data was stored.", "success");
+                    const urlCleared = clearUrlState();
+                    setInputStatus(
+                        urlCleared
+                            ? "Input and URL state cleared."
+                            : "Input cleared, but the browser would not remove the URL fragment.",
+                        urlCleared ? "success" : "warning",
+                    );
                     elements.input.focus();
                 }
 
@@ -1988,8 +2220,100 @@
                     }
                 }
 
+                async function copyText(value) {
+                    if (navigator.clipboard && window.isSecureContext) {
+                        try {
+                            await navigator.clipboard.writeText(value);
+                            return true;
+                        } catch {
+                            // Fall through to the selection-based browser fallback.
+                        }
+                    }
+                    const helper = document.createElement("textarea");
+                    helper.value = value;
+                    helper.setAttribute("readonly", "");
+                    helper.style.position = "fixed";
+                    helper.style.opacity = "0";
+                    document.body.appendChild(helper);
+                    helper.select();
+                    let copied = false;
+                    try {
+                        copied = document.execCommand("copy");
+                    } finally {
+                        helper.remove();
+                    }
+                    return copied;
+                }
+
+                async function copyWithFeedback(button, value, defaultLabel) {
+                    const copied = await copyText(value);
+                    button.textContent = copied ? "Copied" : "Copy failed";
+                    setTimeout(() => {
+                        button.textContent = defaultLabel;
+                    }, 1400);
+                }
+
+                function extensionBlocksForState(minionData, stateId) {
+                    const rawExtend = minionData?.__extend__ ?? [];
+                    const extensions = isObject(rawExtend) ? [rawExtend] : rawExtend;
+                    if (!Array.isArray(extensions)) return [];
+                    return extensions
+                        .filter((extension) => isObject(extension) && Object.hasOwn(extension, stateId))
+                        .map((extension) => extension[stateId]);
+                }
+
+                function sourceDocumentForNode(node) {
+                    if (node.external) {
+                        return {
+                            minion: node.minion,
+                            state_id: node.stateId,
+                            state_type: node.stateType,
+                            unresolved: true,
+                            note: "This node represents a requisite target that was not present in the input JSON.",
+                        };
+                    }
+                    const minionData = state.inputData?.[node.minion];
+                    const document = {
+                        minion: node.minion,
+                        state_id: node.stateId,
+                        state_type: node.stateType,
+                    };
+                    if (isObject(minionData) && Object.hasOwn(minionData, node.stateId)) {
+                        document.state = minionData[node.stateId];
+                    }
+                    const extensions = extensionBlocksForState(minionData, node.stateId);
+                    if (extensions.length > 0) document.__extend__ = extensions;
+                    return document;
+                }
+
+                function showNodeSource(nodeId) {
+                    const node = state.graph?.nodes.find((candidate) => candidate.id === nodeId);
+                    if (!node) return;
+                    state.selectedNodeJson = JSON.stringify(sourceDocumentForNode(node), null, 2);
+                    elements.nodeDialogTitle.textContent = node.label;
+                    elements.nodeDialogSummary.textContent = node.external
+                        ? `${node.minion} · unresolved requisite target`
+                        : `${node.minion} · ${node.stateType} state source`;
+                    elements.nodeDialogJson.textContent = state.selectedNodeJson;
+                    elements.copyNodeJson.textContent = "Copy JSON";
+                    elements.nodeDialog.showModal();
+                }
+
+                function nodeGroupFromEvent(event) {
+                    if (!(event.target instanceof Element)) return null;
+                    const group = event.target.closest("g[data-node-id]");
+                    return group && elements.graphHost.contains(group) ? group : null;
+                }
+
                 elements.renderButton.addEventListener("click", parseAndRender);
                 elements.clearButton.addEventListener("click", clearTool);
+                elements.copyCommand.addEventListener("click", () =>
+                    copyWithFeedback(
+                        elements.copyCommand,
+                        elements.saltCommand.textContent,
+                        "Copy command",
+                    ),
+                );
                 elements.fileInput.addEventListener("change", (event) => loadFile(event.target.files[0]));
                 elements.input.addEventListener("keydown", (event) => {
                     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
@@ -1998,7 +2322,14 @@
                     }
                 });
                 elements.input.addEventListener("input", () => {
-                    if (state.graph) setInputStatus("Input changed. Render again to update the graph.", "warning");
+                    if (!state.graph) return;
+                    const urlCleared = clearUrlState();
+                    setInputStatus(
+                        urlCleared
+                            ? "Input changed. Render again to update the graph and shareable URL."
+                            : "Input changed, but the browser would not remove the stale URL fragment.",
+                        "warning",
+                    );
                 });
 
                 for (const eventName of ["dragenter", "dragover"]) {
@@ -2022,13 +2353,25 @@
                     }
                 });
 
-                elements.minionFilter.addEventListener("change", renderFilteredGraph);
-                elements.graphView.addEventListener("change", renderFilteredGraph);
+                elements.minionFilter.addEventListener("change", renderAndSyncUrlState);
+                elements.graphView.addEventListener("change", renderAndSyncUrlState);
                 elements.searchInput.addEventListener("input", () => {
                     clearTimeout(state.searchTimer);
-                    state.searchTimer = setTimeout(renderFilteredGraph, 120);
+                    state.searchTimer = setTimeout(renderAndSyncUrlState, 120);
                 });
                 elements.resetFilters.addEventListener("click", resetFilters);
+
+                elements.closeNodeDialog.addEventListener("click", () => elements.nodeDialog.close());
+                elements.copyNodeJson.addEventListener("click", () =>
+                    copyWithFeedback(elements.copyNodeJson, state.selectedNodeJson, "Copy JSON"),
+                );
+                elements.graphHost.addEventListener("keydown", (event) => {
+                    if (event.key !== "Enter" && event.key !== " ") return;
+                    const group = nodeGroupFromEvent(event);
+                    if (!group) return;
+                    event.preventDefault();
+                    showNodeSource(group.dataset.nodeId);
+                });
 
                 elements.zoomIn.addEventListener("click", () => applyZoom(state.zoom * 1.2));
                 elements.zoomOut.addEventListener("click", () => applyZoom(state.zoom / 1.2));
@@ -2039,7 +2382,7 @@
 
                 let dragState = null;
                 elements.graphViewport.addEventListener("pointerdown", (event) => {
-                    if (event.button !== 0 || !state.svg) return;
+                    if (event.button !== 0 || !state.svg || nodeGroupFromEvent(event)) return;
                     dragState = {
                         x: event.clientX,
                         y: event.clientY,
@@ -2060,13 +2403,19 @@
                 }
                 elements.graphViewport.addEventListener("pointerup", finishDrag);
                 elements.graphViewport.addEventListener("pointercancel", finishDrag);
+                elements.graphHost.addEventListener("click", (event) => {
+                    const group = nodeGroupFromEvent(event);
+                    if (group) showNodeSource(group.dataset.nodeId);
+                });
 
                 window.saltStateGraphTool = Object.freeze({
                     buildGraph,
                     filterGraph,
                     buildDot,
                     makeLayout,
+                    encodeBase64UrlUtf8,
                     decodeBase64Utf8,
+                    unpackUrlPayload,
                 });
                 setExportButtons();
                 loadUrlState();
