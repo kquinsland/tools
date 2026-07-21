@@ -33,7 +33,7 @@ ruff = "0.15.19"
 
 
 # Let uv manage project environments and dependencies while mise pins the CLI.
-uv = "0.11.23"
+uv = "0.11.30"
 
 # For simulating/running some of the GH/A actions locally.
 act = "0.2.89"
