@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.8.0](https://github.com/kquinsland/tools/compare/tools-site-v0.7.0...tools-site-v0.8.0) (2026-07-21)
+
+
+### Features
+
+* add animated live graph renderer ([1df081d](https://github.com/kquinsland/tools/commit/1df081da7876b93b066b165ce09e4bf5e1a2a07b))
+* add browser-based Salt state graph ([dc0982f](https://github.com/kquinsland/tools/commit/dc0982f95e007aa8398feb58cd39111b347ad315))
+* add interactive Salt state graph tool ([96643dc](https://github.com/kquinsland/tools/commit/96643dcc913c34785a3150caaa1b7409d29f6f2f))
+* share graph filters and node source JSON ([c949696](https://github.com/kquinsland/tools/commit/c9496968e799fd000352949b6dc2c0084d99fcb6))
+* style tool links as prominent buttons ([a7b0ada](https://github.com/kquinsland/tools/commit/a7b0ada9e606dd8920c2c126179d7e4c2012edf8))
+* style tool links as prominent buttons ([f6dc10d](https://github.com/kquinsland/tools/commit/f6dc10dde1fea2cee972d0786d4d5a7a4e7c081b))
+
+
+### Bug Fixes
+
+* contain graph on narrow screens ([5173956](https://github.com/kquinsland/tools/commit/5173956a546e7127419aaf219214b8f00f4e2bfa))
+
 ## [0.7.0](https://github.com/kquinsland/tools/compare/tools-site-v0.6.0...tools-site-v0.7.0) (2026-06-23)
 
 
