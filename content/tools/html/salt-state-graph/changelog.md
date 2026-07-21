@@ -2,6 +2,10 @@
 title: Changelog - Salt State Graph
 bookHidden: true
 ---
+## `1df081d` - July 20, 2026 18:35
+
+- feat: add animated live graph renderer
+
 ## `c949696` - July 20, 2026 18:07
 
 - feat: share graph filters and node source JSON
