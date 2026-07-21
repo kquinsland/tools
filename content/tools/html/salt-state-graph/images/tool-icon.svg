@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Salt State Graph icon</title>
+  <desc id="desc">Four rounded state nodes connected by colored dependency arrows.</desc>
+  <rect width="256" height="256" rx="48" fill="#eef4ff"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="10">
+    <path d="M72 78h50c20 0 25 30 45 30h18" stroke="#2563eb"/>
+    <path d="M72 174h50c20 0 25-30 45-30h18" stroke="#16a34a"/>
+    <path d="m174 96 18 12-18 12" stroke="#2563eb"/>
+    <path d="m174 132 18 12-18 12" stroke="#16a34a"/>
+  </g>
+  <g fill="#fff" stroke="#475569" stroke-width="7">
+    <rect x="30" y="50" width="70" height="56" rx="14"/>
+    <rect x="30" y="146" width="70" height="56" rx="14"/>
+    <rect x="178" y="84" width="48" height="48" rx="12"/>
+    <rect x="178" y="132" width="48" height="48" rx="12"/>
+  </g>
+</svg>
