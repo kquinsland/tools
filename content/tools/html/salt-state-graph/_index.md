@@ -34,10 +34,11 @@ shared or bookmarked.
 - Supports typed, module-less, SLS, glob, and `_in` requisites.
 - Handles `__extend__` declarations and output containing multiple minions.
 - Fuzzy-searches states and filters by minion, connection status, or requisite family.
+- Switches between a static SVG layout and an animated, Obsidian-style force graph.
 - Automatically saves smaller valid inputs and active filters in a shareable URL fragment.
 - Opens the source state JSON, including matching `__extend__` blocks, when a node is selected.
-- Downloads the visible graph as SVG, PNG, WebP, DOT, or normalized JSON.
-- Uses browser-native JavaScript and SVG with no external dependencies.
+- Downloads the active view as PNG or WebP, plus static SVG, DOT, or normalized JSON.
+- Uses browser-native SVG/Canvas with one pinned dependency for the live force simulation.
 
 ## Dependencies
 

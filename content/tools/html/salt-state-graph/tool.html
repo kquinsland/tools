@@ -178,6 +178,7 @@
 
             .panel-heading {
                 display: flex;
+                flex-wrap: wrap;
                 align-items: flex-start;
                 justify-content: space-between;
                 gap: 16px;
@@ -389,6 +390,33 @@
                 line-height: 1.35;
             }
 
+            .renderer-tabs {
+                display: inline-flex;
+                border: 1px solid var(--border-strong);
+                border-radius: 10px;
+                padding: 3px;
+                background: var(--surface-muted);
+            }
+
+            .renderer-tabs button {
+                min-height: 34px;
+                border-color: transparent;
+                padding: 5px 13px;
+                background: transparent;
+                box-shadow: none;
+            }
+
+            .renderer-tabs button[aria-selected="true"] {
+                border-color: var(--border-strong);
+                color: #ffffff;
+                background: var(--accent-strong);
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+            }
+
+            .renderer-tabs button:disabled {
+                opacity: 0.5;
+            }
+
             .toolbar {
                 display: flex;
                 align-items: center;
@@ -446,6 +474,61 @@
                 background: #ffffff;
                 cursor: grab;
                 overscroll-behavior: contain;
+            }
+
+            .live-graph-viewport {
+                position: relative;
+                width: 100%;
+                min-width: 0;
+                max-width: 100%;
+                min-height: 440px;
+                height: min(72vh, 780px);
+                overflow: hidden;
+                border: 1px solid var(--border-strong);
+                border-radius: var(--radius-small);
+                background: #ffffff;
+            }
+
+            .live-graph-host,
+            .live-graph-host > div,
+            .live-graph-host canvas {
+                width: 100%;
+                height: 100%;
+            }
+
+            .live-graph-host canvas {
+                display: block;
+            }
+
+            .live-graph-hint {
+                position: absolute;
+                right: 10px;
+                bottom: 10px;
+                z-index: 2;
+                border-radius: 7px;
+                padding: 5px 8px;
+                color: #475569;
+                background: rgba(255, 255, 255, 0.88);
+                box-shadow: 0 1px 4px rgba(15, 23, 42, 0.14);
+                font-size: 0.72rem;
+                pointer-events: none;
+            }
+
+            .live-graph-message {
+                position: absolute;
+                inset: 0;
+                z-index: 3;
+                display: grid;
+                place-content: center;
+                gap: 6px;
+                padding: 24px;
+                color: #667085;
+                background: #ffffff;
+                text-align: center;
+            }
+
+            .live-graph-message strong {
+                color: #344054;
             }
 
             .graph-viewport.dragging {
@@ -743,6 +826,26 @@
                         <h2 id="results-heading">Rendered graph</h2>
                         <p id="render-status" role="status" aria-live="polite">Graph ready.</p>
                     </div>
+                    <div class="renderer-tabs" role="tablist" aria-label="Graph renderer">
+                        <button
+                            type="button"
+                            id="static-renderer-tab"
+                            role="tab"
+                            aria-selected="true"
+                            aria-controls="graph-viewport"
+                        >
+                            Static
+                        </button>
+                        <button
+                            type="button"
+                            id="live-renderer-tab"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="live-graph-viewport"
+                        >
+                            Live
+                        </button>
+                    </div>
                 </div>
 
                 <div class="metrics" id="ssg-metrics">
@@ -812,13 +915,32 @@
                 </div>
 
                 <div class="legend" id="graph-legend" aria-label="Requisite colors"></div>
-                <div class="graph-viewport" id="graph-viewport">
+                <div
+                    class="graph-viewport"
+                    id="graph-viewport"
+                    role="tabpanel"
+                    aria-labelledby="static-renderer-tab"
+                >
                     <div class="graph-host" id="graph-host">
                         <div class="empty-graph">
                             <strong>No visible states</strong>
                             <span>Adjust the filters to restore graph nodes.</span>
                         </div>
                     </div>
+                </div>
+                <div
+                    class="live-graph-viewport"
+                    id="live-graph-viewport"
+                    role="tabpanel"
+                    aria-labelledby="live-renderer-tab"
+                    hidden
+                >
+                    <div class="live-graph-host" id="live-graph-host"></div>
+                    <div class="live-graph-message" id="live-graph-message" hidden>
+                        <strong>Live graph unavailable</strong>
+                        <span>The static renderer remains available.</span>
+                    </div>
+                    <div class="live-graph-hint">Scroll to zoom · drag to pan · drag nodes to rearrange</div>
                 </div>
 
                 <details class="diagnostics" id="diagnostics-panel">
@@ -851,6 +973,11 @@
             </div>
         </dialog>
 
+        <script
+            src="https://cdn.jsdelivr.net/npm/force-graph@1.51.4/dist/force-graph.min.js"
+            integrity="sha384-Hm6GpQcTNI5VqGgGS7lLxTGtEFcxu/kOVV0B7ozIZRu9blWVvigv5httJQZ2qZmY"
+            crossorigin="anonymous"
+        ></script>
         <script>
             (() => {
                 "use strict";
@@ -921,8 +1048,13 @@
                     graphView: document.getElementById("graph-view"),
                     searchInput: document.getElementById("search-input"),
                     resetFilters: document.getElementById("reset-filters"),
+                    staticRendererTab: document.getElementById("static-renderer-tab"),
+                    liveRendererTab: document.getElementById("live-renderer-tab"),
                     graphViewport: document.getElementById("graph-viewport"),
                     graphHost: document.getElementById("graph-host"),
+                    liveGraphViewport: document.getElementById("live-graph-viewport"),
+                    liveGraphHost: document.getElementById("live-graph-host"),
+                    liveGraphMessage: document.getElementById("live-graph-message"),
                     graphLegend: document.getElementById("graph-legend"),
                     zoomIn: document.getElementById("zoom-in"),
                     zoomOut: document.getElementById("zoom-out"),
@@ -953,6 +1085,12 @@
                     searchTimer: null,
                     inputData: null,
                     selectedNodeJson: "",
+                    renderer: "static",
+                    liveAvailable: typeof window.ForceGraph === "function",
+                    liveGraph: null,
+                    liveHoverNodeId: null,
+                    liveNeedsFit: false,
+                    liveResizeObserver: null,
                 };
 
                 function isObject(value) {
@@ -1772,6 +1910,7 @@
                         minion: elements.minionFilter.value,
                         view: elements.graphView.value,
                         search: elements.searchInput.value,
+                        renderer: state.renderer,
                     };
                 }
 
@@ -1787,6 +1926,204 @@
                     )
                         ? requestedView
                         : "all";
+                    if (candidate.renderer === "static" || candidate.renderer === "live") {
+                        state.renderer = candidate.renderer === "live" && !state.liveAvailable ? "static" : candidate.renderer;
+                    }
+                    updateRendererUi();
+                }
+
+                function updateRendererUi() {
+                    const live = state.renderer === "live" && state.liveAvailable;
+                    elements.staticRendererTab.setAttribute("aria-selected", String(!live));
+                    elements.staticRendererTab.tabIndex = live ? -1 : 0;
+                    elements.liveRendererTab.setAttribute("aria-selected", String(live));
+                    elements.liveRendererTab.tabIndex = live ? 0 : -1;
+                    elements.liveRendererTab.disabled = !state.liveAvailable;
+                    elements.liveRendererTab.title = state.liveAvailable
+                        ? "Animated force-directed canvas"
+                        : "Live view could not load; Static remains available";
+                    elements.graphViewport.hidden = live;
+                    elements.liveGraphViewport.hidden = !live;
+                    elements.zoomValue.textContent = live && state.liveGraph
+                        ? `${Math.round(state.liveGraph.zoom() * 100)}%`
+                        : `${Math.round(state.zoom * 100)}%`;
+                }
+
+                function setLiveMessage(title, detail) {
+                    if (!title) {
+                        elements.liveGraphMessage.hidden = true;
+                        return;
+                    }
+                    elements.liveGraphMessage.querySelector("strong").textContent = title;
+                    elements.liveGraphMessage.querySelector("span").textContent = detail;
+                    elements.liveGraphMessage.hidden = false;
+                }
+
+                function paintLiveNode(node, context, globalScale) {
+                    const radius = node.external ? 5 : 6;
+                    const selected = node.searchMatch || node.id === state.liveHoverNodeId;
+                    context.save();
+                    context.beginPath();
+                    context.arc(node.x, node.y, radius, 0, 2 * Math.PI);
+                    context.fillStyle = selected ? "#315ea8" : node.external ? "#fff7ed" : "#f8fafc";
+                    context.fill();
+                    context.strokeStyle = selected ? "#1d4ed8" : node.external ? "#c2410c" : "#475569";
+                    context.lineWidth = (selected ? 2.5 : 1.5) / Math.max(0.65, globalScale);
+                    if (node.external) context.setLineDash([3, 2]);
+                    context.stroke();
+                    context.setLineDash([]);
+
+                    const fontSize = 12 / globalScale;
+                    const label = node.label.length > 48 ? `${node.label.slice(0, 47)}…` : node.label;
+                    context.font = `600 ${fontSize}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+                    const positionedNeighbors = (node.liveNeighbors ?? []).filter((neighbor) =>
+                        Number.isFinite(neighbor.x),
+                    );
+                    const neighborCenterX = positionedNeighbors.length > 0
+                        ? positionedNeighbors.reduce((total, neighbor) => total + neighbor.x, 0) /
+                          positionedNeighbors.length
+                        : null;
+                    const labelOnRight = neighborCenterX === null ? node.x <= 0 : node.x > neighborCenterX;
+                    context.textAlign = labelOnRight ? "left" : "right";
+                    context.textBaseline = "middle";
+                    context.fillStyle = "#172033";
+                    const labelOffset = radius + 4 / globalScale;
+                    context.fillText(label, node.x + (labelOnRight ? labelOffset : -labelOffset), node.y);
+                    context.restore();
+                }
+
+                function liveTooltip(node) {
+                    const tooltip = document.createElement("span");
+                    tooltip.textContent = `${node.label} · ${node.minion}`;
+                    return tooltip;
+                }
+
+                function resizeLiveGraph() {
+                    if (!state.liveGraph || elements.liveGraphViewport.hidden) return;
+                    const width = Math.max(280, elements.liveGraphViewport.clientWidth);
+                    const height = Math.max(440, elements.liveGraphViewport.clientHeight);
+                    state.liveGraph.width(width).height(height);
+                }
+
+                function fitLiveGraph(duration = 450) {
+                    const nodes = state.liveGraph?.graphData().nodes ?? [];
+                    if (nodes.length === 0) return;
+                    if (nodes.length === 1) {
+                        state.liveGraph.centerAt(nodes[0].x ?? 0, nodes[0].y ?? 0, duration);
+                        state.liveGraph.zoom(2, duration);
+                        return;
+                    }
+                    state.liveGraph.zoomToFit(duration, 54);
+                }
+
+                function ensureLiveGraph() {
+                    if (state.liveGraph) return state.liveGraph;
+                    if (!state.liveAvailable) return null;
+                    try {
+                        const graph = new window.ForceGraph(elements.liveGraphHost)
+                            .backgroundColor("#ffffff")
+                            .nodeId("id")
+                            .nodeVal(5)
+                            .nodeLabel(liveTooltip)
+                            .nodeCanvasObject(paintLiveNode)
+                            .nodeCanvasObjectMode(() => "replace")
+                            .nodePointerAreaPaint((node, color, context) => {
+                                context.fillStyle = color;
+                                context.beginPath();
+                                context.arc(node.x, node.y, 10, 0, 2 * Math.PI);
+                                context.fill();
+                            })
+                            .linkColor((link) => COLORS[link.color])
+                            .linkWidth(1.6)
+                            .linkDirectionalArrowLength(6)
+                            .linkDirectionalArrowColor((link) => COLORS[link.color])
+                            .linkDirectionalArrowRelPos(0.88)
+                            .warmupTicks(18)
+                            .cooldownTicks(70)
+                            .onNodeHover((node) => {
+                                state.liveHoverNodeId = node?.id ?? null;
+                            })
+                            .onNodeClick((node) => showNodeSource(node.id))
+                            .onZoom(({ k }) => {
+                                state.liveNeedsFit = false;
+                                if (state.renderer === "live") {
+                                    elements.zoomValue.textContent = `${Math.round(k * 100)}%`;
+                                }
+                            })
+                            .onEngineStop(() => {
+                                if (!state.liveNeedsFit || state.renderer !== "live") return;
+                                state.liveNeedsFit = false;
+                                fitLiveGraph();
+                            });
+                        graph.d3Force("charge")?.strength(-150);
+                        graph.d3Force("link")?.distance(88);
+                        state.liveGraph = graph;
+                        if (typeof ResizeObserver === "function") {
+                            state.liveResizeObserver = new ResizeObserver(resizeLiveGraph);
+                            state.liveResizeObserver.observe(elements.liveGraphViewport);
+                        } else {
+                            window.addEventListener("resize", resizeLiveGraph);
+                        }
+                        resizeLiveGraph();
+                        return graph;
+                    } catch (error) {
+                        state.liveAvailable = false;
+                        state.renderer = "static";
+                        updateRendererUi();
+                        setRenderStatus(`Live renderer unavailable: ${error.message}`, "warning");
+                        return null;
+                    }
+                }
+
+                function renderLiveGraph() {
+                    const graph = ensureLiveGraph();
+                    if (!graph || !state.visibleGraph) return;
+                    resizeLiveGraph();
+                    if (state.visibleGraph.nodes.length === 0) {
+                        state.liveNeedsFit = false;
+                        graph.graphData({ nodes: [], links: [] });
+                        setLiveMessage("No visible states", "Adjust the filters to restore graph nodes.");
+                        setExportButtons();
+                        return;
+                    }
+                    setLiveMessage(null, null);
+                    const matchIds = state.visibleGraph.matchIds;
+                    const nodes = state.visibleGraph.nodes.map((node) => ({
+                        ...node,
+                        searchMatch: matchIds?.has(node.id) ?? false,
+                        liveNeighbors: [],
+                    }));
+                    const links = state.visibleGraph.edges.map((edge) => ({ ...edge }));
+                    const nodesById = new Map(nodes.map((node) => [node.id, node]));
+                    for (const link of links) {
+                        const source = nodesById.get(link.source);
+                        const target = nodesById.get(link.target);
+                        if (!source || !target) continue;
+                        source.liveNeighbors.push(target);
+                        target.liveNeighbors.push(source);
+                    }
+                    state.liveNeedsFit = true;
+                    graph.graphData({ nodes, links });
+                    graph.d3ReheatSimulation();
+                    setExportButtons();
+                }
+
+                function setRendererMode(renderer, options = {}) {
+                    if (renderer === "live" && !state.liveAvailable) {
+                        setRenderStatus("Live view could not load; Static remains available.", "warning");
+                        return;
+                    }
+                    state.renderer = renderer === "live" ? "live" : "static";
+                    updateRendererUi();
+                    if (state.renderer === "live") {
+                        requestAnimationFrame(renderLiveGraph);
+                        state.liveGraph?.resumeAnimation();
+                    } else {
+                        state.liveGraph?.pauseAnimation();
+                        requestAnimationFrame(fitGraph);
+                    }
+                    setExportButtons();
+                    if (options.updateUrl !== false && state.inputData) syncCurrentUrlState();
                 }
 
                 function updateMetrics(graph, visibleGraph) {
@@ -1798,9 +2135,20 @@
 
                 function setExportButtons() {
                     const hasSvg = state.svg !== null;
+                    const hasLiveCanvas = state.liveGraph?.graphData().nodes.length > 0;
                     document.querySelectorAll("[data-export]").forEach((button) => {
                         const format = button.dataset.export;
-                        button.disabled = !state.visibleGraph || (!hasSvg && ["svg", "png", "webp"].includes(format));
+                        const needsStatic = format === "svg";
+                        const needsRaster = ["png", "webp"].includes(format);
+                        button.disabled =
+                            !state.visibleGraph ||
+                            (needsStatic && (state.renderer === "live" || !hasSvg)) ||
+                            (needsRaster && (state.renderer === "live" ? !hasLiveCanvas : !hasSvg));
+                        if (format === "svg") {
+                            button.title = state.renderer === "live"
+                                ? "SVG export is available in Static view"
+                                : "Download the static vector graph";
+                        }
                     });
                 }
 
@@ -1812,7 +2160,22 @@
                     state.svg.style.height = `${state.layout.height * state.zoom}px`;
                 }
 
+                function zoomGraph(factor) {
+                    if (state.renderer === "live" && state.liveGraph) {
+                        state.liveNeedsFit = false;
+                        const zoom = Math.max(0.12, Math.min(8, state.liveGraph.zoom() * factor));
+                        state.liveGraph.zoom(zoom, 180);
+                        return;
+                    }
+                    applyZoom(state.zoom * factor);
+                }
+
                 function fitGraph() {
+                    if (state.renderer === "live") {
+                        state.liveNeedsFit = false;
+                        fitLiveGraph();
+                        return;
+                    }
                     if (!state.svg || !state.layout) return;
                     const availableWidth = Math.max(240, elements.graphViewport.clientWidth - 24);
                     applyZoom(Math.min(1, availableWidth / state.layout.width));
@@ -1830,6 +2193,7 @@
 
                     if (visibleGraph.nodes.length === 0) {
                         emptyGraph("No visible states", "Adjust the filters to restore graph nodes.");
+                        if (state.renderer === "live") renderLiveGraph();
                         setRenderStatus("The current filters match no states.", "warning");
                         setExportButtons();
                         return;
@@ -1850,7 +2214,12 @@
                         "",
                     );
                     setExportButtons();
-                    requestAnimationFrame(fitGraph);
+                    if (state.renderer === "live") {
+                        requestAnimationFrame(renderLiveGraph);
+                    } else {
+                        state.liveGraph?.pauseAnimation();
+                        requestAnimationFrame(fitGraph);
+                    }
                 }
 
                 function renderAndSyncUrlState() {
@@ -1904,6 +2273,7 @@
                         state.layout = null;
                         state.svg = null;
                         state.inputData = null;
+                        state.liveGraph?.graphData({ nodes: [], links: [] });
                         elements.results.hidden = true;
                         const message = error instanceof Error ? error.message : String(error);
                         setInputStatus(`Could not render this input: ${message}`, "error");
@@ -2070,6 +2440,7 @@
                     state.layout = null;
                     state.svg = null;
                     state.inputData = null;
+                    state.liveGraph?.graphData({ nodes: [], links: [] });
                     state.sourceName = "salt-state-graph";
                     const urlCleared = clearUrlState();
                     setInputStatus(
@@ -2171,6 +2542,33 @@
                 }
 
                 async function exportRaster(format) {
+                    if (state.renderer === "live") {
+                        if (!state.liveGraph || state.visibleGraph?.nodes.length === 0) {
+                            throw new Error("There is no visible live graph to export.");
+                        }
+                        fitLiveGraph(0);
+                        await new Promise((resolve) =>
+                            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+                        );
+                        const liveCanvas = elements.liveGraphHost.querySelector("canvas");
+                        if (!liveCanvas) throw new Error("The live graph canvas is unavailable.");
+                        const mime = format === "webp" ? "image/webp" : "image/png";
+                        const blob = await new Promise((resolve, reject) => {
+                            liveCanvas.toBlob(
+                                (result) =>
+                                    result
+                                        ? resolve(result)
+                                        : reject(new Error(`Could not encode ${format}.`)),
+                                mime,
+                                format === "webp" ? 0.92 : undefined,
+                            );
+                        });
+                        if (format === "webp" && blob.type !== "image/webp") {
+                            throw new Error("This browser does not support WebP canvas export.");
+                        }
+                        downloadBlob(blob, format);
+                        return;
+                    }
                     if (!state.layout) throw new Error("There is no visible graph to export.");
                     const image = await imageFromSvg(serializedSvg());
                     const width = state.layout.width;
@@ -2206,6 +2604,9 @@
                     if (!state.visibleGraph) return;
                     try {
                         if (format === "svg") {
+                            if (state.renderer === "live") {
+                                throw new Error("Switch to Static view to export SVG.");
+                            }
                             downloadBlob(new Blob([serializedSvg()], { type: "image/svg+xml;charset=utf-8" }), "svg");
                         } else if (format === "dot") {
                             downloadBlob(new Blob([buildDot(state.visibleGraph)], { type: "text/vnd.graphviz;charset=utf-8" }), "dot");
@@ -2360,6 +2761,21 @@
                     state.searchTimer = setTimeout(renderAndSyncUrlState, 120);
                 });
                 elements.resetFilters.addEventListener("click", resetFilters);
+                elements.staticRendererTab.addEventListener("click", () => setRendererMode("static"));
+                elements.liveRendererTab.addEventListener("click", () => setRendererMode("live"));
+                for (const tab of [elements.staticRendererTab, elements.liveRendererTab]) {
+                    tab.addEventListener("keydown", (event) => {
+                        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                        event.preventDefault();
+                        const target = ["ArrowRight", "End"].includes(event.key)
+                            ? elements.liveRendererTab
+                            : elements.staticRendererTab;
+                        if (!target.disabled) {
+                            target.focus();
+                            setRendererMode(target === elements.liveRendererTab ? "live" : "static");
+                        }
+                    });
+                }
 
                 elements.closeNodeDialog.addEventListener("click", () => elements.nodeDialog.close());
                 elements.copyNodeJson.addEventListener("click", () =>
@@ -2373,8 +2789,8 @@
                     showNodeSource(group.dataset.nodeId);
                 });
 
-                elements.zoomIn.addEventListener("click", () => applyZoom(state.zoom * 1.2));
-                elements.zoomOut.addEventListener("click", () => applyZoom(state.zoom / 1.2));
+                elements.zoomIn.addEventListener("click", () => zoomGraph(1.2));
+                elements.zoomOut.addEventListener("click", () => zoomGraph(1 / 1.2));
                 elements.zoomFit.addEventListener("click", fitGraph);
                 document.querySelectorAll("[data-export]").forEach((button) => {
                     button.addEventListener("click", () => exportGraph(button.dataset.export));
@@ -2417,6 +2833,7 @@
                     decodeBase64Utf8,
                     unpackUrlPayload,
                 });
+                updateRendererUi();
                 setExportButtons();
                 loadUrlState();
                 window.addEventListener("hashchange", loadUrlState);
