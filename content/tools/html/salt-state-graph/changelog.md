@@ -2,6 +2,10 @@
 title: Changelog - Salt State Graph
 bookHidden: true
 ---
+## `c949696` - July 20, 2026 18:07
+
+- feat: share graph filters and node source JSON
+
 ## `5173956` - July 20, 2026 14:58
 
 - fix: contain graph on narrow screens
