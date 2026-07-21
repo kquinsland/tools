@@ -1,17 +1,17 @@
 ---
 version: 2
 stats:
-  total_tools: 21
-  tools_with_dependencies: 10
+  total_tools: 22
+  tools_with_dependencies: 11
   tools_without_dependencies: 11
   languages:
     - language: "html"
-      count: 18
+      count: 19
     - language: "python"
       count: 3
   dependency_hosts:
     - host: "cdn.jsdelivr.net"
-      count: 9
+      count: 10
     - host: "cdnjs.cloudflare.com"
       count: 2
   dependencies_by_language:
@@ -25,6 +25,9 @@ stats:
           count: 1
         - package: "exifr"
           version: "7.1.3"
+          count: 1
+        - package: "force-graph"
+          version: "1.51.4"
           count: 1
         - package: "json5"
           version: "2.2.3"
@@ -103,6 +106,12 @@ stats:
             - package: "mermaid"
               version: "10"
               via: "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"
+        - slug: "html/salt-state-graph"
+          title: "Salt State Graph"
+          dependencies:
+            - package: "force-graph"
+              version: "1.51.4"
+              via: "https://cdn.jsdelivr.net/npm/force-graph@1.51.4/dist/force-graph.min.js"
         - slug: "html/syncthing-conflict-triage"
           title: "Sync Conflict Triage"
           dependencies:
@@ -369,6 +378,25 @@ tools:
         - "qrcode"
         - "calendar"
         - "offline"
+  - html/salt-state-graph:
+      title: "Salt State Graph"
+      language: "html"
+      description: "Paste or open Salt highstate JSON and explore its requisite graph entirely in your browser."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: "dc0982f95e007aa8398feb58cd39111b347ad315"
+        updated_commit: "1df081da7876b93b066b165ce09e4bf5e1a2a07b"
+      dependencies:
+        - package: "force-graph"
+          version: "1.51.4"
+          via: "https://cdn.jsdelivr.net/npm/force-graph@1.51.4/dist/force-graph.min.js"
+      tags:
+        - "html"
+        - "salt"
+        - "highstate"
+        - "graph"
+        - "dependencies"
+        - "json"
   - html/syncthing-conflict-triage:
       title: "Sync Conflict Triage"
       language: "html"

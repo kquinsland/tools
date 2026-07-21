@@ -1,0 +1,2844 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Salt State Graph</title>
+        <link rel="stylesheet" href="/common.css" />
+        <style>
+            :root {
+                color-scheme: light;
+                --page: #eef3f8;
+                --page-accent: #e0eaff;
+                --surface: #ffffff;
+                --surface-muted: #f7f9fc;
+                --ink: #172033;
+                --muted: #667085;
+                --border: #d6deea;
+                --border-strong: #aebbcf;
+                --accent: #315ea8;
+                --accent-strong: #234a8a;
+                --accent-soft: #e7efff;
+                --success: #177245;
+                --success-soft: #e6f6ed;
+                --danger: #b42318;
+                --danger-soft: #fff0ee;
+                --warning: #a15c07;
+                --warning-soft: #fff5df;
+                --shadow: 0 18px 44px rgba(39, 54, 78, 0.12);
+                --radius: 18px;
+                --radius-small: 11px;
+                --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+                --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    color-scheme: dark;
+                    --page: #20262e;
+                    --page-accent: #26344b;
+                    --surface: #2b333d;
+                    --surface-muted: #252d36;
+                    --ink: #edf2f7;
+                    --muted: #b7c0cc;
+                    --border: #46515e;
+                    --border-strong: #657284;
+                    --accent: #8db6ff;
+                    --accent-strong: #a9c8ff;
+                    --accent-soft: #303e55;
+                    --success: #77d6a0;
+                    --success-soft: #263d34;
+                    --danger: #ff9b94;
+                    --danger-soft: #49302f;
+                    --warning: #f1bd6d;
+                    --warning-soft: #483b27;
+                    --shadow: 0 18px 44px rgba(0, 0, 0, 0.3);
+                }
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            [hidden] {
+                display: none !important;
+            }
+
+            body {
+                margin: 0;
+                min-height: 100vh;
+                color: var(--ink);
+                background:
+                    radial-gradient(circle at 10% 0%, var(--page-accent), transparent 34rem),
+                    var(--page);
+                font-family: var(--sans);
+            }
+
+            button,
+            input,
+            select,
+            textarea {
+                font: inherit;
+            }
+
+            button,
+            .file-button {
+                min-height: 40px;
+                border: 1px solid var(--border-strong);
+                border-radius: 10px;
+                padding: 8px 14px;
+                color: var(--ink);
+                background: var(--surface);
+                font-weight: 650;
+                cursor: pointer;
+                transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+            }
+
+            button:hover:not(:disabled),
+            .file-button:hover {
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px var(--accent-soft);
+            }
+
+            button:active:not(:disabled),
+            .file-button:active {
+                transform: translateY(1px);
+            }
+
+            button:focus-visible,
+            .file-button:focus-within,
+            input:focus-visible,
+            select:focus-visible,
+            textarea:focus-visible,
+            .drop-zone:focus-visible {
+                outline: 3px solid var(--accent-soft);
+                outline-offset: 2px;
+                border-color: var(--accent);
+            }
+
+            button:disabled {
+                cursor: not-allowed;
+                opacity: 0.48;
+            }
+
+            button.primary {
+                color: #ffffff;
+                border-color: var(--accent-strong);
+                background: var(--accent-strong);
+            }
+
+            button.subtle {
+                border-color: transparent;
+                background: var(--surface-muted);
+            }
+
+            .app-shell {
+                width: min(1560px, 100%);
+                margin: 0 auto;
+                padding: 32px clamp(14px, 3vw, 36px) 72px;
+                display: grid;
+                gap: 22px;
+            }
+
+            .hero {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 24px;
+            }
+
+            .hero-copy {
+                display: grid;
+                gap: 8px;
+            }
+
+            .hero h1 {
+                margin: 0;
+                font-size: clamp(2rem, 4vw, 3.25rem);
+                line-height: 1;
+                letter-spacing: -0.045em;
+            }
+
+            .hero p {
+                max-width: 780px;
+                margin: 0;
+                color: var(--muted);
+                font-size: 1.04rem;
+                line-height: 1.55;
+            }
+
+            .panel {
+                min-width: 0;
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: clamp(16px, 2vw, 24px);
+                background: var(--surface);
+                box-shadow: var(--shadow);
+            }
+
+            .panel-heading {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 16px;
+                margin-bottom: 18px;
+            }
+
+            .panel-heading h2,
+            .panel-heading p {
+                margin: 0;
+            }
+
+            .panel-heading h2 {
+                font-size: 1.25rem;
+            }
+
+            .panel-heading p {
+                margin-top: 4px;
+                color: var(--muted);
+                font-size: 0.92rem;
+            }
+
+            .command-example {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 6px 8px;
+            }
+
+            .command-example code {
+                border-radius: 6px;
+                padding: 4px 7px;
+                color: var(--ink);
+                background: var(--surface-muted);
+                font-family: var(--mono);
+                font-size: 0.8rem;
+            }
+
+            .command-example button {
+                min-height: 30px;
+                padding: 4px 9px;
+                font-size: 0.78rem;
+            }
+
+            .input-layout {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) minmax(240px, 0.32fr);
+                gap: 18px;
+            }
+
+            .input-column {
+                min-width: 0;
+                display: grid;
+                gap: 12px;
+            }
+
+            #json-input {
+                width: 100%;
+                min-height: 290px;
+                resize: vertical;
+                border: 1px solid var(--border-strong);
+                border-radius: var(--radius-small);
+                padding: 14px;
+                color: var(--ink);
+                background: var(--surface-muted);
+                font-family: var(--mono);
+                font-size: 0.88rem;
+                line-height: 1.5;
+                tab-size: 4;
+            }
+
+            .action-row,
+            .export-row,
+            .zoom-row {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .file-button {
+                display: inline-flex;
+                align-items: center;
+            }
+
+            .file-button input {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                clip: rect(0 0 0 0);
+                clip-path: inset(50%);
+                overflow: hidden;
+                white-space: nowrap;
+            }
+
+            .drop-zone {
+                min-height: 100%;
+                border: 2px dashed var(--border-strong);
+                border-radius: var(--radius-small);
+                padding: 22px;
+                display: grid;
+                place-content: center;
+                gap: 10px;
+                text-align: center;
+                color: var(--muted);
+                background: var(--surface-muted);
+                cursor: pointer;
+            }
+
+            .drop-zone.dragover {
+                border-color: var(--accent);
+                color: var(--accent-strong);
+                background: var(--accent-soft);
+            }
+
+            .drop-zone strong {
+                color: var(--ink);
+            }
+
+            .drop-icon {
+                display: block;
+                font-size: 2rem;
+                line-height: 1;
+            }
+
+            .status {
+                min-height: 22px;
+                color: var(--muted);
+                font-size: 0.9rem;
+            }
+
+            .status.success {
+                color: var(--success);
+            }
+
+            .status.error {
+                color: var(--danger);
+            }
+
+            .status.warning {
+                color: var(--warning);
+            }
+
+            .metrics {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(110px, 1fr));
+                gap: 10px;
+                margin-bottom: 16px;
+            }
+
+            .metric {
+                border: 1px solid var(--border);
+                border-radius: var(--radius-small);
+                padding: 12px 14px;
+                background: var(--surface-muted);
+            }
+
+            .metric-value {
+                display: block;
+                font-size: 1.55rem;
+                font-weight: 760;
+                letter-spacing: -0.03em;
+            }
+
+            .metric-label {
+                display: block;
+                margin-top: 2px;
+                color: var(--muted);
+                font-size: 0.78rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.07em;
+            }
+
+            .controls {
+                display: grid;
+                grid-template-columns: minmax(220px, 1.2fr) repeat(2, minmax(170px, 0.6fr));
+                gap: 10px;
+                align-items: start;
+                margin-bottom: 14px;
+            }
+
+            .field {
+                display: grid;
+                gap: 5px;
+            }
+
+            .field > span {
+                color: var(--muted);
+                font-size: 0.76rem;
+                font-weight: 750;
+                text-transform: uppercase;
+                letter-spacing: 0.065em;
+            }
+
+            .field input,
+            .field select {
+                width: 100%;
+                min-height: 40px;
+                border: 1px solid var(--border-strong);
+                border-radius: 9px;
+                padding: 8px 10px;
+                color: var(--ink);
+                background: var(--surface-muted);
+            }
+
+            .field-hint {
+                color: var(--muted);
+                font-size: 0.75rem;
+                line-height: 1.35;
+            }
+
+            .renderer-tabs {
+                display: inline-flex;
+                border: 1px solid var(--border-strong);
+                border-radius: 10px;
+                padding: 3px;
+                background: var(--surface-muted);
+            }
+
+            .renderer-tabs button {
+                min-height: 34px;
+                border-color: transparent;
+                padding: 5px 13px;
+                background: transparent;
+                box-shadow: none;
+            }
+
+            .renderer-tabs button[aria-selected="true"] {
+                border-color: var(--border-strong);
+                color: #ffffff;
+                background: var(--accent-strong);
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+            }
+
+            .renderer-tabs button:disabled {
+                opacity: 0.5;
+            }
+
+            .toolbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 14px;
+                margin-bottom: 10px;
+            }
+
+            .toolbar .zoom-row {
+                flex: 0 0 auto;
+            }
+
+            .zoom-value {
+                min-width: 52px;
+                color: var(--muted);
+                text-align: center;
+                font-family: var(--mono);
+                font-size: 0.84rem;
+            }
+
+            .legend {
+                min-height: 26px;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 8px 16px;
+                margin-bottom: 10px;
+                color: var(--muted);
+                font-size: 0.8rem;
+            }
+
+            .legend-item {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .legend-line {
+                width: 24px;
+                height: 3px;
+                border-radius: 999px;
+                background: currentColor;
+            }
+
+            .graph-viewport {
+                position: relative;
+                width: 100%;
+                min-width: 0;
+                max-width: 100%;
+                min-height: 440px;
+                max-height: 72vh;
+                overflow: auto;
+                border: 1px solid var(--border-strong);
+                border-radius: var(--radius-small);
+                background: #ffffff;
+                cursor: grab;
+                overscroll-behavior: contain;
+            }
+
+            .live-graph-viewport {
+                position: relative;
+                width: 100%;
+                min-width: 0;
+                max-width: 100%;
+                min-height: 440px;
+                height: min(72vh, 780px);
+                overflow: hidden;
+                border: 1px solid var(--border-strong);
+                border-radius: var(--radius-small);
+                background: #ffffff;
+            }
+
+            .live-graph-host,
+            .live-graph-host > div,
+            .live-graph-host canvas {
+                width: 100%;
+                height: 100%;
+            }
+
+            .live-graph-host canvas {
+                display: block;
+            }
+
+            .live-graph-hint {
+                position: absolute;
+                right: 10px;
+                bottom: 10px;
+                z-index: 2;
+                border-radius: 7px;
+                padding: 5px 8px;
+                color: #475569;
+                background: rgba(255, 255, 255, 0.88);
+                box-shadow: 0 1px 4px rgba(15, 23, 42, 0.14);
+                font-size: 0.72rem;
+                pointer-events: none;
+            }
+
+            .live-graph-message {
+                position: absolute;
+                inset: 0;
+                z-index: 3;
+                display: grid;
+                place-content: center;
+                gap: 6px;
+                padding: 24px;
+                color: #667085;
+                background: #ffffff;
+                text-align: center;
+            }
+
+            .live-graph-message strong {
+                color: #344054;
+            }
+
+            .graph-viewport.dragging {
+                cursor: grabbing;
+                user-select: none;
+            }
+
+            .graph-host {
+                min-width: 100%;
+                min-height: 438px;
+                display: grid;
+                place-items: start;
+            }
+
+            .graph-host svg {
+                display: block;
+                flex: none;
+            }
+
+            .graph-host g[data-node-id] {
+                cursor: pointer;
+            }
+
+            .graph-host g[data-node-id] rect {
+                transition: filter 120ms ease, stroke-width 120ms ease;
+            }
+
+            .graph-host g[data-node-id]:hover rect,
+            .graph-host g[data-node-id]:focus rect {
+                stroke-width: 3;
+                filter: drop-shadow(0 2px 3px rgba(15, 23, 42, 0.2));
+            }
+
+            .graph-host g[data-node-id]:focus {
+                outline: none;
+            }
+
+            .empty-graph {
+                width: 100%;
+                min-height: 438px;
+                display: grid;
+                place-content: center;
+                gap: 6px;
+                padding: 24px;
+                color: #667085;
+                text-align: center;
+            }
+
+            .empty-graph strong {
+                color: #344054;
+            }
+
+            .diagnostics {
+                margin-top: 14px;
+                border: 1px solid var(--border);
+                border-radius: var(--radius-small);
+                background: var(--surface-muted);
+            }
+
+            .diagnostics summary {
+                padding: 11px 13px;
+                cursor: pointer;
+                font-weight: 700;
+            }
+
+            .diagnostic-list {
+                max-height: 220px;
+                margin: 0;
+                padding: 0 28px 14px 34px;
+                overflow: auto;
+                color: var(--muted);
+                font-family: var(--mono);
+                font-size: 0.82rem;
+                line-height: 1.5;
+            }
+
+            .diagnostic-list li + li {
+                margin-top: 7px;
+            }
+
+            .privacy-note {
+                margin-top: 10px;
+                color: var(--muted);
+                font-size: 0.78rem;
+            }
+
+            .url-help {
+                margin-top: 14px;
+                border-top: 1px solid var(--border);
+                padding-top: 12px;
+                color: var(--muted);
+                font-size: 0.86rem;
+                line-height: 1.5;
+            }
+
+            .url-help summary {
+                width: fit-content;
+                color: var(--accent-strong);
+                font-weight: 700;
+                cursor: pointer;
+            }
+
+            .url-help p {
+                margin: 10px 0 0;
+            }
+
+            .url-help code {
+                display: block;
+                margin-top: 8px;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 9px 10px;
+                overflow-wrap: anywhere;
+                color: var(--ink);
+                background: var(--surface-muted);
+                font-family: var(--mono);
+                font-size: 0.78rem;
+            }
+
+            .node-dialog {
+                width: min(760px, calc(100% - 24px));
+                max-height: min(82vh, 820px);
+                border: 1px solid var(--border-strong);
+                border-radius: var(--radius);
+                padding: 0;
+                color: var(--ink);
+                background: var(--surface);
+                box-shadow: var(--shadow);
+            }
+
+            .node-dialog::backdrop {
+                background: rgba(15, 23, 42, 0.58);
+                backdrop-filter: blur(2px);
+            }
+
+            .node-dialog-header,
+            .node-dialog-actions {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+
+            .node-dialog-header {
+                border-bottom: 1px solid var(--border);
+                padding: 16px 18px;
+            }
+
+            .node-dialog-header h2,
+            .node-dialog-summary {
+                margin: 0;
+            }
+
+            .node-dialog-header h2 {
+                overflow-wrap: anywhere;
+                font-size: 1.08rem;
+            }
+
+            .node-dialog-body {
+                padding: 16px 18px 18px;
+            }
+
+            .node-dialog-summary {
+                color: var(--muted);
+                font-size: 0.84rem;
+            }
+
+            .node-dialog-actions {
+                margin-bottom: 10px;
+            }
+
+            .node-dialog pre {
+                max-height: min(58vh, 590px);
+                margin: 0;
+                border: 1px solid var(--border);
+                border-radius: var(--radius-small);
+                padding: 14px;
+                overflow: auto;
+                color: var(--ink);
+                background: var(--surface-muted);
+                font-family: var(--mono);
+                font-size: 0.8rem;
+                line-height: 1.5;
+                white-space: pre;
+            }
+
+            @media (max-width: 900px) {
+                .input-layout,
+                .controls {
+                    grid-template-columns: 1fr;
+                }
+
+                .drop-zone {
+                    min-height: 150px;
+                }
+
+                .metrics {
+                    grid-template-columns: repeat(2, minmax(110px, 1fr));
+                }
+
+                .toolbar {
+                    align-items: flex-start;
+                    flex-direction: column;
+                }
+            }
+
+            @media (max-width: 620px) {
+                .app-shell {
+                    padding: 22px 10px 48px;
+                }
+
+                .hero {
+                    flex-direction: column;
+                }
+
+                .metrics {
+                    grid-template-columns: 1fr 1fr;
+                }
+
+                .export-row {
+                    width: 100%;
+                }
+
+                .export-row button {
+                    flex: 1 1 92px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <main class="app-shell">
+            <header class="hero" id="ssg-header">
+                <div class="hero-copy">
+                    <h1>Salt State Graph</h1>
+                    <p>
+                        Turn JSON from <code>state.show_highstate</code> or <code>state.show_sls</code>
+                        into an explorable dependency graph. Paste JSON, choose a local file, or load a
+                        base64 URL fragment to begin.
+                    </p>
+                </div>
+            </header>
+
+            <section class="panel" id="ssg-input" aria-labelledby="input-heading">
+                <div class="panel-heading">
+                    <div>
+                        <h2 id="input-heading">Salt JSON input</h2>
+                        <p class="command-example">
+                            <span>Generate input:</span>
+                            <code id="salt-command">salt '*' state.show_highstate --out=json &gt; my-output.json</code>
+                            <button type="button" id="copy-command">Copy command</button>
+                        </p>
+                    </div>
+                </div>
+                <div class="input-layout">
+                    <div class="input-column">
+                        <textarea
+                            id="json-input"
+                            aria-label="Salt highstate JSON"
+                            placeholder='Paste JSON shaped like { "minion": { "state-id": { ... } } }'
+                            spellcheck="false"
+                        ></textarea>
+                        <div class="action-row">
+                            <button class="primary" type="button" id="render-button">Render graph</button>
+                            <label class="file-button">
+                                Choose JSON file
+                                <input id="file-input" type="file" accept=".json,application/json" />
+                            </label>
+                            <button class="subtle" type="button" id="clear-button">Clear</button>
+                        </div>
+                        <div class="status" id="input-status" role="status" aria-live="polite">
+                            Waiting for JSON. Press Ctrl/⌘ + Enter to render pasted input.
+                        </div>
+                    </div>
+                    <div class="drop-zone" id="drop-zone" role="button" tabindex="0">
+                        <span class="drop-icon" aria-hidden="true">⇩</span>
+                        <strong>Drop a JSON file here</strong>
+                        <span>or click this area to browse</span>
+                    </div>
+                </div>
+                <details class="url-help">
+                    <summary>Share or load JSON with the URL fragment</summary>
+                    <p>
+                        After a successful render, compact JSON is automatically encoded into
+                        <code>#state=</code> with the active filters when the fragment is at most 64 KiB.
+                        Copy the updated address to share the same graph view. You can also construct a
+                        URL from the command line:
+                    </p>
+                    <code>open "https://tools.karlquinsland.com/tools/html/salt-state-graph/tool.html#state=$(base64 &lt; my-output.json | tr -d '\n')"</code>
+                </details>
+            </section>
+
+            <section class="panel" id="ssg-results" aria-labelledby="results-heading" hidden>
+                <div class="panel-heading">
+                    <div>
+                        <h2 id="results-heading">Rendered graph</h2>
+                        <p id="render-status" role="status" aria-live="polite">Graph ready.</p>
+                    </div>
+                    <div class="renderer-tabs" role="tablist" aria-label="Graph renderer">
+                        <button
+                            type="button"
+                            id="static-renderer-tab"
+                            role="tab"
+                            aria-selected="true"
+                            aria-controls="graph-viewport"
+                        >
+                            Static
+                        </button>
+                        <button
+                            type="button"
+                            id="live-renderer-tab"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="live-graph-viewport"
+                        >
+                            Live
+                        </button>
+                    </div>
+                </div>
+
+                <div class="metrics" id="ssg-metrics">
+                    <div class="metric">
+                        <span class="metric-value" id="metric-minions">0</span>
+                        <span class="metric-label">Minions</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value" id="metric-nodes">0</span>
+                        <span class="metric-label">Visible nodes</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value" id="metric-edges">0</span>
+                        <span class="metric-label">Visible edges</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value" id="metric-diagnostics">0</span>
+                        <span class="metric-label">Diagnostics</span>
+                    </div>
+                </div>
+
+                <div class="controls" id="ssg-controls">
+                    <label class="field">
+                        <span>Find a state</span>
+                        <input id="search-input" type="search" placeholder="ID, module, name, SLS, or minion" />
+                        <small class="field-hint">Fuzzy matches are highlighted with linked context.</small>
+                    </label>
+                    <label class="field">
+                        <span>Minion</span>
+                        <select id="minion-filter">
+                            <option value="">All minions</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Graph view</span>
+                        <select id="graph-view">
+                            <option value="all">All states and links</option>
+                            <option value="unlinked">Unlinked states only</option>
+                            <option value="connected">Connected states only</option>
+                            <option value="require">require only</option>
+                            <option value="reactive">watch + onchanges only</option>
+                            <option value="watch">watch only</option>
+                            <option value="onchanges">onchanges only</option>
+                            <option value="onfail">onfail only</option>
+                            <option value="listen">listen only</option>
+                            <option value="use">use only</option>
+                            <option value="prereq">prereq only</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="toolbar">
+                    <div class="export-row" aria-label="Download graph">
+                        <button type="button" data-export="svg">Download SVG</button>
+                        <button type="button" data-export="png">Download PNG</button>
+                        <button type="button" data-export="webp">Download WebP</button>
+                        <button type="button" data-export="dot">Download DOT</button>
+                        <button type="button" data-export="json">Download JSON</button>
+                    </div>
+                    <div class="zoom-row" aria-label="Graph zoom">
+                        <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
+                        <span class="zoom-value" id="zoom-value">100%</span>
+                        <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+                        <button type="button" id="zoom-fit">Fit</button>
+                        <button type="button" id="reset-filters" class="subtle">Reset filters</button>
+                    </div>
+                </div>
+
+                <div class="legend" id="graph-legend" aria-label="Requisite colors"></div>
+                <div
+                    class="graph-viewport"
+                    id="graph-viewport"
+                    role="tabpanel"
+                    aria-labelledby="static-renderer-tab"
+                >
+                    <div class="graph-host" id="graph-host">
+                        <div class="empty-graph">
+                            <strong>No visible states</strong>
+                            <span>Adjust the filters to restore graph nodes.</span>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="live-graph-viewport"
+                    id="live-graph-viewport"
+                    role="tabpanel"
+                    aria-labelledby="live-renderer-tab"
+                    hidden
+                >
+                    <div class="live-graph-host" id="live-graph-host"></div>
+                    <div class="live-graph-message" id="live-graph-message" hidden>
+                        <strong>Live graph unavailable</strong>
+                        <span>The static renderer remains available.</span>
+                    </div>
+                    <div class="live-graph-hint">Scroll to zoom · drag to pan · drag nodes to rearrange</div>
+                </div>
+
+                <details class="diagnostics" id="diagnostics-panel">
+                    <summary id="diagnostics-summary">Diagnostics</summary>
+                    <ul class="diagnostic-list" id="diagnostic-list"></ul>
+                </details>
+                <p class="privacy-note">
+                    Generated URLs contain decodable Salt data. Larger inputs are not added to the
+                    address. Clear the tool to remove <code>#state=</code>.
+                </p>
+            </section>
+        </main>
+
+        <dialog
+            class="node-dialog"
+            id="node-dialog"
+            aria-labelledby="node-dialog-title"
+            aria-describedby="node-dialog-summary"
+        >
+            <div class="node-dialog-header">
+                <h2 id="node-dialog-title">State JSON</h2>
+                <button type="button" id="close-node-dialog" aria-label="Close state JSON">Close</button>
+            </div>
+            <div class="node-dialog-body">
+                <div class="node-dialog-actions">
+                    <p class="node-dialog-summary" id="node-dialog-summary"></p>
+                    <button type="button" id="copy-node-json">Copy JSON</button>
+                </div>
+                <pre id="node-dialog-json" tabindex="0"></pre>
+            </div>
+        </dialog>
+
+        <script
+            src="https://cdn.jsdelivr.net/npm/force-graph@1.51.4/dist/force-graph.min.js"
+            integrity="sha384-Hm6GpQcTNI5VqGgGS7lLxTGtEFcxu/kOVV0B7ozIZRu9blWVvigv5httJQZ2qZmY"
+            crossorigin="anonymous"
+        ></script>
+        <script>
+            (() => {
+                "use strict";
+
+                const SVG_NS = "http://www.w3.org/2000/svg";
+                const MAX_FILE_BYTES = 25 * 1024 * 1024;
+                const MAX_URL_FRAGMENT_CHARACTERS = 64 * 1024;
+                const MAX_RASTER_PIXELS = 64_000_000;
+                const MAX_RASTER_DIMENSION = 12_000;
+                const URL_PAYLOAD_TOOL = "salt-state-graph";
+
+                const RULES = Object.freeze({
+                    require: { color: "blue", inverse: false },
+                    require_in: { color: "blue", inverse: true },
+                    require_any: { color: "blue", inverse: false },
+                    watch: { color: "red", inverse: false },
+                    watch_in: { color: "red", inverse: true },
+                    watch_any: { color: "red", inverse: false },
+                    onchanges: { color: "green", inverse: false },
+                    onchanges_in: { color: "green", inverse: true },
+                    onchanges_any: { color: "green", inverse: false },
+                    onfail: { color: "orange", inverse: false },
+                    onfail_in: { color: "orange", inverse: true },
+                    onfail_any: { color: "orange", inverse: false },
+                    onfail_all: { color: "orange", inverse: false },
+                    listen: { color: "teal", inverse: false },
+                    listen_in: { color: "teal", inverse: true },
+                    use: { color: "purple", inverse: false },
+                    use_in: { color: "purple", inverse: true },
+                    prereq: { color: "brown", inverse: true },
+                    prereq_in: { color: "brown", inverse: false },
+                });
+
+                const COLORS = Object.freeze({
+                    blue: "#2563eb",
+                    red: "#dc2626",
+                    green: "#16a34a",
+                    orange: "#ea580c",
+                    teal: "#0f766e",
+                    purple: "#9333ea",
+                    brown: "#92400e",
+                });
+
+                const FAMILY_LABELS = Object.freeze({
+                    blue: "require",
+                    red: "watch",
+                    green: "onchanges",
+                    orange: "onfail",
+                    teal: "listen",
+                    purple: "use",
+                    brown: "prereq",
+                });
+
+                class GraphInputError extends Error {}
+
+                const elements = {
+                    input: document.getElementById("json-input"),
+                    saltCommand: document.getElementById("salt-command"),
+                    copyCommand: document.getElementById("copy-command"),
+                    fileInput: document.getElementById("file-input"),
+                    dropZone: document.getElementById("drop-zone"),
+                    renderButton: document.getElementById("render-button"),
+                    clearButton: document.getElementById("clear-button"),
+                    inputStatus: document.getElementById("input-status"),
+                    results: document.getElementById("ssg-results"),
+                    renderStatus: document.getElementById("render-status"),
+                    minionFilter: document.getElementById("minion-filter"),
+                    graphView: document.getElementById("graph-view"),
+                    searchInput: document.getElementById("search-input"),
+                    resetFilters: document.getElementById("reset-filters"),
+                    staticRendererTab: document.getElementById("static-renderer-tab"),
+                    liveRendererTab: document.getElementById("live-renderer-tab"),
+                    graphViewport: document.getElementById("graph-viewport"),
+                    graphHost: document.getElementById("graph-host"),
+                    liveGraphViewport: document.getElementById("live-graph-viewport"),
+                    liveGraphHost: document.getElementById("live-graph-host"),
+                    liveGraphMessage: document.getElementById("live-graph-message"),
+                    graphLegend: document.getElementById("graph-legend"),
+                    zoomIn: document.getElementById("zoom-in"),
+                    zoomOut: document.getElementById("zoom-out"),
+                    zoomFit: document.getElementById("zoom-fit"),
+                    zoomValue: document.getElementById("zoom-value"),
+                    diagnosticsPanel: document.getElementById("diagnostics-panel"),
+                    diagnosticsSummary: document.getElementById("diagnostics-summary"),
+                    diagnosticList: document.getElementById("diagnostic-list"),
+                    metricMinions: document.getElementById("metric-minions"),
+                    metricNodes: document.getElementById("metric-nodes"),
+                    metricEdges: document.getElementById("metric-edges"),
+                    metricDiagnostics: document.getElementById("metric-diagnostics"),
+                    nodeDialog: document.getElementById("node-dialog"),
+                    nodeDialogTitle: document.getElementById("node-dialog-title"),
+                    nodeDialogSummary: document.getElementById("node-dialog-summary"),
+                    nodeDialogJson: document.getElementById("node-dialog-json"),
+                    closeNodeDialog: document.getElementById("close-node-dialog"),
+                    copyNodeJson: document.getElementById("copy-node-json"),
+                };
+
+                const state = {
+                    graph: null,
+                    visibleGraph: null,
+                    layout: null,
+                    svg: null,
+                    zoom: 1,
+                    sourceName: "salt-state-graph",
+                    searchTimer: null,
+                    inputData: null,
+                    selectedNodeJson: "",
+                    renderer: "static",
+                    liveAvailable: typeof window.ForceGraph === "function",
+                    liveGraph: null,
+                    liveHoverNodeId: null,
+                    liveNeedsFit: false,
+                    liveResizeObserver: null,
+                };
+
+                function isObject(value) {
+                    return value !== null && typeof value === "object" && !Array.isArray(value);
+                }
+
+                function scalarString(value) {
+                    if (typeof value === "string") return value;
+                    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+                    return null;
+                }
+
+                function makeNodeLabel(stateType, stateId) {
+                    return `${stateType.toUpperCase()} - ${stateId}`;
+                }
+
+                function makeNodeId(minion, stateType, stateId, external = false) {
+                    return JSON.stringify([external ? "external" : "state", minion, stateType, stateId]);
+                }
+
+                function declarationName(declaration) {
+                    if (!Array.isArray(declaration)) return null;
+                    for (const item of declaration) {
+                        if (isObject(item) && Object.hasOwn(item, "name")) {
+                            return scalarString(item.name);
+                        }
+                    }
+                    return null;
+                }
+
+                function createNode(minion, stateType, stateId, declaration, sls, external = false) {
+                    return {
+                        id: makeNodeId(minion, stateType, stateId, external),
+                        label: makeNodeLabel(stateType, stateId),
+                        minion,
+                        stateId,
+                        stateType,
+                        name: declarationName(declaration),
+                        sls,
+                        external,
+                    };
+                }
+
+                function globToRegExp(pattern) {
+                    let source = "^";
+                    for (let index = 0; index < pattern.length; index += 1) {
+                        const character = pattern[index];
+                        if (character === "*") {
+                            source += ".*";
+                        } else if (character === "?") {
+                            source += ".";
+                        } else if (character === "[") {
+                            const close = pattern.indexOf("]", index + 1);
+                            if (close === -1) {
+                                source += "\\[";
+                            } else {
+                                let content = pattern.slice(index + 1, close);
+                                if (content.startsWith("!")) content = `^${content.slice(1)}`;
+                                content = content.replace(/\\/g, "\\\\");
+                                source += `[${content}]`;
+                                index = close;
+                            }
+                        } else {
+                            source += character.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&");
+                        }
+                    }
+                    return new RegExp(`${source}$`);
+                }
+
+                function matchesReference(value, pattern) {
+                    if (value === null || value === undefined) return false;
+                    if (/[*?[\]]/.test(pattern)) return globToRegExp(pattern).test(value);
+                    return value === pattern;
+                }
+
+                function findRequisites(declaration) {
+                    const items = Array.isArray(declaration)
+                        ? declaration.filter((item) => isObject(item))
+                        : isObject(declaration)
+                          ? [declaration]
+                          : [];
+                    const found = [];
+                    for (const item of items) {
+                        for (const requisite of Object.keys(RULES)) {
+                            if (Object.hasOwn(item, requisite)) found.push([requisite, item[requisite]]);
+                        }
+                    }
+                    return found;
+                }
+
+                function parseReferences(references, node, requisite, diagnostics) {
+                    const values = Array.isArray(references) ? references : [references];
+                    const parsed = [];
+                    for (const reference of values) {
+                        if (typeof reference === "string") {
+                            parsed.push([null, reference]);
+                            continue;
+                        }
+                        if (isObject(reference)) {
+                            for (const [stateType, rawStateId] of Object.entries(reference)) {
+                                const stateId = scalarString(rawStateId);
+                                if (stateId !== null) {
+                                    parsed.push([stateType, stateId]);
+                                } else {
+                                    diagnostics.push({
+                                        code: "invalid-requisite",
+                                        minion: node.minion,
+                                        reference: null,
+                                        message: `Ignored invalid ${requisite} reference in ${node.label}.`,
+                                    });
+                                }
+                            }
+                            continue;
+                        }
+                        diagnostics.push({
+                            code: "invalid-requisite",
+                            minion: node.minion,
+                            reference: null,
+                            message: `Ignored invalid ${requisite} reference in ${node.label}.`,
+                        });
+                    }
+                    return parsed;
+                }
+
+                function buildGraph(data) {
+                    if (!isObject(data)) {
+                        throw new GraphInputError("Salt output must be a JSON object keyed by minion name.");
+                    }
+                    const minionEntries = Object.entries(data);
+                    if (minionEntries.length === 0) {
+                        throw new GraphInputError("Salt output contains no minions.");
+                    }
+
+                    const nodes = new Map();
+                    const declarations = new Map();
+                    const diagnostics = [];
+                    const minions = [];
+
+                    for (const [minion, minionValue] of minionEntries) {
+                        if (!isObject(minionValue)) {
+                            throw new GraphInputError(`Minion ${JSON.stringify(minion)} did not return state data.`);
+                        }
+                        minions.push(minion);
+                        for (const [stateId, properties] of Object.entries(minionValue)) {
+                            if (stateId.startsWith("__")) continue;
+                            if (!isObject(properties)) {
+                                throw new GraphInputError(
+                                    `State ${JSON.stringify(stateId)} on ${JSON.stringify(minion)} must be an object.`,
+                                );
+                            }
+                            const sls = typeof properties.__sls__ === "string" ? properties.__sls__ : null;
+                            for (const [stateType, declaration] of Object.entries(properties)) {
+                                if (stateType.startsWith("__")) continue;
+                                const node = createNode(minion, stateType, stateId, declaration, sls);
+                                nodes.set(node.id, node);
+                                declarations.set(node.id, [declaration]);
+                            }
+                        }
+                    }
+
+                    if (nodes.size === 0) {
+                        throw new GraphInputError("Salt output contains no state declarations.");
+                    }
+
+                    for (const [minion, minionValue] of minionEntries) {
+                        const rawExtend = minionValue.__extend__ ?? [];
+                        let extensions;
+                        if (isObject(rawExtend)) {
+                            extensions = [rawExtend];
+                        } else if (Array.isArray(rawExtend)) {
+                            extensions = rawExtend;
+                        } else {
+                            diagnostics.push({
+                                code: "invalid-extend",
+                                minion,
+                                reference: null,
+                                message: "Ignored an __extend__ value that is not an array or object.",
+                            });
+                            continue;
+                        }
+
+                        for (const extension of extensions) {
+                            if (!isObject(extension)) continue;
+                            for (const [stateId, block] of Object.entries(extension)) {
+                                if (!isObject(block)) continue;
+                                const extensionSls = typeof block.__sls__ === "string" ? block.__sls__ : null;
+                                for (const [stateType, declaration] of Object.entries(block)) {
+                                    if (stateType.startsWith("__")) continue;
+                                    const identifier = makeNodeId(minion, stateType, stateId);
+                                    if (!nodes.has(identifier)) {
+                                        const node = createNode(
+                                            minion,
+                                            stateType,
+                                            stateId,
+                                            declaration,
+                                            extensionSls,
+                                        );
+                                        nodes.set(node.id, node);
+                                        declarations.set(node.id, [declaration]);
+                                    } else {
+                                        declarations.get(identifier).push(declaration);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    function resolve(minion, stateType, stateId) {
+                        const matches = [];
+                        for (const candidate of nodes.values()) {
+                            if (candidate.external || candidate.minion !== minion) continue;
+                            let matched = false;
+                            if (stateType === "sls") {
+                                matched = matchesReference(candidate.sls, stateId);
+                            } else {
+                                if (stateType !== null && candidate.stateType !== stateType) continue;
+                                matched =
+                                    matchesReference(candidate.stateId, stateId) ||
+                                    matchesReference(candidate.name, stateId);
+                            }
+                            if (matched) matches.push(candidate);
+                        }
+                        return matches;
+                    }
+
+                    function externalNode(minion, stateType, stateId) {
+                        const externalType = stateType ?? "state";
+                        const identifier = makeNodeId(minion, externalType, stateId, true);
+                        if (nodes.has(identifier)) return nodes.get(identifier);
+                        const node = createNode(minion, externalType, stateId, [], null, true);
+                        nodes.set(node.id, node);
+                        return node;
+                    }
+
+                    const edges = [];
+                    const edgeKeys = new Set();
+                    for (const [nodeId, nodeDeclarations] of declarations.entries()) {
+                        const currentNode = nodes.get(nodeId);
+                        for (const declaration of nodeDeclarations) {
+                            for (const [requisite, references] of findRequisites(declaration)) {
+                                const parsed = parseReferences(references, currentNode, requisite, diagnostics);
+                                for (const [stateType, stateId] of parsed) {
+                                    let targets = resolve(currentNode.minion, stateType, stateId);
+                                    if (targets.length === 0) {
+                                        targets = [externalNode(currentNode.minion, stateType, stateId)];
+                                        diagnostics.push({
+                                            code: "unresolved-requisite",
+                                            minion: currentNode.minion,
+                                            reference: stateId,
+                                            message: `Could not resolve ${requisite} target ${JSON.stringify(stateId)}.`,
+                                        });
+                                    }
+                                    const rule = RULES[requisite];
+                                    for (const targetNode of targets) {
+                                        const source = rule.inverse ? currentNode.id : targetNode.id;
+                                        const target = rule.inverse ? targetNode.id : currentNode.id;
+                                        const key = JSON.stringify([source, target, requisite]);
+                                        if (edgeKeys.has(key)) continue;
+                                        edgeKeys.add(key);
+                                        edges.push({ source, target, requisite, color: rule.color });
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    return {
+                        schemaVersion: 1,
+                        minions,
+                        nodes: Array.from(nodes.values()),
+                        edges,
+                        diagnostics,
+                    };
+                }
+
+                function requisiteFamily(requisite) {
+                    return Object.values(FAMILY_LABELS).find(
+                        (family) => requisite === family || requisite.startsWith(`${family}_`),
+                    );
+                }
+
+                function editDistance(left, right, limit) {
+                    if (Math.abs(left.length - right.length) > limit) return limit + 1;
+                    let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+                    for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+                        const current = [leftIndex];
+                        let rowMinimum = current[0];
+                        for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+                            const cost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
+                            current[rightIndex] = Math.min(
+                                previous[rightIndex] + 1,
+                                current[rightIndex - 1] + 1,
+                                previous[rightIndex - 1] + cost,
+                            );
+                            rowMinimum = Math.min(rowMinimum, current[rightIndex]);
+                        }
+                        if (rowMinimum > limit) return limit + 1;
+                        previous = current;
+                    }
+                    return previous[right.length];
+                }
+
+                function hasAdjacentTransposition(value, query) {
+                    if (value.length !== query.length) return false;
+                    const differences = [];
+                    for (let index = 0; index < value.length; index += 1) {
+                        if (value[index] !== query[index]) differences.push(index);
+                    }
+                    return (
+                        differences.length === 2 &&
+                        differences[1] === differences[0] + 1 &&
+                        value[differences[0]] === query[differences[1]] &&
+                        value[differences[1]] === query[differences[0]]
+                    );
+                }
+
+                function fuzzyTokenMatch(value, query) {
+                    if (value.includes(query)) return true;
+                    if (query.length < 4) return false;
+                    const tolerance = query.length >= 8 ? 2 : 1;
+                    const words = value.split(/[^\p{L}\p{N}_-]+/u).filter(Boolean);
+                    return words.some(
+                        (word) =>
+                            hasAdjacentTransposition(word, query) ||
+                            editDistance(word, query, tolerance) <= tolerance,
+                    );
+                }
+
+                function nodeMatchesSearch(node, query) {
+                    const terms = query
+                        .normalize("NFKC")
+                        .toLocaleLowerCase()
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean);
+                    if (terms.length === 0) return true;
+                    const values = [node.label, node.minion, node.stateId, node.stateType, node.name, node.sls]
+                        .filter(Boolean)
+                        .map((value) => value.normalize("NFKC").toLocaleLowerCase());
+                    return terms.every((term) => values.some((value) => fuzzyTokenMatch(value, term)));
+                }
+
+                function filterGraph(graph, options) {
+                    let nodes = graph.nodes.filter(
+                        (node) => !options.minion || node.minion === options.minion,
+                    );
+                    let allowed = new Set(nodes.map((node) => node.id));
+                    const allEdges = graph.edges.filter(
+                        (edge) => allowed.has(edge.source) && allowed.has(edge.target),
+                    );
+                    let edges = allEdges;
+                    const view = options.view ?? "all";
+
+                    if (view === "unlinked") {
+                        const connected = new Set(allEdges.flatMap((edge) => [edge.source, edge.target]));
+                        nodes = nodes.filter((node) => !connected.has(node.id));
+                        edges = [];
+                    } else if (view === "connected") {
+                        const connected = new Set(allEdges.flatMap((edge) => [edge.source, edge.target]));
+                        nodes = nodes.filter((node) => connected.has(node.id));
+                    } else if (view !== "all") {
+                        const families = view === "reactive" ? new Set(["watch", "onchanges"]) : new Set([view]);
+                        edges = allEdges.filter((edge) => families.has(requisiteFamily(edge.requisite)));
+                        const connected = new Set(edges.flatMap((edge) => [edge.source, edge.target]));
+                        nodes = nodes.filter((node) => connected.has(node.id));
+                    }
+                    allowed = new Set(nodes.map((node) => node.id));
+                    edges = edges.filter((edge) => allowed.has(edge.source) && allowed.has(edge.target));
+
+                    const search = (options.search ?? "").trim();
+                    let matchIds = null;
+                    if (search) {
+                        matchIds = new Set(
+                            nodes
+                                .filter((node) => nodeMatchesSearch(node, search))
+                                .map((node) => node.id),
+                        );
+                        const context = new Set(matchIds);
+                        for (const edge of edges) {
+                            if (matchIds.has(edge.source) || matchIds.has(edge.target)) {
+                                context.add(edge.source);
+                                context.add(edge.target);
+                            }
+                        }
+                        nodes = nodes.filter((node) => context.has(node.id));
+                        allowed = new Set(nodes.map((node) => node.id));
+                        edges = edges.filter(
+                            (edge) => allowed.has(edge.source) && allowed.has(edge.target),
+                        );
+                    }
+
+                    return { nodes, edges, matchIds };
+                }
+
+                function wrapLabel(value, width = 31, maxLines = 5) {
+                    const lines = [];
+                    let remaining = value.trim();
+                    while (remaining && lines.length < maxLines) {
+                        if (remaining.length <= width) {
+                            lines.push(remaining);
+                            remaining = "";
+                            break;
+                        }
+                        let cut = remaining.lastIndexOf(" ", width);
+                        if (cut < Math.floor(width * 0.45)) cut = width;
+                        lines.push(remaining.slice(0, cut).trim());
+                        remaining = remaining.slice(cut).trim();
+                    }
+                    if (remaining && lines.length > 0) {
+                        const last = lines.length - 1;
+                        lines[last] = `${lines[last].slice(0, Math.max(1, width - 1))}…`;
+                    }
+                    return lines.length > 0 ? lines : [value];
+                }
+
+                function displayLines(node, multiMinion) {
+                    const prefix = multiMinion ? [`[${node.minion}]`] : [];
+                    return prefix.concat(wrapLabel(node.label));
+                }
+
+                function measureNode(lines) {
+                    const longest = Math.max(1, ...lines.map((line) => Array.from(line).length));
+                    return {
+                        width: Math.max(150, Math.min(520, longest * 7.5 + 30)),
+                        height: lines.length * 18 + 26,
+                    };
+                }
+
+                function graphComponents(nodes, edges) {
+                    const adjacency = new Map(nodes.map((node) => [node.id, new Set()]));
+                    for (const edge of edges) {
+                        adjacency.get(edge.source)?.add(edge.target);
+                        adjacency.get(edge.target)?.add(edge.source);
+                    }
+                    const remaining = new Set(adjacency.keys());
+                    const order = new Map(nodes.map((node, index) => [node.id, index]));
+                    const components = [];
+                    while (remaining.size > 0) {
+                        const start = nodes.find((node) => remaining.has(node.id)).id;
+                        const stack = [start];
+                        const component = [];
+                        remaining.delete(start);
+                        while (stack.length > 0) {
+                            const current = stack.pop();
+                            component.push(current);
+                            for (const adjacent of adjacency.get(current)) {
+                                if (remaining.delete(adjacent)) stack.push(adjacent);
+                            }
+                        }
+                        component.sort((left, right) => order.get(left) - order.get(right));
+                        components.push(component);
+                    }
+                    return components;
+                }
+
+                function graphRanks(component, edges) {
+                    const members = new Set(component);
+                    const successors = new Map(component.map((nodeId) => [nodeId, new Set()]));
+                    const indegree = new Map(component.map((nodeId) => [nodeId, 0]));
+                    for (const edge of edges) {
+                        if (
+                            members.has(edge.source) &&
+                            members.has(edge.target) &&
+                            edge.source !== edge.target &&
+                            !successors.get(edge.source).has(edge.target)
+                        ) {
+                            successors.get(edge.source).add(edge.target);
+                            indegree.set(edge.target, indegree.get(edge.target) + 1);
+                        }
+                    }
+                    const queue = component.filter((nodeId) => indegree.get(nodeId) === 0);
+                    const ranks = new Map(component.map((nodeId) => [nodeId, 0]));
+                    const visited = new Set();
+                    for (let cursor = 0; cursor < queue.length; cursor += 1) {
+                        const current = queue[cursor];
+                        visited.add(current);
+                        for (const successor of successors.get(current)) {
+                            ranks.set(successor, Math.max(ranks.get(successor), ranks.get(current) + 1));
+                            indegree.set(successor, indegree.get(successor) - 1);
+                            if (indegree.get(successor) === 0) queue.push(successor);
+                        }
+                    }
+                    for (const nodeId of component) {
+                        if (!visited.has(nodeId)) ranks.set(nodeId, 0);
+                    }
+                    return ranks;
+                }
+
+                function layoutComponent(component, graph, nodeMap, multiMinion) {
+                    const ranks = graphRanks(component, graph.edges);
+                    const layers = new Map();
+                    for (const nodeId of component) {
+                        const rank = ranks.get(nodeId);
+                        if (!layers.has(rank)) layers.set(rank, []);
+                        layers.get(rank).push(nodeId);
+                    }
+
+                    const sizes = new Map();
+                    for (const nodeId of component) {
+                        const lines = displayLines(nodeMap.get(nodeId), multiMinion);
+                        sizes.set(nodeId, { ...measureNode(lines), lines });
+                    }
+
+                    const layerWidths = new Map();
+                    const layerHeights = new Map();
+                    for (const [rank, nodeIds] of layers.entries()) {
+                        layerWidths.set(rank, Math.max(...nodeIds.map((nodeId) => sizes.get(nodeId).width)));
+                        layerHeights.set(
+                            rank,
+                            nodeIds.reduce((sum, nodeId) => sum + sizes.get(nodeId).height, 0) +
+                                Math.max(0, nodeIds.length - 1) * 24,
+                        );
+                    }
+                    const componentHeight = Math.max(...layerHeights.values()) + 30;
+                    const boxes = new Map();
+                    let x = 15;
+                    for (const rank of Array.from(layers.keys()).sort((left, right) => left - right)) {
+                        const layerWidth = layerWidths.get(rank);
+                        let y = (componentHeight - layerHeights.get(rank)) / 2;
+                        for (const nodeId of layers.get(rank)) {
+                            const size = sizes.get(nodeId);
+                            boxes.set(nodeId, {
+                                x: x + (layerWidth - size.width) / 2,
+                                y,
+                                width: size.width,
+                                height: size.height,
+                                lines: size.lines,
+                            });
+                            y += size.height + 24;
+                        }
+                        x += layerWidth + 76;
+                    }
+                    return { boxes, width: x - 46, height: componentHeight };
+                }
+
+                function makeLayout(graph) {
+                    const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
+                    const multiMinion = new Set(graph.nodes.map((node) => node.minion)).size > 1;
+                    const componentLayouts = graphComponents(graph.nodes, graph.edges).map((component) =>
+                        layoutComponent(component, graph, nodeMap, multiMinion),
+                    );
+                    const totalArea = componentLayouts.reduce(
+                        (sum, component) => sum + component.width * component.height,
+                        0,
+                    );
+                    const targetWidth = Math.max(1000, Math.min(3400, Math.sqrt(totalArea) * 1.8));
+                    const boxes = new Map();
+                    let x = 30;
+                    let y = 30;
+                    let shelfHeight = 0;
+                    let usedWidth = 0;
+                    for (const component of componentLayouts) {
+                        if (x > 30 && x + component.width > targetWidth) {
+                            x = 30;
+                            y += shelfHeight + 34;
+                            shelfHeight = 0;
+                        }
+                        for (const [nodeId, box] of component.boxes.entries()) {
+                            boxes.set(nodeId, { ...box, x: box.x + x, y: box.y + y });
+                        }
+                        usedWidth = Math.max(usedWidth, x + component.width);
+                        x += component.width + 34;
+                        shelfHeight = Math.max(shelfHeight, component.height);
+                    }
+                    return {
+                        width: Math.max(960, Math.ceil(usedWidth + 30)),
+                        height: Math.max(320, Math.ceil(y + shelfHeight + 30)),
+                        boxes,
+                    };
+                }
+
+                function boxCenter(box) {
+                    return [box.x + box.width / 2, box.y + box.height / 2];
+                }
+
+                function edgePoints(source, target) {
+                    if (source === target) {
+                        const right = source.x + source.width;
+                        const top = source.y;
+                        return [
+                            [right - 8, top + 16],
+                            [right + 24, top - 14],
+                            [right + 24, top + 46],
+                            [right - 2, top + 34],
+                        ];
+                    }
+                    const [sourceX, sourceY] = boxCenter(source);
+                    const [targetX, targetY] = boxCenter(target);
+                    const horizontal = Math.abs(targetX - sourceX) >= Math.abs(targetY - sourceY);
+                    if (horizontal && targetX >= sourceX) {
+                        return [
+                            [source.x + source.width, sourceY],
+                            [target.x, targetY],
+                        ];
+                    }
+                    if (horizontal) {
+                        return [
+                            [source.x, sourceY],
+                            [target.x + target.width, targetY],
+                        ];
+                    }
+                    if (targetY >= sourceY) {
+                        return [
+                            [sourceX, source.y + source.height],
+                            [targetX, target.y],
+                        ];
+                    }
+                    return [
+                        [sourceX, source.y],
+                        [targetX, target.y + target.height],
+                    ];
+                }
+
+                function svgElement(name, attributes = {}) {
+                    const element = document.createElementNS(SVG_NS, name);
+                    for (const [key, value] of Object.entries(attributes)) {
+                        element.setAttribute(key, String(value));
+                    }
+                    return element;
+                }
+
+                function appendSvgTitle(parent, value) {
+                    const title = svgElement("title");
+                    title.textContent = value;
+                    parent.appendChild(title);
+                }
+
+                function buildSvg(graph, layout) {
+                    const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
+                    const svg = svgElement("svg", {
+                        xmlns: SVG_NS,
+                        width: layout.width,
+                        height: layout.height,
+                        viewBox: `0 0 ${layout.width} ${layout.height}`,
+                        role: "img",
+                        "aria-labelledby": "graph-title graph-description",
+                    });
+                    const title = svgElement("title", { id: "graph-title" });
+                    title.textContent = "Salt state dependency graph";
+                    const description = svgElement("desc", { id: "graph-description" });
+                    description.textContent = `${graph.nodes.length} states and ${graph.edges.length} requisite edges.`;
+                    svg.append(title, description);
+                    svg.appendChild(
+                        svgElement("rect", {
+                            width: "100%",
+                            height: "100%",
+                            fill: "#ffffff",
+                        }),
+                    );
+
+                    const defs = svgElement("defs");
+                    for (const color of new Set(graph.edges.map((edge) => edge.color))) {
+                        const marker = svgElement("marker", {
+                            id: `arrow-${color}`,
+                            viewBox: "0 0 10 10",
+                            refX: 9,
+                            refY: 5,
+                            markerWidth: 7,
+                            markerHeight: 7,
+                            orient: "auto-start-reverse",
+                        });
+                        marker.appendChild(
+                            svgElement("path", {
+                                d: "M 0 0 L 10 5 L 0 10 z",
+                                fill: COLORS[color],
+                            }),
+                        );
+                        defs.appendChild(marker);
+                    }
+                    svg.appendChild(defs);
+
+                    for (const edge of graph.edges) {
+                        const sourceBox = layout.boxes.get(edge.source);
+                        const targetBox = layout.boxes.get(edge.target);
+                        if (!sourceBox || !targetBox) continue;
+                        const points = edgePoints(sourceBox, targetBox)
+                            .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`)
+                            .join(" ");
+                        const group = svgElement("g");
+                        const sourceLabel = nodeMap.get(edge.source)?.label ?? edge.source;
+                        const targetLabel = nodeMap.get(edge.target)?.label ?? edge.target;
+                        appendSvgTitle(group, `${edge.requisite}: ${sourceLabel} → ${targetLabel}`);
+                        group.appendChild(
+                            svgElement("polyline", {
+                                points,
+                                fill: "none",
+                                stroke: COLORS[edge.color],
+                                "stroke-width": 2,
+                                opacity: 0.74,
+                                "marker-end": `url(#arrow-${edge.color})`,
+                            }),
+                        );
+                        svg.appendChild(group);
+                    }
+
+                    for (const node of graph.nodes) {
+                        const box = layout.boxes.get(node.id);
+                        if (!box) continue;
+                        const searchMatch = graph.matchIds?.has(node.id) ?? false;
+                        const group = svgElement("g", {
+                            "data-node-id": node.id,
+                            role: "button",
+                            tabindex: 0,
+                            "aria-label": `Show source JSON for ${node.label}`,
+                        });
+                        const details = [node.label, `minion: ${node.minion}`];
+                        if (node.name) details.push(`name: ${node.name}`);
+                        if (node.sls) details.push(`sls: ${node.sls}`);
+                        if (node.external) details.push("unresolved external target");
+                        appendSvgTitle(group, details.join("\n"));
+                        const rectangle = svgElement("rect", {
+                            x: box.x,
+                            y: box.y,
+                            width: box.width,
+                            height: box.height,
+                            rx: 8,
+                            fill: searchMatch ? "#e7efff" : node.external ? "#fff7ed" : "#f8fafc",
+                            stroke: searchMatch ? "#234a8a" : node.external ? "#c2410c" : "#475569",
+                            "stroke-width": searchMatch ? 3 : 1.5,
+                        });
+                        if (node.external) rectangle.setAttribute("stroke-dasharray", "6 4");
+                        group.appendChild(rectangle);
+
+                        const firstY = box.y + box.height / 2 - (box.lines.length - 1) * 9 + 5;
+                        const text = svgElement("text", {
+                            x: box.x + box.width / 2,
+                            y: firstY,
+                            "font-family": "ui-monospace, SFMono-Regular, Consolas, monospace",
+                            "font-size": 13,
+                            "text-anchor": "middle",
+                            fill: "#0f172a",
+                        });
+                        box.lines.forEach((line, index) => {
+                            const span = svgElement("tspan", {
+                                x: box.x + box.width / 2,
+                                dy: index === 0 ? 0 : 18,
+                            });
+                            span.textContent = line;
+                            text.appendChild(span);
+                        });
+                        group.appendChild(text);
+                        svg.appendChild(group);
+                    }
+                    return svg;
+                }
+
+                function setInputStatus(message, tone = "") {
+                    elements.inputStatus.textContent = message;
+                    elements.inputStatus.className = `status${tone ? ` ${tone}` : ""}`;
+                }
+
+                function setRenderStatus(message, tone = "") {
+                    elements.renderStatus.textContent = message;
+                    elements.renderStatus.className = tone;
+                }
+
+                function populateMinions(minions) {
+                    const previous = elements.minionFilter.value;
+                    const options = [new Option("All minions", "")];
+                    for (const minion of minions) options.push(new Option(minion, minion));
+                    elements.minionFilter.replaceChildren(...options);
+                    if (minions.includes(previous)) elements.minionFilter.value = previous;
+                }
+
+                function renderDiagnostics(graph) {
+                    elements.diagnosticList.replaceChildren();
+                    elements.diagnosticsSummary.textContent = `Diagnostics (${graph.diagnostics.length})`;
+                    if (graph.diagnostics.length === 0) {
+                        const item = document.createElement("li");
+                        item.textContent = "All requisite references resolved without parser warnings.";
+                        elements.diagnosticList.appendChild(item);
+                        elements.diagnosticsPanel.open = false;
+                        return;
+                    }
+                    for (const diagnostic of graph.diagnostics) {
+                        const item = document.createElement("li");
+                        item.textContent = `[${diagnostic.code}] ${diagnostic.minion}: ${diagnostic.message}`;
+                        elements.diagnosticList.appendChild(item);
+                    }
+                    elements.diagnosticsPanel.open = graph.diagnostics.length <= 8;
+                }
+
+                function renderLegend(graph) {
+                    elements.graphLegend.replaceChildren();
+                    const colors = new Set(graph.edges.map((edge) => edge.color));
+                    if (colors.size === 0) {
+                        elements.graphLegend.textContent = "No dependency edges in the current view.";
+                        return;
+                    }
+                    for (const [color, label] of Object.entries(FAMILY_LABELS)) {
+                        if (!colors.has(color)) continue;
+                        const item = document.createElement("span");
+                        item.className = "legend-item";
+                        item.style.color = COLORS[color];
+                        const line = document.createElement("span");
+                        line.className = "legend-line";
+                        const text = document.createElement("span");
+                        text.textContent = label;
+                        item.append(line, text);
+                        elements.graphLegend.appendChild(item);
+                    }
+                }
+
+                function emptyGraph(message, detail) {
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "empty-graph";
+                    const heading = document.createElement("strong");
+                    heading.textContent = message;
+                    const copy = document.createElement("span");
+                    copy.textContent = detail;
+                    wrapper.append(heading, copy);
+                    elements.graphHost.replaceChildren(wrapper);
+                }
+
+                function currentFilterOptions() {
+                    return {
+                        minion: elements.minionFilter.value,
+                        view: elements.graphView.value,
+                        search: elements.searchInput.value,
+                        renderer: state.renderer,
+                    };
+                }
+
+                function applyFilterOptions(filters) {
+                    const candidate = isObject(filters) ? filters : {};
+                    elements.searchInput.value = typeof candidate.search === "string" ? candidate.search : "";
+                    elements.minionFilter.value = state.graph?.minions.includes(candidate.minion)
+                        ? candidate.minion
+                        : "";
+                    const requestedView = typeof candidate.view === "string" ? candidate.view : "all";
+                    elements.graphView.value = Array.from(elements.graphView.options).some(
+                        (option) => option.value === requestedView,
+                    )
+                        ? requestedView
+                        : "all";
+                    if (candidate.renderer === "static" || candidate.renderer === "live") {
+                        state.renderer = candidate.renderer === "live" && !state.liveAvailable ? "static" : candidate.renderer;
+                    }
+                    updateRendererUi();
+                }
+
+                function updateRendererUi() {
+                    const live = state.renderer === "live" && state.liveAvailable;
+                    elements.staticRendererTab.setAttribute("aria-selected", String(!live));
+                    elements.staticRendererTab.tabIndex = live ? -1 : 0;
+                    elements.liveRendererTab.setAttribute("aria-selected", String(live));
+                    elements.liveRendererTab.tabIndex = live ? 0 : -1;
+                    elements.liveRendererTab.disabled = !state.liveAvailable;
+                    elements.liveRendererTab.title = state.liveAvailable
+                        ? "Animated force-directed canvas"
+                        : "Live view could not load; Static remains available";
+                    elements.graphViewport.hidden = live;
+                    elements.liveGraphViewport.hidden = !live;
+                    elements.zoomValue.textContent = live && state.liveGraph
+                        ? `${Math.round(state.liveGraph.zoom() * 100)}%`
+                        : `${Math.round(state.zoom * 100)}%`;
+                }
+
+                function setLiveMessage(title, detail) {
+                    if (!title) {
+                        elements.liveGraphMessage.hidden = true;
+                        return;
+                    }
+                    elements.liveGraphMessage.querySelector("strong").textContent = title;
+                    elements.liveGraphMessage.querySelector("span").textContent = detail;
+                    elements.liveGraphMessage.hidden = false;
+                }
+
+                function paintLiveNode(node, context, globalScale) {
+                    const radius = node.external ? 5 : 6;
+                    const selected = node.searchMatch || node.id === state.liveHoverNodeId;
+                    context.save();
+                    context.beginPath();
+                    context.arc(node.x, node.y, radius, 0, 2 * Math.PI);
+                    context.fillStyle = selected ? "#315ea8" : node.external ? "#fff7ed" : "#f8fafc";
+                    context.fill();
+                    context.strokeStyle = selected ? "#1d4ed8" : node.external ? "#c2410c" : "#475569";
+                    context.lineWidth = (selected ? 2.5 : 1.5) / Math.max(0.65, globalScale);
+                    if (node.external) context.setLineDash([3, 2]);
+                    context.stroke();
+                    context.setLineDash([]);
+
+                    const fontSize = 12 / globalScale;
+                    const label = node.label.length > 48 ? `${node.label.slice(0, 47)}…` : node.label;
+                    context.font = `600 ${fontSize}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+                    const positionedNeighbors = (node.liveNeighbors ?? []).filter((neighbor) =>
+                        Number.isFinite(neighbor.x),
+                    );
+                    const neighborCenterX = positionedNeighbors.length > 0
+                        ? positionedNeighbors.reduce((total, neighbor) => total + neighbor.x, 0) /
+                          positionedNeighbors.length
+                        : null;
+                    const labelOnRight = neighborCenterX === null ? node.x <= 0 : node.x > neighborCenterX;
+                    context.textAlign = labelOnRight ? "left" : "right";
+                    context.textBaseline = "middle";
+                    context.fillStyle = "#172033";
+                    const labelOffset = radius + 4 / globalScale;
+                    context.fillText(label, node.x + (labelOnRight ? labelOffset : -labelOffset), node.y);
+                    context.restore();
+                }
+
+                function liveTooltip(node) {
+                    const tooltip = document.createElement("span");
+                    tooltip.textContent = `${node.label} · ${node.minion}`;
+                    return tooltip;
+                }
+
+                function resizeLiveGraph() {
+                    if (!state.liveGraph || elements.liveGraphViewport.hidden) return;
+                    const width = Math.max(280, elements.liveGraphViewport.clientWidth);
+                    const height = Math.max(440, elements.liveGraphViewport.clientHeight);
+                    state.liveGraph.width(width).height(height);
+                }
+
+                function fitLiveGraph(duration = 450) {
+                    const nodes = state.liveGraph?.graphData().nodes ?? [];
+                    if (nodes.length === 0) return;
+                    if (nodes.length === 1) {
+                        state.liveGraph.centerAt(nodes[0].x ?? 0, nodes[0].y ?? 0, duration);
+                        state.liveGraph.zoom(2, duration);
+                        return;
+                    }
+                    state.liveGraph.zoomToFit(duration, 54);
+                }
+
+                function ensureLiveGraph() {
+                    if (state.liveGraph) return state.liveGraph;
+                    if (!state.liveAvailable) return null;
+                    try {
+                        const graph = new window.ForceGraph(elements.liveGraphHost)
+                            .backgroundColor("#ffffff")
+                            .nodeId("id")
+                            .nodeVal(5)
+                            .nodeLabel(liveTooltip)
+                            .nodeCanvasObject(paintLiveNode)
+                            .nodeCanvasObjectMode(() => "replace")
+                            .nodePointerAreaPaint((node, color, context) => {
+                                context.fillStyle = color;
+                                context.beginPath();
+                                context.arc(node.x, node.y, 10, 0, 2 * Math.PI);
+                                context.fill();
+                            })
+                            .linkColor((link) => COLORS[link.color])
+                            .linkWidth(1.6)
+                            .linkDirectionalArrowLength(6)
+                            .linkDirectionalArrowColor((link) => COLORS[link.color])
+                            .linkDirectionalArrowRelPos(0.88)
+                            .warmupTicks(18)
+                            .cooldownTicks(70)
+                            .onNodeHover((node) => {
+                                state.liveHoverNodeId = node?.id ?? null;
+                            })
+                            .onNodeClick((node) => showNodeSource(node.id))
+                            .onZoom(({ k }) => {
+                                state.liveNeedsFit = false;
+                                if (state.renderer === "live") {
+                                    elements.zoomValue.textContent = `${Math.round(k * 100)}%`;
+                                }
+                            })
+                            .onEngineStop(() => {
+                                if (!state.liveNeedsFit || state.renderer !== "live") return;
+                                state.liveNeedsFit = false;
+                                fitLiveGraph();
+                            });
+                        graph.d3Force("charge")?.strength(-150);
+                        graph.d3Force("link")?.distance(88);
+                        state.liveGraph = graph;
+                        if (typeof ResizeObserver === "function") {
+                            state.liveResizeObserver = new ResizeObserver(resizeLiveGraph);
+                            state.liveResizeObserver.observe(elements.liveGraphViewport);
+                        } else {
+                            window.addEventListener("resize", resizeLiveGraph);
+                        }
+                        resizeLiveGraph();
+                        return graph;
+                    } catch (error) {
+                        state.liveAvailable = false;
+                        state.renderer = "static";
+                        updateRendererUi();
+                        setRenderStatus(`Live renderer unavailable: ${error.message}`, "warning");
+                        return null;
+                    }
+                }
+
+                function renderLiveGraph() {
+                    const graph = ensureLiveGraph();
+                    if (!graph || !state.visibleGraph) return;
+                    resizeLiveGraph();
+                    if (state.visibleGraph.nodes.length === 0) {
+                        state.liveNeedsFit = false;
+                        graph.graphData({ nodes: [], links: [] });
+                        setLiveMessage("No visible states", "Adjust the filters to restore graph nodes.");
+                        setExportButtons();
+                        return;
+                    }
+                    setLiveMessage(null, null);
+                    const matchIds = state.visibleGraph.matchIds;
+                    const nodes = state.visibleGraph.nodes.map((node) => ({
+                        ...node,
+                        searchMatch: matchIds?.has(node.id) ?? false,
+                        liveNeighbors: [],
+                    }));
+                    const links = state.visibleGraph.edges.map((edge) => ({ ...edge }));
+                    const nodesById = new Map(nodes.map((node) => [node.id, node]));
+                    for (const link of links) {
+                        const source = nodesById.get(link.source);
+                        const target = nodesById.get(link.target);
+                        if (!source || !target) continue;
+                        source.liveNeighbors.push(target);
+                        target.liveNeighbors.push(source);
+                    }
+                    state.liveNeedsFit = true;
+                    graph.graphData({ nodes, links });
+                    graph.d3ReheatSimulation();
+                    setExportButtons();
+                }
+
+                function setRendererMode(renderer, options = {}) {
+                    if (renderer === "live" && !state.liveAvailable) {
+                        setRenderStatus("Live view could not load; Static remains available.", "warning");
+                        return;
+                    }
+                    state.renderer = renderer === "live" ? "live" : "static";
+                    updateRendererUi();
+                    if (state.renderer === "live") {
+                        requestAnimationFrame(renderLiveGraph);
+                        state.liveGraph?.resumeAnimation();
+                    } else {
+                        state.liveGraph?.pauseAnimation();
+                        requestAnimationFrame(fitGraph);
+                    }
+                    setExportButtons();
+                    if (options.updateUrl !== false && state.inputData) syncCurrentUrlState();
+                }
+
+                function updateMetrics(graph, visibleGraph) {
+                    elements.metricMinions.textContent = String(graph.minions.length);
+                    elements.metricNodes.textContent = String(visibleGraph.nodes.length);
+                    elements.metricEdges.textContent = String(visibleGraph.edges.length);
+                    elements.metricDiagnostics.textContent = String(graph.diagnostics.length);
+                }
+
+                function setExportButtons() {
+                    const hasSvg = state.svg !== null;
+                    const hasLiveCanvas = state.liveGraph?.graphData().nodes.length > 0;
+                    document.querySelectorAll("[data-export]").forEach((button) => {
+                        const format = button.dataset.export;
+                        const needsStatic = format === "svg";
+                        const needsRaster = ["png", "webp"].includes(format);
+                        button.disabled =
+                            !state.visibleGraph ||
+                            (needsStatic && (state.renderer === "live" || !hasSvg)) ||
+                            (needsRaster && (state.renderer === "live" ? !hasLiveCanvas : !hasSvg));
+                        if (format === "svg") {
+                            button.title = state.renderer === "live"
+                                ? "SVG export is available in Static view"
+                                : "Download the static vector graph";
+                        }
+                    });
+                }
+
+                function applyZoom(value) {
+                    state.zoom = Math.max(0.12, Math.min(3, value));
+                    elements.zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+                    if (!state.svg || !state.layout) return;
+                    state.svg.style.width = `${state.layout.width * state.zoom}px`;
+                    state.svg.style.height = `${state.layout.height * state.zoom}px`;
+                }
+
+                function zoomGraph(factor) {
+                    if (state.renderer === "live" && state.liveGraph) {
+                        state.liveNeedsFit = false;
+                        const zoom = Math.max(0.12, Math.min(8, state.liveGraph.zoom() * factor));
+                        state.liveGraph.zoom(zoom, 180);
+                        return;
+                    }
+                    applyZoom(state.zoom * factor);
+                }
+
+                function fitGraph() {
+                    if (state.renderer === "live") {
+                        state.liveNeedsFit = false;
+                        fitLiveGraph();
+                        return;
+                    }
+                    if (!state.svg || !state.layout) return;
+                    const availableWidth = Math.max(240, elements.graphViewport.clientWidth - 24);
+                    applyZoom(Math.min(1, availableWidth / state.layout.width));
+                    elements.graphViewport.scrollTo({ top: 0, left: 0 });
+                }
+
+                function renderFilteredGraph() {
+                    if (!state.graph) return;
+                    const visibleGraph = filterGraph(state.graph, currentFilterOptions());
+                    state.visibleGraph = visibleGraph;
+                    state.layout = null;
+                    state.svg = null;
+                    updateMetrics(state.graph, visibleGraph);
+                    renderLegend(visibleGraph);
+
+                    if (visibleGraph.nodes.length === 0) {
+                        emptyGraph("No visible states", "Adjust the filters to restore graph nodes.");
+                        if (state.renderer === "live") renderLiveGraph();
+                        setRenderStatus("The current filters match no states.", "warning");
+                        setExportButtons();
+                        return;
+                    }
+
+                    const layout = makeLayout(visibleGraph);
+                    const svg = buildSvg(visibleGraph, layout);
+                    state.layout = layout;
+                    state.svg = svg;
+                    elements.graphHost.replaceChildren(svg);
+                    const originalCount = state.graph.nodes.length;
+                    const context = visibleGraph.nodes.length === originalCount ? "" : ` of ${originalCount}`;
+                    const searchSummary = visibleGraph.matchIds
+                        ? ` ${visibleGraph.matchIds.size} fuzzy match(es) highlighted.`
+                        : "";
+                    setRenderStatus(
+                        `Showing ${visibleGraph.nodes.length}${context} nodes and ${visibleGraph.edges.length} edges.${searchSummary}`,
+                        "",
+                    );
+                    setExportButtons();
+                    if (state.renderer === "live") {
+                        requestAnimationFrame(renderLiveGraph);
+                    } else {
+                        state.liveGraph?.pauseAnimation();
+                        requestAnimationFrame(fitGraph);
+                    }
+                }
+
+                function renderAndSyncUrlState() {
+                    renderFilteredGraph();
+                    if (state.inputData) syncCurrentUrlState();
+                }
+
+                function resetFilters(options = {}) {
+                    applyFilterOptions(null);
+                    renderFilteredGraph();
+                    if (options.updateUrl !== false && state.inputData) syncCurrentUrlState();
+                }
+
+                function parseAndRender(options = {}) {
+                    const updateUrl = options.updateUrl !== false;
+                    const text = elements.input.value.trim();
+                    if (!text) {
+                        if (updateUrl) clearUrlState();
+                        setInputStatus("Paste or choose a JSON file first.", "warning");
+                        return;
+                    }
+                    try {
+                        const decoded = JSON.parse(text);
+                        const graph = buildGraph(decoded);
+                        state.graph = graph;
+                        state.inputData = decoded;
+                        elements.results.hidden = false;
+                        populateMinions(graph.minions);
+                        renderDiagnostics(graph);
+                        applyFilterOptions(options.filters);
+                        renderFilteredGraph();
+                        const urlState = updateUrl ? syncCurrentUrlState() : "loaded";
+                        const externalCount = graph.nodes.filter((node) => node.external).length;
+                        const suffix = externalCount > 0 ? `, including ${externalCount} unresolved targets` : "";
+                        const urlMessages = {
+                            updated: " Shareable URL updated.",
+                            loaded: " Loaded from the URL fragment.",
+                            "too-large": " The encoded input exceeds 64 KiB, so it was not added to the URL.",
+                            unavailable: " The browser would not allow the URL fragment to be updated.",
+                        };
+                        setInputStatus(
+                            `Parsed ${graph.minions.length} minion(s), ${graph.nodes.length} nodes, and ${graph.edges.length} edges${suffix}.${urlMessages[urlState]}`,
+                            externalCount > 0 || ["too-large", "unavailable"].includes(urlState)
+                                ? "warning"
+                                : "success",
+                        );
+                    } catch (error) {
+                        if (updateUrl) clearUrlState();
+                        state.graph = null;
+                        state.visibleGraph = null;
+                        state.layout = null;
+                        state.svg = null;
+                        state.inputData = null;
+                        state.liveGraph?.graphData({ nodes: [], links: [] });
+                        elements.results.hidden = true;
+                        const message = error instanceof Error ? error.message : String(error);
+                        setInputStatus(`Could not render this input: ${message}`, "error");
+                    }
+                }
+
+                async function loadFile(file) {
+                    if (!file) return;
+                    if (file.size > MAX_FILE_BYTES) {
+                        setInputStatus("That file is larger than the 25 MB browser safety limit.", "error");
+                        return;
+                    }
+                    try {
+                        elements.input.value = await file.text();
+                        state.sourceName = file.name.replace(/\.json$/i, "") || "salt-state-graph";
+                        parseAndRender();
+                    } catch (error) {
+                        setInputStatus(`Could not read ${file.name}: ${error.message}`, "error");
+                    } finally {
+                        elements.fileInput.value = "";
+                    }
+                }
+
+                function hashParameter(name) {
+                    const fragment = window.location.hash.slice(1);
+                    for (const part of fragment.split("&")) {
+                        const separator = part.indexOf("=");
+                        const rawName = separator === -1 ? part : part.slice(0, separator);
+                        let decodedName;
+                        try {
+                            decodedName = decodeURIComponent(rawName);
+                        } catch {
+                            continue;
+                        }
+                        if (decodedName !== name) continue;
+                        const rawValue = separator === -1 ? "" : part.slice(separator + 1);
+                        try {
+                            return decodeURIComponent(rawValue);
+                        } catch {
+                            throw new GraphInputError(`The #${name} URL value contains invalid escaping.`);
+                        }
+                    }
+                    return null;
+                }
+
+                function clearUrlState() {
+                    if (!window.location.hash) return true;
+                    try {
+                        history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+                        return true;
+                    } catch {
+                        return false;
+                    }
+                }
+
+                function encodeBase64UrlUtf8(value) {
+                    const bytes = new TextEncoder().encode(value);
+                    let binary = "";
+                    const chunkSize = 0x8000;
+                    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+                        binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+                    }
+                    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+                }
+
+                function syncUrlState(value) {
+                    const fragment = `state=${encodeBase64UrlUtf8(value)}`;
+                    if (fragment.length > MAX_URL_FRAGMENT_CHARACTERS) {
+                        return clearUrlState() ? "too-large" : "unavailable";
+                    }
+                    try {
+                        history.replaceState(
+                            null,
+                            "",
+                            `${window.location.pathname}${window.location.search}#${fragment}`,
+                        );
+                        return "updated";
+                    } catch {
+                        return "unavailable";
+                    }
+                }
+
+                function makeUrlPayload() {
+                    return {
+                        tool: URL_PAYLOAD_TOOL,
+                        version: 1,
+                        highstate: state.inputData,
+                        filters: currentFilterOptions(),
+                    };
+                }
+
+                function syncCurrentUrlState() {
+                    if (!state.inputData) return "unavailable";
+                    return syncUrlState(JSON.stringify(makeUrlPayload()));
+                }
+
+                function unpackUrlPayload(value) {
+                    if (!isObject(value) || value.tool !== URL_PAYLOAD_TOOL) {
+                        return { highstate: value, filters: null, wrapped: false };
+                    }
+                    if (value.version !== 1) {
+                        throw new GraphInputError(`Unsupported Salt State Graph URL version: ${value.version}.`);
+                    }
+                    if (!isObject(value.highstate)) {
+                        throw new GraphInputError("The Salt State Graph URL does not contain highstate data.");
+                    }
+                    return {
+                        highstate: value.highstate,
+                        filters: isObject(value.filters) ? value.filters : null,
+                        wrapped: true,
+                    };
+                }
+
+                function decodeBase64Utf8(encoded) {
+                    const compact = encoded.replace(/\s+/g, "").replace(/-/g, "+").replace(/_/g, "/");
+                    if (!compact) throw new GraphInputError("The #state URL value is empty.");
+                    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(compact)) {
+                        throw new GraphInputError("The #state URL value is not valid base64.");
+                    }
+                    const remainder = compact.length % 4;
+                    if (remainder === 1) throw new GraphInputError("The #state URL value is not valid base64.");
+                    const padded = compact.padEnd(compact.length + ((4 - remainder) % 4), "=");
+                    let binary;
+                    try {
+                        binary = atob(padded);
+                    } catch {
+                        throw new GraphInputError("The #state URL value is not valid base64.");
+                    }
+                    if (binary.length > MAX_FILE_BYTES) {
+                        throw new GraphInputError("The decoded #state data exceeds the 25 MB browser safety limit.");
+                    }
+                    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+                    try {
+                        return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+                    } catch {
+                        throw new GraphInputError("The #state URL value is not valid UTF-8 JSON text.");
+                    }
+                }
+
+                function loadUrlState() {
+                    let encoded;
+                    try {
+                        encoded = hashParameter("state");
+                        if (encoded === null) return;
+                        const decodedText = decodeBase64Utf8(encoded);
+                        const payload = unpackUrlPayload(JSON.parse(decodedText));
+                        elements.input.value = payload.wrapped
+                            ? JSON.stringify(payload.highstate, null, 2)
+                            : decodedText;
+                        state.sourceName = "salt-state-graph-url";
+                        parseAndRender({ updateUrl: false, filters: payload.filters });
+                    } catch (error) {
+                        const message = error instanceof Error ? error.message : String(error);
+                        setInputStatus(`Could not load URL state: ${message}`, "error");
+                    }
+                }
+
+                function clearTool() {
+                    elements.input.value = "";
+                    elements.fileInput.value = "";
+                    elements.results.hidden = true;
+                    state.graph = null;
+                    state.visibleGraph = null;
+                    state.layout = null;
+                    state.svg = null;
+                    state.inputData = null;
+                    state.liveGraph?.graphData({ nodes: [], links: [] });
+                    state.sourceName = "salt-state-graph";
+                    const urlCleared = clearUrlState();
+                    setInputStatus(
+                        urlCleared
+                            ? "Input and URL state cleared."
+                            : "Input cleared, but the browser would not remove the URL fragment.",
+                        urlCleared ? "success" : "warning",
+                    );
+                    elements.input.focus();
+                }
+
+                function safeBaseName() {
+                    const cleaned = state.sourceName
+                        .replace(/[^a-zA-Z0-9._-]+/g, "-")
+                        .replace(/^-+|-+$/g, "");
+                    return cleaned || "salt-state-graph";
+                }
+
+                function downloadBlob(blob, extension) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = `${safeBaseName()}.${extension}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 0);
+                }
+
+                function serializedSvg() {
+                    if (!state.svg) throw new Error("There is no visible graph to export.");
+                    const clone = state.svg.cloneNode(true);
+                    clone.setAttribute("xmlns", SVG_NS);
+                    clone.removeAttribute("style");
+                    return `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(clone)}\n`;
+                }
+
+                function dotQuote(value) {
+                    return JSON.stringify(value);
+                }
+
+                function buildDot(graph) {
+                    const lines = [
+                        "digraph states {",
+                        "  graph [rankdir=LR, bgcolor=white];",
+                        '  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#475569"];',
+                    ];
+                    for (const node of graph.nodes) {
+                        const attributes = [`label=${dotQuote(node.label)}`];
+                        if (node.external) attributes.push("style=\"rounded,dashed,filled\"", 'color="#c2410c"');
+                        lines.push(`  ${dotQuote(node.id)} [${attributes.join(", ")}];`);
+                    }
+                    for (const edge of graph.edges) {
+                        lines.push(
+                            `  ${dotQuote(edge.source)} -> ${dotQuote(edge.target)} [color=${dotQuote(COLORS[edge.color])}, label=${dotQuote(edge.requisite)}];`,
+                        );
+                    }
+                    lines.push("}");
+                    return `${lines.join("\n")}\n`;
+                }
+
+                function normalizedJson(graph) {
+                    return `${JSON.stringify(
+                        {
+                            schema_version: 1,
+                            minions: Array.from(new Set(graph.nodes.map((node) => node.minion))),
+                            nodes: graph.nodes.map((node) => ({
+                                id: node.id,
+                                label: node.label,
+                                minion: node.minion,
+                                state_id: node.stateId,
+                                state_type: node.stateType,
+                                name: node.name,
+                                sls: node.sls,
+                                external: node.external,
+                            })),
+                            edges: graph.edges,
+                            diagnostics: state.graph?.diagnostics ?? [],
+                        },
+                        null,
+                        2,
+                    )}\n`;
+                }
+
+                async function imageFromSvg(svgText) {
+                    const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const image = new Image();
+                    try {
+                        await new Promise((resolve, reject) => {
+                            image.onload = resolve;
+                            image.onerror = () => reject(new Error("The browser could not rasterize the SVG."));
+                            image.src = url;
+                        });
+                        return image;
+                    } finally {
+                        URL.revokeObjectURL(url);
+                    }
+                }
+
+                async function exportRaster(format) {
+                    if (state.renderer === "live") {
+                        if (!state.liveGraph || state.visibleGraph?.nodes.length === 0) {
+                            throw new Error("There is no visible live graph to export.");
+                        }
+                        fitLiveGraph(0);
+                        await new Promise((resolve) =>
+                            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+                        );
+                        const liveCanvas = elements.liveGraphHost.querySelector("canvas");
+                        if (!liveCanvas) throw new Error("The live graph canvas is unavailable.");
+                        const mime = format === "webp" ? "image/webp" : "image/png";
+                        const blob = await new Promise((resolve, reject) => {
+                            liveCanvas.toBlob(
+                                (result) =>
+                                    result
+                                        ? resolve(result)
+                                        : reject(new Error(`Could not encode ${format}.`)),
+                                mime,
+                                format === "webp" ? 0.92 : undefined,
+                            );
+                        });
+                        if (format === "webp" && blob.type !== "image/webp") {
+                            throw new Error("This browser does not support WebP canvas export.");
+                        }
+                        downloadBlob(blob, format);
+                        return;
+                    }
+                    if (!state.layout) throw new Error("There is no visible graph to export.");
+                    const image = await imageFromSvg(serializedSvg());
+                    const width = state.layout.width;
+                    const height = state.layout.height;
+                    const scale = Math.min(
+                        1,
+                        MAX_RASTER_DIMENSION / width,
+                        MAX_RASTER_DIMENSION / height,
+                        Math.sqrt(MAX_RASTER_PIXELS / (width * height)),
+                    );
+                    const canvas = document.createElement("canvas");
+                    canvas.width = Math.max(1, Math.floor(width * scale));
+                    canvas.height = Math.max(1, Math.floor(height * scale));
+                    const context = canvas.getContext("2d");
+                    context.fillStyle = "#ffffff";
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    const mime = format === "webp" ? "image/webp" : "image/png";
+                    const blob = await new Promise((resolve, reject) => {
+                        canvas.toBlob(
+                            (result) => (result ? resolve(result) : reject(new Error(`Could not encode ${format}.`))),
+                            mime,
+                            format === "webp" ? 0.92 : undefined,
+                        );
+                    });
+                    if (format === "webp" && blob.type !== "image/webp") {
+                        throw new Error("This browser does not support WebP canvas export.");
+                    }
+                    downloadBlob(blob, format);
+                }
+
+                async function exportGraph(format) {
+                    if (!state.visibleGraph) return;
+                    try {
+                        if (format === "svg") {
+                            if (state.renderer === "live") {
+                                throw new Error("Switch to Static view to export SVG.");
+                            }
+                            downloadBlob(new Blob([serializedSvg()], { type: "image/svg+xml;charset=utf-8" }), "svg");
+                        } else if (format === "dot") {
+                            downloadBlob(new Blob([buildDot(state.visibleGraph)], { type: "text/vnd.graphviz;charset=utf-8" }), "dot");
+                        } else if (format === "json") {
+                            downloadBlob(new Blob([normalizedJson(state.visibleGraph)], { type: "application/json;charset=utf-8" }), "json");
+                        } else {
+                            await exportRaster(format);
+                        }
+                        setRenderStatus(`${format.toUpperCase()} download created.`, "success");
+                    } catch (error) {
+                        setRenderStatus(error.message, "error");
+                    }
+                }
+
+                async function copyText(value) {
+                    if (navigator.clipboard && window.isSecureContext) {
+                        try {
+                            await navigator.clipboard.writeText(value);
+                            return true;
+                        } catch {
+                            // Fall through to the selection-based browser fallback.
+                        }
+                    }
+                    const helper = document.createElement("textarea");
+                    helper.value = value;
+                    helper.setAttribute("readonly", "");
+                    helper.style.position = "fixed";
+                    helper.style.opacity = "0";
+                    document.body.appendChild(helper);
+                    helper.select();
+                    let copied = false;
+                    try {
+                        copied = document.execCommand("copy");
+                    } finally {
+                        helper.remove();
+                    }
+                    return copied;
+                }
+
+                async function copyWithFeedback(button, value, defaultLabel) {
+                    const copied = await copyText(value);
+                    button.textContent = copied ? "Copied" : "Copy failed";
+                    setTimeout(() => {
+                        button.textContent = defaultLabel;
+                    }, 1400);
+                }
+
+                function extensionBlocksForState(minionData, stateId) {
+                    const rawExtend = minionData?.__extend__ ?? [];
+                    const extensions = isObject(rawExtend) ? [rawExtend] : rawExtend;
+                    if (!Array.isArray(extensions)) return [];
+                    return extensions
+                        .filter((extension) => isObject(extension) && Object.hasOwn(extension, stateId))
+                        .map((extension) => extension[stateId]);
+                }
+
+                function sourceDocumentForNode(node) {
+                    if (node.external) {
+                        return {
+                            minion: node.minion,
+                            state_id: node.stateId,
+                            state_type: node.stateType,
+                            unresolved: true,
+                            note: "This node represents a requisite target that was not present in the input JSON.",
+                        };
+                    }
+                    const minionData = state.inputData?.[node.minion];
+                    const document = {
+                        minion: node.minion,
+                        state_id: node.stateId,
+                        state_type: node.stateType,
+                    };
+                    if (isObject(minionData) && Object.hasOwn(minionData, node.stateId)) {
+                        document.state = minionData[node.stateId];
+                    }
+                    const extensions = extensionBlocksForState(minionData, node.stateId);
+                    if (extensions.length > 0) document.__extend__ = extensions;
+                    return document;
+                }
+
+                function showNodeSource(nodeId) {
+                    const node = state.graph?.nodes.find((candidate) => candidate.id === nodeId);
+                    if (!node) return;
+                    state.selectedNodeJson = JSON.stringify(sourceDocumentForNode(node), null, 2);
+                    elements.nodeDialogTitle.textContent = node.label;
+                    elements.nodeDialogSummary.textContent = node.external
+                        ? `${node.minion} · unresolved requisite target`
+                        : `${node.minion} · ${node.stateType} state source`;
+                    elements.nodeDialogJson.textContent = state.selectedNodeJson;
+                    elements.copyNodeJson.textContent = "Copy JSON";
+                    elements.nodeDialog.showModal();
+                }
+
+                function nodeGroupFromEvent(event) {
+                    if (!(event.target instanceof Element)) return null;
+                    const group = event.target.closest("g[data-node-id]");
+                    return group && elements.graphHost.contains(group) ? group : null;
+                }
+
+                elements.renderButton.addEventListener("click", parseAndRender);
+                elements.clearButton.addEventListener("click", clearTool);
+                elements.copyCommand.addEventListener("click", () =>
+                    copyWithFeedback(
+                        elements.copyCommand,
+                        elements.saltCommand.textContent,
+                        "Copy command",
+                    ),
+                );
+                elements.fileInput.addEventListener("change", (event) => loadFile(event.target.files[0]));
+                elements.input.addEventListener("keydown", (event) => {
+                    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                        event.preventDefault();
+                        parseAndRender();
+                    }
+                });
+                elements.input.addEventListener("input", () => {
+                    if (!state.graph) return;
+                    const urlCleared = clearUrlState();
+                    setInputStatus(
+                        urlCleared
+                            ? "Input changed. Render again to update the graph and shareable URL."
+                            : "Input changed, but the browser would not remove the stale URL fragment.",
+                        "warning",
+                    );
+                });
+
+                for (const eventName of ["dragenter", "dragover"]) {
+                    elements.dropZone.addEventListener(eventName, (event) => {
+                        event.preventDefault();
+                        elements.dropZone.classList.add("dragover");
+                    });
+                }
+                for (const eventName of ["dragleave", "drop"]) {
+                    elements.dropZone.addEventListener(eventName, (event) => {
+                        event.preventDefault();
+                        elements.dropZone.classList.remove("dragover");
+                    });
+                }
+                elements.dropZone.addEventListener("drop", (event) => loadFile(event.dataTransfer.files[0]));
+                elements.dropZone.addEventListener("click", () => elements.fileInput.click());
+                elements.dropZone.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        elements.fileInput.click();
+                    }
+                });
+
+                elements.minionFilter.addEventListener("change", renderAndSyncUrlState);
+                elements.graphView.addEventListener("change", renderAndSyncUrlState);
+                elements.searchInput.addEventListener("input", () => {
+                    clearTimeout(state.searchTimer);
+                    state.searchTimer = setTimeout(renderAndSyncUrlState, 120);
+                });
+                elements.resetFilters.addEventListener("click", resetFilters);
+                elements.staticRendererTab.addEventListener("click", () => setRendererMode("static"));
+                elements.liveRendererTab.addEventListener("click", () => setRendererMode("live"));
+                for (const tab of [elements.staticRendererTab, elements.liveRendererTab]) {
+                    tab.addEventListener("keydown", (event) => {
+                        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                        event.preventDefault();
+                        const target = ["ArrowRight", "End"].includes(event.key)
+                            ? elements.liveRendererTab
+                            : elements.staticRendererTab;
+                        if (!target.disabled) {
+                            target.focus();
+                            setRendererMode(target === elements.liveRendererTab ? "live" : "static");
+                        }
+                    });
+                }
+
+                elements.closeNodeDialog.addEventListener("click", () => elements.nodeDialog.close());
+                elements.copyNodeJson.addEventListener("click", () =>
+                    copyWithFeedback(elements.copyNodeJson, state.selectedNodeJson, "Copy JSON"),
+                );
+                elements.graphHost.addEventListener("keydown", (event) => {
+                    if (event.key !== "Enter" && event.key !== " ") return;
+                    const group = nodeGroupFromEvent(event);
+                    if (!group) return;
+                    event.preventDefault();
+                    showNodeSource(group.dataset.nodeId);
+                });
+
+                elements.zoomIn.addEventListener("click", () => zoomGraph(1.2));
+                elements.zoomOut.addEventListener("click", () => zoomGraph(1 / 1.2));
+                elements.zoomFit.addEventListener("click", fitGraph);
+                document.querySelectorAll("[data-export]").forEach((button) => {
+                    button.addEventListener("click", () => exportGraph(button.dataset.export));
+                });
+
+                let dragState = null;
+                elements.graphViewport.addEventListener("pointerdown", (event) => {
+                    if (event.button !== 0 || !state.svg || nodeGroupFromEvent(event)) return;
+                    dragState = {
+                        x: event.clientX,
+                        y: event.clientY,
+                        left: elements.graphViewport.scrollLeft,
+                        top: elements.graphViewport.scrollTop,
+                    };
+                    elements.graphViewport.classList.add("dragging");
+                    elements.graphViewport.setPointerCapture(event.pointerId);
+                });
+                elements.graphViewport.addEventListener("pointermove", (event) => {
+                    if (!dragState) return;
+                    elements.graphViewport.scrollLeft = dragState.left - (event.clientX - dragState.x);
+                    elements.graphViewport.scrollTop = dragState.top - (event.clientY - dragState.y);
+                });
+                function finishDrag() {
+                    dragState = null;
+                    elements.graphViewport.classList.remove("dragging");
+                }
+                elements.graphViewport.addEventListener("pointerup", finishDrag);
+                elements.graphViewport.addEventListener("pointercancel", finishDrag);
+                elements.graphHost.addEventListener("click", (event) => {
+                    const group = nodeGroupFromEvent(event);
+                    if (group) showNodeSource(group.dataset.nodeId);
+                });
+
+                window.saltStateGraphTool = Object.freeze({
+                    buildGraph,
+                    filterGraph,
+                    buildDot,
+                    makeLayout,
+                    encodeBase64UrlUtf8,
+                    decodeBase64Utf8,
+                    unpackUrlPayload,
+                });
+                updateRendererUi();
+                setExportButtons();
+                loadUrlState();
+                window.addEventListener("hashchange", loadUrlState);
+            })();
+        </script>
+        <script src="/analytics.js"></script>
+    </body>
+</html>
