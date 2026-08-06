@@ -525,6 +525,8 @@
           <label class="option"><input type="checkbox" id="opt-non-breaking" /><span>Non-breaking / non-joiners</span></label>
           <label class="option"><input type="checkbox" id="opt-special-unicode" /><span>Special Unicode (emoji / symbols)</span></label>
           <label class="option"><input type="checkbox" id="opt-control" /><span>Control chars (newline, tab, etc.)</span></label>
+          <label class="option"><input type="checkbox" id="opt-troublemakers" /><span>Common Unicode troublemakers preset</span></label>
+          <span class="inline-help">Includes NBSP, soft hyphen, line/paragraph separators, direction marks, and variation selectors.</span>
         </div>
 
         <div class="check-card">
@@ -537,7 +539,6 @@
             <button id="apply-custom" class="small secondary">Set custom chars</button>
           </div>
           <span class="inline-help">Custom characters are space-delimited and highlighted one-by-one.</span>
-          <span class="inline-help">Common troublemakers: NBSP (U+00A0), soft hyphen (U+00AD), line/paragraph separators (U+2028 / U+2029), directional marks (U+200E / U+200F), variation selectors (U+FE00+).</span>
         </div>
       </div>
 
@@ -641,6 +642,51 @@
 
   </main>
   <script>
+    const TROUBLEMAKER_PRESET_RULES = [
+      {
+        id: "troublemaker-nbsp",
+        enabled: true,
+        find: "\u00A0",
+        replace: " ",
+      },
+      {
+        id: "troublemaker-soft-hyphen",
+        enabled: true,
+        find: "\u00AD",
+        replace: "",
+      },
+      {
+        id: "troublemaker-line-sep",
+        enabled: true,
+        find: "\u2028",
+        replace: "\n",
+      },
+      {
+        id: "troublemaker-para-sep",
+        enabled: true,
+        find: "\u2029",
+        replace: "\n",
+      },
+      {
+        id: "troublemaker-lrm",
+        enabled: true,
+        find: "\u200E",
+        replace: "",
+      },
+      {
+        id: "troublemaker-rlm",
+        enabled: true,
+        find: "\u200F",
+        replace: "",
+      },
+      ...Array.from({ length: 16 }, (_, index) => ({
+        id: `troublemaker-variation-${index.toString(16).padStart(2, "0")}`,
+        enabled: true,
+        find: String.fromCodePoint(0xFE00 + index),
+        replace: "",
+      })),
+    ];
+
     const DEFAULT_STATE = {
       highlights: {
         zeroWidth: true,
@@ -651,6 +697,7 @@
         punctuation: false,
         custom: false,
       },
+      unicodeTroublemakerPreset: true,
       customChars: "",
       rules: [
         {
@@ -710,6 +757,7 @@
       optNonBreaking: document.getElementById("opt-non-breaking"),
       optSpecialUnicode: document.getElementById("opt-special-unicode"),
       optControl: document.getElementById("opt-control"),
+      optTroublemakers: document.getElementById("opt-troublemakers"),
       optQuotes: document.getElementById("opt-quotes"),
       optPunctuation: document.getElementById("opt-punctuation"),
       optCustom: document.getElementById("opt-custom"),
@@ -786,10 +834,12 @@
         ...DEFAULT_STATE.highlights,
         ...state.highlights,
       };
+      state.unicodeTroublemakerPreset = Boolean(state.unicodeTroublemakerPreset);
       if (!Array.isArray(state.rules) || !state.rules.length) {
         state.rules = DEFAULT_STATE.rules.map((rule) => ({ ...rule }));
       }
       state.rules = state.rules.map(normalizeRule);
+      applyTroublemakerPreset(state.unicodeTroublemakerPreset);
 
       const savedText = localStorage.getItem(STORAGE_TEXT_KEY);
       if (typeof savedText === "string") {
@@ -868,6 +918,10 @@
         state.highlights.control = elements.optControl.checked;
         onStateChange();
       });
+      elements.optTroublemakers.addEventListener("change", () => {
+        state.unicodeTroublemakerPreset = elements.optTroublemakers.checked;
+        onStateChange();
+      });
       elements.optQuotes.addEventListener("change", () => {
         state.highlights.quotes = elements.optQuotes.checked;
         onStateChange();
@@ -943,6 +997,7 @@
       elements.optNonBreaking.checked = Boolean(state.highlights.nonBreaking);
       elements.optSpecialUnicode.checked = Boolean(state.highlights.specialUnicode);
       elements.optControl.checked = Boolean(state.highlights.control);
+      elements.optTroublemakers.checked = Boolean(state.unicodeTroublemakerPreset);
       elements.optQuotes.checked = Boolean(state.highlights.quotes);
       elements.optPunctuation.checked = Boolean(state.highlights.punctuation);
       elements.optCustom.checked = Boolean(state.highlights.custom);
@@ -964,9 +1019,42 @@
         custom: elements.optCustom.checked,
       };
       state.customChars = elements.customCharsInput.value;
+      state.unicodeTroublemakerPreset = elements.optTroublemakers.checked;
       if (!Array.isArray(state.rules) || !state.rules.length) {
         state.rules = DEFAULT_STATE.rules.map((rule) => ({ ...rule }));
       }
+      applyTroublemakerPreset(state.unicodeTroublemakerPreset);
+    }
+
+    function applyTroublemakerPreset(enabled) {
+      const templateRules = new Map(TROUBLEMAKER_PRESET_RULES.map((rule) => [rule.id, rule]));
+
+      if (!enabled) {
+        state.rules = state.rules.filter((rule) => !templateRules.has(rule.id));
+        return;
+      }
+
+      const existingById = new Map(
+        state.rules
+          .filter((rule) => templateRules.has(rule.id))
+          .map((rule) => [rule.id, normalizeRule(rule)]),
+      );
+
+      const nextRules = state.rules.filter((rule) => !templateRules.has(rule.id));
+      for (const template of TROUBLEMAKER_PRESET_RULES) {
+        const existingRule = existingById.get(template.id);
+        if (existingRule) {
+          nextRules.push({
+            ...template,
+            ...existingRule,
+            id: template.id,
+          });
+          continue;
+        }
+        nextRules.push({ ...template });
+      }
+
+      state.rules = nextRules.map(normalizeRule);
     }
 
     function normalizeRule(rule) {
@@ -1049,11 +1137,15 @@
     }
 
     function normalizeState(raw) {
+      const defaultTroublemakerPreset = DEFAULT_STATE.unicodeTroublemakerPreset;
       const normalized = {
         highlights: {
           ...DEFAULT_STATE.highlights,
           ...(raw?.highlights || {}),
         },
+        unicodeTroublemakerPreset: typeof raw?.unicodeTroublemakerPreset === "boolean"
+          ? raw.unicodeTroublemakerPreset
+          : defaultTroublemakerPreset,
         customChars: typeof raw?.customChars === "string" ? raw.customChars : "",
         rules: Array.isArray(raw?.rules) && raw.rules.length ? raw.rules.map(normalizeRule) : DEFAULT_STATE.rules.map((rule) => ({ ...rule })),
       };
@@ -1070,6 +1162,7 @@
         ...target.highlights,
         ...normalizedPatch.highlights,
       };
+      target.unicodeTroublemakerPreset = normalizedPatch.unicodeTroublemakerPreset;
       target.customChars = normalizedPatch.customChars;
       target.rules = normalizedPatch.rules.length
         ? normalizedPatch.rules.map((rule, index) => ({ ...rule, id: rule.id || `r${index}` }))
@@ -1727,18 +1820,29 @@
     }
 
     function isDefaultState(checkState) {
+      const defaultRules = getDefaultRulesForState();
       return (
-        checkState.rules.length === DEFAULT_STATE.rules.length &&
+        checkState.rules.length === defaultRules.length &&
         checkState.customChars === DEFAULT_STATE.customChars &&
-        equalRules(checkState.rules, DEFAULT_STATE.rules) &&
+        equalRules(checkState.rules, defaultRules) &&
         checkState.highlights.zeroWidth === DEFAULT_STATE.highlights.zeroWidth &&
         checkState.highlights.nonBreaking === DEFAULT_STATE.highlights.nonBreaking &&
         checkState.highlights.specialUnicode === DEFAULT_STATE.highlights.specialUnicode &&
         checkState.highlights.control === DEFAULT_STATE.highlights.control &&
         checkState.highlights.quotes === DEFAULT_STATE.highlights.quotes &&
         checkState.highlights.punctuation === DEFAULT_STATE.highlights.punctuation &&
-        checkState.highlights.custom === DEFAULT_STATE.highlights.custom
+        checkState.highlights.custom === DEFAULT_STATE.highlights.custom &&
+        checkState.unicodeTroublemakerPreset === DEFAULT_STATE.unicodeTroublemakerPreset
       );
+    }
+
+    function getDefaultRulesForState() {
+      const baseRules = DEFAULT_STATE.rules.map((rule) => ({ ...rule }));
+      if (!DEFAULT_STATE.unicodeTroublemakerPreset) {
+        return baseRules;
+      }
+      const normalized = TROUBLEMAKER_PRESET_RULES.map((rule) => normalizeRule(rule));
+      return [...baseRules, ...normalized];
     }
 
     function equalRules(currentRules, compareRules) {
