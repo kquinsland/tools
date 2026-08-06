@@ -1,11 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none">
-  <rect width="640" height="640" rx="128" fill="#f4ede3"/>
-  <path d="M170 130h300c22.091 0 40 17.909 40 40v300c0 22.091-17.909 40-40 40H170c-22.091 0-40-17.909-40-40V170c0-22.091 17.909-40 40-40z" fill="#efe1d1"/>
-  <path d="M236 220h168v28H236z" fill="#c46b2e"/>
-  <path d="M236 276h168v28H236z" fill="#8b5b3a"/>
-  <path d="M236 332h168v28H236z" fill="#6f8f7a"/>
-  <path d="M236 388h96v28H236z" fill="#2b6f6b"/>
-  <path d="M352 446l74-74 28 28-102 102-74-74 28-28 46 46z" fill="#2b6f6b"/>
-  <path d="M248 220v214" stroke="#c46b2e" stroke-width="18" stroke-linecap="round"/>
-  <path d="M248 220l-50 50M248 220l50 50M236 434l-48-48M214 466l-48-48" stroke="#2f6f4d" stroke-width="12" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none" role="img" aria-label="Text Character Cleaner icon">
+  <rect width="640" height="640" rx="128" fill="#0f172a"/>
+  <rect x="96" y="96" width="448" height="448" rx="72" fill="#f8fafc"/>
+  <rect x="152" y="168" width="336" height="32" rx="16" fill="#1d4ed8"/>
+  <rect x="152" y="224" width="336" height="32" rx="16" fill="#1d4ed8"/>
+  <rect x="152" y="280" width="248" height="32" rx="16" fill="#1d4ed8"/>
+  <rect x="152" y="336" width="300" height="32" rx="16" fill="#334155"/>
+  <rect x="152" y="392" width="220" height="32" rx="16" fill="#334155"/>
+  <path d="M352 448c0 44.183-35.817 80-80 80" stroke="#0ea5e9" stroke-width="28" stroke-linecap="round"/>
+  <path d="M356 448h108" stroke="#0284c7" stroke-width="24" stroke-linecap="round"/>
+  <path d="M416 388l56 56-56 56" stroke="#0f172a" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

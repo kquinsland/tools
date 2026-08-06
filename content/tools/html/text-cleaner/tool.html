@@ -531,12 +531,13 @@
           <h3>Punctuation and quotes</h3>
           <label class="option"><input type="checkbox" id="opt-quotes" /><span>Left/right quotation marks</span></label>
           <label class="option"><input type="checkbox" id="opt-punctuation" /><span>Punctuation marks</span></label>
-          <label class="option"><input type="checkbox" id="opt-custom" /><span>Custom characters</span></label>
+          <label class="option"><input type="checkbox" id="opt-custom" /><span>Custom characters (space-delimited)</span></label>
           <div class="row-group">
-            <input id="custom-chars" class="field" type="text" placeholder="e.g. © ™ §" />
+            <input id="custom-chars" class="field" type="text" placeholder="e.g. © ™ § (space between each)" />
             <button id="apply-custom" class="small secondary">Set custom chars</button>
           </div>
-          <span class="inline-help">Custom characters are tracked and highlighted one-by-one.</span>
+          <span class="inline-help">Custom characters are space-delimited and highlighted one-by-one.</span>
+          <span class="inline-help">Common troublemakers: NBSP (U+00A0), soft hyphen (U+00AD), line/paragraph separators (U+2028 / U+2029), directional marks (U+200E / U+200F), variation selectors (U+FE00+).</span>
         </div>
       </div>
 
@@ -1573,7 +1574,17 @@
     }
 
     function getCustomCharSet() {
-      return new Set([...state.customChars]);
+      const tokens = state.customChars
+        .trim()
+        .split(/\s+/u)
+        .filter(Boolean);
+      const set = new Set();
+      for (const token of tokens) {
+        for (const ch of token) {
+          set.add(ch);
+        }
+      }
+      return set;
     }
 
     function isZeroWidthChar(char) {
