@@ -1,12 +1,12 @@
 ---
 version: 2
 stats:
-  total_tools: 22
+  total_tools: 23
   tools_with_dependencies: 11
-  tools_without_dependencies: 11
+  tools_without_dependencies: 12
   languages:
     - language: "html"
-      count: 19
+      count: 20
     - language: "python"
       count: 3
   dependency_hosts:
@@ -416,6 +416,20 @@ tools:
         - "diff"
         - "conflict"
         - "triage"
+  - html/text-cleaner:
+      title: "Text Character Cleaner"
+      language: "html"
+      description: "Inspect, highlight, and replace hidden or troublesome text characters with configurable rules."
+      toolbox:
+        file: "tool.html"
+        introduced_commit: null
+        updated_commit: null
+      tags:
+        - "html"
+        - "text"
+        - "unicode"
+        - "cleaning"
+        - "replace"
   - html/url-inspect-rewrite:
       title: "URL Inspect & Rewrite"
       language: "html"

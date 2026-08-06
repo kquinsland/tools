@@ -18,6 +18,7 @@
 - [QR Code Generator](https://tools.karlquinsland.com/tools/html/qr-code-generator/): Generate QR codes entirely in your browser, including calendar tasks and common share formats.
 - [Salt State Graph](https://tools.karlquinsland.com/tools/html/salt-state-graph/): Paste or open Salt highstate JSON and explore its requisite graph entirely in your browser.
 - [Sync Conflict Triage](https://tools.karlquinsland.com/tools/html/syncthing-conflict-triage/): Scan a folder for SyncThing-style conflict files, compare side-by-side, edit in place, and stage deletions safely.
+- [Text Character Cleaner](https://tools.karlquinsland.com/tools/html/text-cleaner/): Inspect, highlight, and replace hidden or troublesome text characters with configurable rules.
 - [URL Inspect & Rewrite](https://tools.karlquinsland.com/tools/html/url-inspect-rewrite/): Parse a URL, review query parameters, and rebuild a cleaner link.
 - [URL to Markdown Links](https://tools.karlquinsland.com/tools/html/url-markdown-links/): Extract URLs from text and format them as Markdown links with optional list and checkbox helpers.
 - [YAML ↔ JSON Convert & Compare](https://tools.karlquinsland.com/tools/html/yaml-json-convert-compare/): Convert YAML, JSON, JSONC, and JSON5 documents, or compare two files for logical equality with formatting controls.
