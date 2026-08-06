@@ -448,6 +448,10 @@
       margin-top: 4px;
     }
 
+    .rule-value-preview {
+      margin-top: 4px;
+    }
+
     .badge {
       display: inline-block;
       border-radius: 999px;
@@ -525,7 +529,7 @@
           <label class="option"><input type="checkbox" id="opt-non-breaking" /><span>Non-breaking / non-joiners</span></label>
           <label class="option"><input type="checkbox" id="opt-special-unicode" /><span>Special Unicode (emoji / symbols)</span></label>
           <label class="option"><input type="checkbox" id="opt-control" /><span>Control chars (newline, tab, etc.)</span></label>
-          <label class="option"><input type="checkbox" id="opt-troublemakers" /><span>Common Unicode troublemakers preset</span></label>
+          <label class="option"><input type="checkbox" id="opt-troublemakers" /><span>Common Unicode troublemakers</span></label>
           <span class="inline-help">Includes NBSP, soft hyphen, line/paragraph separators, direction marks, and variation selectors.</span>
         </div>
 
@@ -556,10 +560,12 @@
         <div class="field">
           <label for="new-rule-find">Find</label>
           <input id="new-rule-find" type="text" placeholder="exact text" />
+          <span id="new-rule-find-preview" class="inline-help rule-value-preview">Current value: empty</span>
         </div>
         <div class="field">
           <label for="new-rule-replace">Replace with</label>
           <input id="new-rule-replace" type="text" placeholder="replacement" />
+          <span id="new-rule-replace-preview" class="inline-help rule-value-preview">Current value: empty</span>
         </div>
         <button id="add-rule" class="secondary">Add rule</button>
         <button id="add-rule-empty" class="ghost small" title="Adds a blank rule you can edit">Add empty row</button>
@@ -767,6 +773,8 @@
       rulesBody: document.getElementById("rules-body"),
       newFind: document.getElementById("new-rule-find"),
       newReplace: document.getElementById("new-rule-replace"),
+      newFindPreview: document.getElementById("new-rule-find-preview"),
+      newReplacePreview: document.getElementById("new-rule-replace-preview"),
       addRule: document.getElementById("add-rule"),
       addRuleEmpty: document.getElementById("add-rule-empty"),
       applyReplacements: document.getElementById("apply-replacements"),
@@ -943,6 +951,15 @@
         onStateChange();
       });
 
+      elements.newFind.addEventListener("input", () => {
+        updateNewRuleInputPreview(elements.newFind, elements.newFindPreview);
+      });
+      elements.newReplace.addEventListener("input", () => {
+        updateNewRuleInputPreview(elements.newReplace, elements.newReplacePreview);
+      });
+      updateNewRuleInputPreview(elements.newFind, elements.newFindPreview);
+      updateNewRuleInputPreview(elements.newReplace, elements.newReplacePreview);
+
       elements.newFind.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
           event.preventDefault();
@@ -959,6 +976,8 @@
       elements.addRuleEmpty.addEventListener("click", () => {
         addRule({ id: nextRuleId(), enabled: true, find: "", replace: "" });
         renderRules();
+        updateNewRuleInputPreview(elements.newFind, elements.newFindPreview);
+        updateNewRuleInputPreview(elements.newReplace, elements.newReplacePreview);
         onStateChange();
       });
       elements.applyReplacements.addEventListener("click", applyReplacements);
@@ -1241,24 +1260,34 @@
         enabledCell.appendChild(enabled);
 
         const findCell = document.createElement("td");
+        const findHelp = document.createElement("span");
         const find = document.createElement("input");
         find.type = "text";
         find.value = rule.find;
+        findHelp.className = "inline-help rule-value-preview";
+        findHelp.textContent = formatRuleValuePreview(rule.find);
         find.addEventListener("input", () => {
           rule.find = find.value;
+          findHelp.textContent = formatRuleValuePreview(rule.find);
           onStateChange();
         });
         findCell.appendChild(find);
+        findCell.appendChild(findHelp);
 
         const replaceCell = document.createElement("td");
+        const replaceHelp = document.createElement("span");
         const replace = document.createElement("input");
         replace.type = "text";
         replace.value = rule.replace;
+        replaceHelp.className = "inline-help rule-value-preview";
+        replaceHelp.textContent = formatRuleValuePreview(rule.replace);
         replace.addEventListener("input", () => {
           rule.replace = replace.value;
+          replaceHelp.textContent = formatRuleValuePreview(rule.replace);
           onStateChange();
         });
         replaceCell.appendChild(replace);
+        replaceCell.appendChild(replaceHelp);
 
         const actionsCell = document.createElement("td");
         const actions = document.createElement("div");
@@ -1320,6 +1349,8 @@
       addRule({ find, replace, enabled: true });
       elements.newFind.value = "";
       elements.newReplace.value = "";
+      updateNewRuleInputPreview(elements.newFind, elements.newFindPreview);
+      updateNewRuleInputPreview(elements.newReplace, elements.newReplacePreview);
       renderRules();
       onStateChange();
       updateRuleStatus("Rule added.");
@@ -1521,6 +1552,13 @@
       return `<ul>${frequencies.map(({ char, count }) => `<li><span>${formatDisplayChar(char)}</span><strong>${count}</strong></li>`).join("")}</ul>`;
     }
 
+    function updateNewRuleInputPreview(input, output) {
+      if (!input || !output) {
+        return;
+      }
+      output.textContent = formatRuleValuePreview(input.value);
+    }
+
     function countWords(text) {
       if (!text.trim()) {
         return 0;
@@ -1553,6 +1591,42 @@
         return "<code>ZWSP</code>";
       }
       return escapeHtml(char);
+    }
+
+    function formatRuleValuePreview(value) {
+      const text = String(value || "");
+      if (!text) {
+        return "Current value: empty";
+      }
+      const rendered = [...text].map((char) => `${formatRuleValueChar(char)} (${formatRuleValueCodePoint(char)})`).join(" • ");
+      return `Current value: ${rendered}`;
+    }
+
+    function formatRuleValueChar(char) {
+      const rendered = visibleLabelForChar(char);
+      return rendered === char ? escapeForPreview(char) : rendered;
+    }
+
+    function formatRuleValueCodePoint(char) {
+      const cp = char.codePointAt(0);
+      const hex = cp.toString(16).toUpperCase().padStart(4, "0");
+      return `U+${hex}`;
+    }
+
+    function escapeForPreview(char) {
+      if (char === "\n") {
+        return "\\n";
+      }
+      if (char === "\r") {
+        return "\\r";
+      }
+      if (char === "\t") {
+        return "\\t";
+      }
+      if (char === " ") {
+        return "[space]";
+      }
+      return char;
     }
 
     function buildHighlightedMarkup(text) {
