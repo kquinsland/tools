@@ -16,6 +16,7 @@
 - [Kustomize Error Formatter](https://tools.karlquinsland.com/tools/html/kustomize-error-formatter/): Turn dense Kustomize build errors into readable cause chains, path highlights, and conflict resource summaries.
 - [Makefile Dependency Graph](https://tools.karlquinsland.com/tools/html/makefile-dependency-graph/): Paste a Makefile and instantly view target dependencies as DOT and Mermaid state diagrams.
 - [QR Code Generator](https://tools.karlquinsland.com/tools/html/qr-code-generator/): Generate QR codes entirely in your browser, including calendar tasks and common share formats.
+- [Salt State Graph](https://tools.karlquinsland.com/tools/html/salt-state-graph/): Paste or open Salt highstate JSON and explore its requisite graph entirely in your browser.
 - [Sync Conflict Triage](https://tools.karlquinsland.com/tools/html/syncthing-conflict-triage/): Scan a folder for SyncThing-style conflict files, compare side-by-side, edit in place, and stage deletions safely.
 - [URL Inspect & Rewrite](https://tools.karlquinsland.com/tools/html/url-inspect-rewrite/): Parse a URL, review query parameters, and rebuild a cleaner link.
 - [URL to Markdown Links](https://tools.karlquinsland.com/tools/html/url-markdown-links/): Extract URLs from text and format them as Markdown links with optional list and checkbox helpers.

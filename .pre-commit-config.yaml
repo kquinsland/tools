@@ -27,12 +27,12 @@ repos:
 
     # Fix any markdown issues w/ the rendered docs
     - repo: https://github.com/DavidAnson/markdownlint-cli2
-      rev: v0.22.1
+      rev: v0.23.1
       hooks:
           - id: markdownlint-cli2
 
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.15.19
+      rev: v0.15.22
       hooks:
           # Lint, fixing what can be automatically fixed
           - id: ruff-check
@@ -50,7 +50,7 @@ repos:
           - id: zizmor
 
     - repo: https://github.com/renovatebot/pre-commit-hooks
-      rev: 43.242.0
+      rev: 43.272.6
       hooks:
           - id: renovate-config-validator
             args:
