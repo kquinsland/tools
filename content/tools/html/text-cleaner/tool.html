@@ -1,0 +1,1964 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Text Character Cleaner</title>
+  <link rel="stylesheet" href="/common.css" />
+  <style>
+    :root {
+      --bg: #f6f2ec;
+      --paper: #ffffff;
+      --paper-soft: #fdf8f2;
+      --ink: #1d201e;
+      --muted: #5e635e;
+      --line: #ded3c7;
+      --accent: #c46b2e;
+      --accent-soft: #f3decc;
+      --success: #1f6f4d;
+      --success-bg: #deede2;
+      --warning: #9d3b26;
+      --warning-soft: #f7ddd8;
+      --control: #5f3ea6;
+      --shadow: 0 16px 42px rgba(24, 23, 23, 0.1);
+      --radius: 16px;
+      --error: #b54a4a;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #2f353b;
+        --paper: #3c434b;
+        --paper-soft: #323841;
+        --ink: #e8ecef;
+        --muted: #b8bdc5;
+        --line: #5f6974;
+        --accent: #e2a26c;
+        --accent-soft: #4e3422;
+        --success: #7be0af;
+        --success-bg: #274136;
+        --warning: #f3a56d;
+        --warning-soft: #3e2f25;
+        --control: #b6a4ff;
+        --shadow: 0 16px 42px rgba(0, 0, 0, 0.35);
+      }
+    }
+
+    body {
+      margin: 0;
+      padding: 32px 16px 48px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--bg) 85%, #ffffff 15%), var(--bg));
+      color: var(--ink);
+    }
+
+    .tool-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 12px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 1.6rem + 1vw, 2.2rem);
+      line-height: 1.1;
+    }
+
+    header p {
+      margin: 0.2rem 0 0;
+      color: var(--muted);
+      max-width: 72ch;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 2px;
+    }
+
+    button,
+    .button {
+      border: 1px solid transparent;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      padding: 8px 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: transparent;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    button.ghost {
+      background: transparent;
+      color: var(--ink);
+      border-color: var(--line);
+      border-style: dashed;
+    }
+
+    button.small {
+      padding: 4px 10px;
+      font-size: 0.88rem;
+      border-radius: 999px;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    textarea,
+    input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--paper-soft);
+      color: var(--ink);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+    }
+
+    textarea:focus,
+    input[type="text"]:focus,
+    button:focus-visible,
+    .drop-zone:focus-visible,
+    .check-grid input:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--accent) 65%, transparent);
+      outline-offset: 2px;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--line);
+      border-radius: 14px;
+      padding: 15px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+      background: color-mix(in srgb, var(--paper-soft) 70%, transparent);
+      position: relative;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragging {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent-soft) 45%, transparent);
+    }
+
+    .drop-zone input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    .drop-zone-title {
+      display: block;
+      font-weight: 600;
+    }
+
+    .drop-zone-subtitle {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 4px;
+      display: block;
+    }
+
+    .file-meta {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+    }
+
+    .check-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--paper-soft);
+      padding: 10px 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .check-card h3 {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .option {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.93rem;
+      font-weight: 500;
+    }
+
+    .option input {
+      accent-color: var(--accent);
+    }
+
+    .rules-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .rules-table th,
+    .rules-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 10px;
+      vertical-align: middle;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+
+    .rules-table thead th {
+      background: var(--accent-soft);
+      color: var(--ink);
+    }
+
+    .rules-table tbody tr:nth-child(odd) {
+      background: var(--paper-soft);
+    }
+
+    .rules-table input[type="text"] {
+      padding: 7px 9px;
+      font-size: 0.9rem;
+      min-width: 110px;
+    }
+
+    .rule-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .stats-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+
+    .stat {
+      background: var(--paper-soft);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .stat .label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 2px;
+    }
+
+    .stat .value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stats-list {
+      margin: 8px 0 0;
+      display: grid;
+      gap: 8px;
+      max-height: 220px;
+      overflow: auto;
+      padding-right: 6px;
+    }
+
+    .stats-list ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .stats-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px dashed var(--line);
+      padding: 4px 0;
+      font-size: 0.9rem;
+    }
+
+    .char-frequency-title {
+      margin: 6px 0 0;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .rendered {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      min-height: 180px;
+      padding: 10px 12px;
+      background: var(--paper-soft);
+      white-space: pre-wrap;
+      overflow: auto;
+      line-height: 1.45;
+      font-family: "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.93rem;
+      word-break: break-word;
+      display: block;
+    }
+
+    .status {
+      font-size: 0.9rem;
+      color: var(--muted);
+      min-height: 1.2rem;
+    }
+
+    .status.success {
+      color: var(--success);
+    }
+
+    .status.error {
+      color: var(--warning);
+      font-weight: 600;
+    }
+
+    .hl-token {
+      border-radius: 6px;
+      padding: 0 2px;
+      margin: 0 0.5px;
+      display: inline-block;
+      line-height: 1.35;
+      border: 1px solid transparent;
+      white-space: pre;
+    }
+
+    .hl-zero-width {
+      background: #f8d9c5;
+      border-color: #f1a272;
+      color: #5a240a;
+    }
+
+    .hl-non-break {
+      background: #d9eaff;
+      border-color: #71a7e0;
+      color: #0b3f66;
+    }
+
+    .hl-special-unicode {
+      background: #dfdf9f;
+      border-color: #9d9d2f;
+      color: #3e3b13;
+    }
+
+    .hl-control {
+      background: #d8e3ff;
+      border-color: #6f84e2;
+      color: #1e2e74;
+      font-weight: 700;
+    }
+
+    .hl-quote {
+      background: #ffd3e1;
+      border-color: #e27ea8;
+      color: #6e2c54;
+    }
+
+    .hl-punc {
+      background: #e2d8ff;
+      border-color: #9f87eb;
+      color: #3f286a;
+    }
+
+    .hl-custom {
+      background: #d7f6e6;
+      border-color: #80bf9b;
+      color: #134e30;
+    }
+
+    .row-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: 8px;
+    }
+
+    .row-group .field {
+      min-width: 180px;
+      flex: 1 1 auto;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .inline-help {
+      display: block;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+
+    .rule-value-preview {
+      margin-top: 4px;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      background: var(--paper-soft);
+      border: 1px solid var(--line);
+      padding: 2px 8px;
+      font-size: 0.79rem;
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin: 0;
+    }
+
+    @media (max-width: 800px) {
+      body {
+        padding: 16px 10px 32px;
+      }
+
+      .toolbar {
+        align-items: stretch;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="tool-shell">
+    <header>
+      <h1>Text Character Cleaner</h1>
+      <p>
+        Paste text or drop a file, then highlight and replace problematic characters
+        (invisible Unicode, quotes, punctuation and more). All processing runs locally.
+      </p>
+    </header>
+
+    <section class="panel" id="input-section">
+      <h2 class="section-title">Input text</h2>
+
+      <label for="text-input">Paste or type text</label>
+      <textarea id="text-input" placeholder="Paste text here to start cleaning..."></textarea>
+
+      <label class="drop-zone" for="file-input" id="drop-zone">
+        <span class="drop-zone-title">Drag and drop a file, or click to upload</span>
+        <span class="drop-zone-subtitle">Text files are read as UTF-8 in-browser</span>
+        <input type="file" id="file-input" accept="*/*" />
+      </label>
+      <p id="file-meta" class="file-meta">No file loaded.</p>
+
+      <div class="toolbar">
+        <button id="clear-input" class="secondary">Clear input</button>
+        <span id="input-status" class="status" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="panel" id="render-highlight-section">
+      <h2 class="section-title">Rendered preview with highlights</h2>
+      <p class="inline-help">
+        This preview renders your raw input with special characters highlighted.
+        Use the controls below to decide what to show.
+      </p>
+
+      <div class="check-grid" id="highlight-options">
+        <div class="check-card">
+          <h3>Unicode cleanup</h3>
+          <label class="option"><input type="checkbox" id="opt-zero-width" /><span>Zero-width spaces + BOM</span></label>
+          <label class="option"><input type="checkbox" id="opt-non-breaking" /><span>Non-breaking / non-joiners</span></label>
+          <label class="option"><input type="checkbox" id="opt-special-unicode" /><span>Special Unicode (emoji / symbols)</span></label>
+          <label class="option"><input type="checkbox" id="opt-control" /><span>Control chars (newline, tab, etc.)</span></label>
+          <label class="option"><input type="checkbox" id="opt-troublemakers" /><span>Common Unicode troublemakers</span></label>
+          <span class="inline-help">Includes NBSP, soft hyphen, line/paragraph separators, direction marks, and variation selectors.</span>
+        </div>
+
+        <div class="check-card">
+          <h3>Punctuation and quotes</h3>
+          <label class="option"><input type="checkbox" id="opt-quotes" /><span>Left/right quotation marks</span></label>
+          <label class="option"><input type="checkbox" id="opt-punctuation" /><span>Punctuation marks</span></label>
+          <label class="option"><input type="checkbox" id="opt-custom" /><span>Custom characters (space-delimited)</span></label>
+          <div class="row-group">
+            <input id="custom-chars" class="field" type="text" placeholder="e.g. © ™ § (space between each)" />
+            <button id="apply-custom" class="small secondary">Set custom chars</button>
+          </div>
+          <span class="inline-help">Custom characters are space-delimited and highlighted one-by-one.</span>
+        </div>
+      </div>
+
+      <pre id="rendered-text" class="rendered" aria-live="polite"></pre>
+    </section>
+
+    <section class="panel" id="replace-section">
+      <h2 class="section-title">Replacement rules</h2>
+      <p class="inline-help">
+        Rules are applied sequentially in order. Disable any rule with its checkbox.
+        Add new rules for quick bulk cleanup and keep them for next sessions.
+      </p>
+
+      <div id="quick-add-row" class="row-group">
+        <div class="field">
+          <label for="new-rule-find">Find</label>
+          <input id="new-rule-find" type="text" placeholder="exact text" />
+          <span id="new-rule-find-preview" class="inline-help rule-value-preview">Current value: empty</span>
+        </div>
+        <div class="field">
+          <label for="new-rule-replace">Replace with</label>
+          <input id="new-rule-replace" type="text" placeholder="replacement" />
+          <span id="new-rule-replace-preview" class="inline-help rule-value-preview">Current value: empty</span>
+        </div>
+        <button id="add-rule" class="secondary">Add rule</button>
+        <button id="add-rule-empty" class="ghost small" title="Adds a blank rule you can edit">Add empty row</button>
+      </div>
+
+      <div class="toolbar">
+        <button id="apply-replacements">Apply replacements</button>
+        <button id="reverse-replacements" class="secondary">Reverse last replacements</button>
+        <button id="use-output-as-input" class="ghost">Use output as input</button>
+      </div>
+
+      <div class="toolbar">
+        <button id="copy-output" class="secondary">Copy output</button>
+        <a id="download-output" class="button secondary" href="#" download="cleaned-text.txt">Download output</a>
+        <button id="clear-output" class="secondary">Clear output</button>
+        <span id="rule-status" class="status" role="status" aria-live="polite"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="rules-table">
+          <thead>
+            <tr>
+              <th style="width: 70px">Enabled</th>
+              <th>Find</th>
+              <th>Replace with</th>
+              <th style="width: 170px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rules-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" id="stats-section">
+      <h2 class="section-title">Stats for nerds</h2>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <span class="label">Characters</span>
+          <span class="value" id="stat-chars">0</span>
+        </div>
+        <div class="stat">
+          <span class="label">Code points</span>
+          <span class="value" id="stat-codepoints">0</span>
+        </div>
+        <div class="stat">
+          <span class="label">Words</span>
+          <span class="value" id="stat-words">0</span>
+        </div>
+        <div class="stat">
+          <span class="label">Lines</span>
+          <span class="value" id="stat-lines">1</span>
+          <span class="inline-help">Empty text counts as 0 lines.</span>
+        </div>
+        <div class="stat">
+          <span class="label">Unique characters</span>
+          <span class="value" id="stat-unique">0</span>
+        </div>
+        <div class="stat">
+          <span class="label">Whitespace</span>
+          <span class="value" id="stat-whitespace">0</span>
+        </div>
+      </div>
+
+      <div class="stats-list" id="problem-stat-list"></div>
+
+      <div>
+        <p class="char-frequency-title">Character frequencies (top 10)</p>
+        <div class="stats-list" id="char-frequency"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="output-section">
+      <h2 class="section-title">Cleaned output</h2>
+      <label for="cleaned-output">Output</label>
+      <textarea id="cleaned-output" placeholder="Apply replacements to populate output."></textarea>
+      <p class="muted" id="replacement-count"></p>
+      <p class="footer-note">Output is also available for copy/download and can be loaded back into input.</p>
+    </section>
+
+  </main>
+  <script>
+    const TROUBLEMAKER_PRESET_RULES = [
+      {
+        id: "troublemaker-nbsp",
+        enabled: true,
+        find: "\u00A0",
+        replace: " ",
+      },
+      {
+        id: "troublemaker-soft-hyphen",
+        enabled: true,
+        find: "\u00AD",
+        replace: "",
+      },
+      {
+        id: "troublemaker-line-sep",
+        enabled: true,
+        find: "\u2028",
+        replace: "\n",
+      },
+      {
+        id: "troublemaker-para-sep",
+        enabled: true,
+        find: "\u2029",
+        replace: "\n",
+      },
+      {
+        id: "troublemaker-lrm",
+        enabled: true,
+        find: "\u200E",
+        replace: "",
+      },
+      {
+        id: "troublemaker-rlm",
+        enabled: true,
+        find: "\u200F",
+        replace: "",
+      },
+      ...Array.from({ length: 16 }, (_, index) => ({
+        id: `troublemaker-variation-${index.toString(16).padStart(2, "0")}`,
+        enabled: true,
+        find: String.fromCodePoint(0xFE00 + index),
+        replace: "",
+      })),
+    ];
+
+    const DEFAULT_STATE = {
+      highlights: {
+        zeroWidth: true,
+        nonBreaking: true,
+        specialUnicode: false,
+        control: true,
+        quotes: true,
+        punctuation: false,
+        custom: false,
+      },
+      unicodeTroublemakerPreset: true,
+      customChars: "",
+      rules: [
+        {
+          id: "r1",
+          enabled: true,
+          find: "…",
+          replace: "...",
+        },
+        {
+          id: "r2",
+          enabled: true,
+          find: "—",
+          replace: "--",
+        },
+        {
+          id: "r3",
+          enabled: true,
+          find: "“",
+          replace: "\"",
+        },
+        {
+          id: "r4",
+          enabled: true,
+          find: "”",
+          replace: "\"",
+        },
+        {
+          id: "r5",
+          enabled: true,
+          find: "‘",
+          replace: "'",
+        },
+        {
+          id: "r6",
+          enabled: true,
+          find: "’",
+          replace: "'",
+        },
+      ],
+    };
+    const STORAGE_SETTINGS_KEY = "tool.textCleaner.settings.v1";
+    const STORAGE_TEXT_KEY = "tool.textCleaner.inputText.v1";
+    const STATE_HASH_KEY = "state=";
+    const RULE_ID_SEED = {
+      next: 0,
+    };
+
+    const elements = {
+      textInput: document.getElementById("text-input"),
+      fileInput: document.getElementById("file-input"),
+      dropZone: document.getElementById("drop-zone"),
+      fileMeta: document.getElementById("file-meta"),
+      inputStatus: document.getElementById("input-status"),
+
+      renderedText: document.getElementById("rendered-text"),
+      optZeroWidth: document.getElementById("opt-zero-width"),
+      optNonBreaking: document.getElementById("opt-non-breaking"),
+      optSpecialUnicode: document.getElementById("opt-special-unicode"),
+      optControl: document.getElementById("opt-control"),
+      optTroublemakers: document.getElementById("opt-troublemakers"),
+      optQuotes: document.getElementById("opt-quotes"),
+      optPunctuation: document.getElementById("opt-punctuation"),
+      optCustom: document.getElementById("opt-custom"),
+      customCharsInput: document.getElementById("custom-chars"),
+      applyCustom: document.getElementById("apply-custom"),
+
+      rulesBody: document.getElementById("rules-body"),
+      newFind: document.getElementById("new-rule-find"),
+      newReplace: document.getElementById("new-rule-replace"),
+      newFindPreview: document.getElementById("new-rule-find-preview"),
+      newReplacePreview: document.getElementById("new-rule-replace-preview"),
+      addRule: document.getElementById("add-rule"),
+      addRuleEmpty: document.getElementById("add-rule-empty"),
+      applyReplacements: document.getElementById("apply-replacements"),
+      reverseReplacements: document.getElementById("reverse-replacements"),
+      useOutputAsInput: document.getElementById("use-output-as-input"),
+      cleanedOutput: document.getElementById("cleaned-output"),
+      copyOutput: document.getElementById("copy-output"),
+      downloadOutput: document.getElementById("download-output"),
+      clearOutput: document.getElementById("clear-output"),
+      clearInput: document.getElementById("clear-input"),
+      ruleStatus: document.getElementById("rule-status"),
+      inputStatus: document.getElementById("input-status"),
+      replacementCount: document.getElementById("replacement-count"),
+      statChars: document.getElementById("stat-chars"),
+      statCodepoints: document.getElementById("stat-codepoints"),
+      statWords: document.getElementById("stat-words"),
+      statLines: document.getElementById("stat-lines"),
+      statUnique: document.getElementById("stat-unique"),
+      statWhitespace: document.getElementById("stat-whitespace"),
+      problemStats: document.getElementById("problem-stat-list"),
+      charFrequency: document.getElementById("char-frequency"),
+    };
+
+    const state = structuredClone(DEFAULT_STATE);
+    const replacementHistory = [];
+    const supportsUnicodeProps = supportsUnicodePropertyEscapes();
+    let objectUrl = "";
+    let isApplyingState = false;
+
+    const unicodeProps = {
+      punctuation: makeUnicodeRegex("\\p{P}"),
+      pictographic: makeUnicodeRegex("\\p{Extended_Pictographic}"),
+      symbol: makeUnicodeRegex("\\p{Symbol}"),
+    };
+
+    init();
+
+    function init() {
+      wireEvents();
+      hydrateState();
+      renderRules();
+      updateRendered();
+      syncState();
+      updateStats();
+      updateOutputDownload();
+      renderRuleStatus("");
+      renderInputStatus("Ready.");
+      requestAnimationFrame(() => {
+        elements.textInput.focus();
+      });
+    }
+
+    function hydrateState() {
+      const localState = readStoredSettings();
+      const hashState = readStateFromHash();
+
+      mergeState(state, DEFAULT_STATE);
+      mergeState(state, localState);
+      if (hashState) {
+        mergeState(state, hashState);
+      }
+
+      state.customChars = typeof state.customChars === "string" ? state.customChars : "";
+      state.highlights = {
+        ...DEFAULT_STATE.highlights,
+        ...state.highlights,
+      };
+      state.unicodeTroublemakerPreset = Boolean(state.unicodeTroublemakerPreset);
+      if (!Array.isArray(state.rules) || !state.rules.length) {
+        state.rules = DEFAULT_STATE.rules.map((rule) => ({ ...rule }));
+      }
+      state.rules = state.rules.map(normalizeRule);
+      applyTroublemakerPreset(state.unicodeTroublemakerPreset);
+
+      const savedText = localStorage.getItem(STORAGE_TEXT_KEY);
+      if (typeof savedText === "string") {
+        elements.textInput.value = savedText;
+      }
+      syncInputsFromState();
+      updateCustomCharsInputFromState();
+    }
+
+    function syncState() {
+      renderRules();
+      updateRendered();
+      updateStats();
+      updateActionState();
+    }
+
+    function supportsUnicodePropertyEscapes() {
+      try {
+        new RegExp("\\p{L}", "u");
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function makeUnicodeRegex(pattern) {
+      if (!supportsUnicodeProps) {
+        return null;
+      }
+      try {
+        return new RegExp(pattern, "u");
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function wireEvents() {
+      elements.textInput.addEventListener("input", onInputTextChange);
+      elements.clearInput.addEventListener("click", clearInput);
+      elements.fileInput.addEventListener("change", onFileInputChange);
+
+      elements.dropZone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        elements.dropZone.classList.add("dragging");
+      });
+      elements.dropZone.addEventListener("dragleave", () => {
+        elements.dropZone.classList.remove("dragging");
+      });
+      elements.dropZone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        elements.dropZone.classList.remove("dragging");
+        const file = event.dataTransfer.files?.[0];
+        if (file) {
+          readFile(file);
+        }
+      });
+      ["dragenter", "dragover"].forEach((eventName) => {
+        elements.dropZone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+        });
+      });
+
+      elements.optZeroWidth.addEventListener("change", () => {
+        state.highlights.zeroWidth = elements.optZeroWidth.checked;
+        onStateChange();
+      });
+      elements.optNonBreaking.addEventListener("change", () => {
+        state.highlights.nonBreaking = elements.optNonBreaking.checked;
+        onStateChange();
+      });
+      elements.optSpecialUnicode.addEventListener("change", () => {
+        state.highlights.specialUnicode = elements.optSpecialUnicode.checked;
+        onStateChange();
+      });
+      elements.optControl.addEventListener("change", () => {
+        state.highlights.control = elements.optControl.checked;
+        onStateChange();
+      });
+      elements.optTroublemakers.addEventListener("change", () => {
+        state.unicodeTroublemakerPreset = elements.optTroublemakers.checked;
+        onStateChange();
+      });
+      elements.optQuotes.addEventListener("change", () => {
+        state.highlights.quotes = elements.optQuotes.checked;
+        onStateChange();
+      });
+      elements.optPunctuation.addEventListener("change", () => {
+        state.highlights.punctuation = elements.optPunctuation.checked;
+        onStateChange();
+      });
+      elements.optCustom.addEventListener("change", () => {
+        state.highlights.custom = elements.optCustom.checked;
+        onStateChange();
+      });
+      elements.applyCustom.addEventListener("click", () => {
+        state.customChars = elements.customCharsInput.value;
+        onStateChange();
+      });
+      elements.customCharsInput.addEventListener("input", () => {
+        state.customChars = elements.customCharsInput.value;
+        onStateChange();
+      });
+
+      elements.newFind.addEventListener("input", () => {
+        updateNewRuleInputPreview(elements.newFind, elements.newFindPreview);
+      });
+      elements.newReplace.addEventListener("input", () => {
+        updateNewRuleInputPreview(elements.newReplace, elements.newReplacePreview);
+      });
+      updateNewRuleInputPreview(elements.newFind, elements.newFindPreview);
+      updateNewRuleInputPreview(elements.newReplace, elements.newReplacePreview);
+
+      elements.newFind.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          onAddRule();
+        }
+      });
+      elements.newReplace.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          onAddRule();
+        }
+      });
+      elements.addRule.addEventListener("click", onAddRule);
+      elements.addRuleEmpty.addEventListener("click", () => {
+        addRule({ id: nextRuleId(), enabled: true, find: "", replace: "" });
+        renderRules();
+        updateNewRuleInputPreview(elements.newFind, elements.newFindPreview);
+        updateNewRuleInputPreview(elements.newReplace, elements.newReplacePreview);
+        onStateChange();
+      });
+      elements.applyReplacements.addEventListener("click", applyReplacements);
+      elements.reverseReplacements.addEventListener("click", reverseReplacements);
+      elements.useOutputAsInput.addEventListener("click", () => {
+        elements.textInput.value = elements.cleanedOutput.value;
+        localStorage.setItem(STORAGE_TEXT_KEY, elements.textInput.value);
+        onInputTextChange();
+      });
+      elements.copyOutput.addEventListener("click", copyOutput);
+      elements.clearOutput.addEventListener("click", clearOutput);
+      elements.downloadOutput.addEventListener("click", () => {
+        updateOutputDownload();
+      });
+      window.addEventListener("hashchange", () => {
+        if (isApplyingState) {
+          return;
+        }
+        const hashState = readStateFromHash();
+        if (!hashState) {
+          return;
+        }
+        mergeState(state, DEFAULT_STATE);
+        mergeState(state, hashState);
+        syncInputsFromState();
+        updateStateFromSettings();
+        renderRules();
+        updateRendered();
+        updateStats();
+        syncAndSave();
+      });
+    }
+
+    function syncInputsFromState() {
+      elements.optZeroWidth.checked = Boolean(state.highlights.zeroWidth);
+      elements.optNonBreaking.checked = Boolean(state.highlights.nonBreaking);
+      elements.optSpecialUnicode.checked = Boolean(state.highlights.specialUnicode);
+      elements.optControl.checked = Boolean(state.highlights.control);
+      elements.optTroublemakers.checked = Boolean(state.unicodeTroublemakerPreset);
+      elements.optQuotes.checked = Boolean(state.highlights.quotes);
+      elements.optPunctuation.checked = Boolean(state.highlights.punctuation);
+      elements.optCustom.checked = Boolean(state.highlights.custom);
+      elements.customCharsInput.value = state.customChars;
+    }
+
+    function updateCustomCharsInputFromState() {
+      elements.customCharsInput.value = state.customChars;
+    }
+
+    function updateStateFromSettings() {
+      state.highlights = {
+        zeroWidth: elements.optZeroWidth.checked,
+        nonBreaking: elements.optNonBreaking.checked,
+        specialUnicode: elements.optSpecialUnicode.checked,
+        control: elements.optControl.checked,
+        quotes: elements.optQuotes.checked,
+        punctuation: elements.optPunctuation.checked,
+        custom: elements.optCustom.checked,
+      };
+      state.customChars = elements.customCharsInput.value;
+      state.unicodeTroublemakerPreset = elements.optTroublemakers.checked;
+      if (!Array.isArray(state.rules) || !state.rules.length) {
+        state.rules = DEFAULT_STATE.rules.map((rule) => ({ ...rule }));
+      }
+      applyTroublemakerPreset(state.unicodeTroublemakerPreset);
+    }
+
+    function applyTroublemakerPreset(enabled) {
+      const templateRules = new Map(TROUBLEMAKER_PRESET_RULES.map((rule) => [rule.id, rule]));
+
+      if (!enabled) {
+        state.rules = state.rules.filter((rule) => !templateRules.has(rule.id));
+        return;
+      }
+
+      const existingById = new Map(
+        state.rules
+          .filter((rule) => templateRules.has(rule.id))
+          .map((rule) => [rule.id, normalizeRule(rule)]),
+      );
+
+      const nextRules = state.rules.filter((rule) => !templateRules.has(rule.id));
+      for (const template of TROUBLEMAKER_PRESET_RULES) {
+        const existingRule = existingById.get(template.id);
+        if (existingRule) {
+          nextRules.push({
+            ...template,
+            ...existingRule,
+            id: template.id,
+          });
+          continue;
+        }
+        nextRules.push({ ...template });
+      }
+
+      state.rules = nextRules.map(normalizeRule);
+    }
+
+    function normalizeRule(rule) {
+      return {
+        id: typeof rule?.id === "string" && rule.id.length ? rule.id : nextRuleId(),
+        enabled: Boolean(rule?.enabled),
+        find: String(rule?.find ?? ""),
+        replace: String(rule?.replace ?? ""),
+      };
+    }
+
+    function nextRuleId() {
+      RULE_ID_SEED.next += 1;
+      return `r-${Math.random().toString(36).slice(2, 9)}-${RULE_ID_SEED.next}`;
+    }
+
+    function readStoredSettings() {
+      try {
+        const raw = localStorage.getItem(STORAGE_SETTINGS_KEY);
+        if (!raw) {
+          return null;
+        }
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") {
+          return null;
+        }
+        return parsed;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function readStateFromHash() {
+      if (!location.hash.startsWith(`#${STATE_HASH_KEY}`)) {
+        return null;
+      }
+
+      try {
+        const encoded = location.hash.slice(STATE_HASH_KEY.length + 1);
+        const normalized = decodeUrlSafeBase64(decodeURIComponent(encoded));
+        const bytes = Uint8Array.from(atob(normalized), (char) => char.charCodeAt(0));
+        const json = new TextDecoder().decode(bytes);
+        const parsed = JSON.parse(json);
+        if (!parsed || typeof parsed !== "object") {
+          return null;
+        }
+        return parsed;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function decodeUrlSafeBase64(value) {
+      const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = normalized.length % 4 === 0 ? normalized : `${normalized}${"=".repeat(4 - (normalized.length % 4))}`;
+      return padded;
+    }
+
+    function writeStateToHash() {
+      const compact = encodeURIComponent(encodeStateToBase64(state));
+      const baseUrl = `${location.pathname}${location.search}`;
+      if (isDefaultState(state)) {
+        history.replaceState(null, "", baseUrl);
+        return;
+      }
+      history.replaceState(null, "", `${baseUrl}#${STATE_HASH_KEY}${compact}`);
+    }
+
+    function encodeStateToBase64(data) {
+      const json = JSON.stringify(data);
+      const bytes = new TextEncoder().encode(json);
+      let binary = "";
+      for (const byte of bytes) {
+        binary += String.fromCharCode(byte);
+      }
+      return btoa(binary)
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+    }
+
+    function normalizeState(raw) {
+      const defaultTroublemakerPreset = DEFAULT_STATE.unicodeTroublemakerPreset;
+      const normalized = {
+        highlights: {
+          ...DEFAULT_STATE.highlights,
+          ...(raw?.highlights || {}),
+        },
+        unicodeTroublemakerPreset: typeof raw?.unicodeTroublemakerPreset === "boolean"
+          ? raw.unicodeTroublemakerPreset
+          : defaultTroublemakerPreset,
+        customChars: typeof raw?.customChars === "string" ? raw.customChars : "",
+        rules: Array.isArray(raw?.rules) && raw.rules.length ? raw.rules.map(normalizeRule) : DEFAULT_STATE.rules.map((rule) => ({ ...rule })),
+      };
+      normalized.rules = normalized.rules.map((rule) => normalizeRule(rule)).filter((rule, index) => index < 80);
+      return normalized;
+    }
+
+    function mergeState(target, patch) {
+      const normalizedPatch = normalizeState(patch);
+      if (!target.rules) {
+        target.rules = [];
+      }
+      target.highlights = {
+        ...target.highlights,
+        ...normalizedPatch.highlights,
+      };
+      target.unicodeTroublemakerPreset = normalizedPatch.unicodeTroublemakerPreset;
+      target.customChars = normalizedPatch.customChars;
+      target.rules = normalizedPatch.rules.length
+        ? normalizedPatch.rules.map((rule, index) => ({ ...rule, id: rule.id || `r${index}` }))
+        : DEFAULT_STATE.rules.map((rule) => ({ ...rule }));
+      return target;
+    }
+
+    function syncAndSave() {
+      updateStateFromSettings();
+      writeStateToHash();
+      localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(state));
+      renderRules();
+      updateRendered();
+      updateStats();
+    }
+
+    function onStateChange() {
+      syncAndSave();
+      updateInputStatusMessage("Settings updated.");
+    }
+
+    function syncAndSaveInput() {
+      localStorage.setItem(STORAGE_TEXT_KEY, elements.textInput.value);
+    }
+
+    function onInputTextChange() {
+      syncAndSaveInput();
+      renderRenderedText();
+      updateStats();
+    }
+
+    function onFileInputChange(event) {
+      const file = event.target.files?.[0];
+      if (!file) {
+        return;
+      }
+      readFile(file);
+    }
+
+    function readFile(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        elements.textInput.value = String(reader.result || "");
+        localStorage.setItem(STORAGE_TEXT_KEY, elements.textInput.value);
+        renderRenderedText();
+        updateStats();
+        elements.fileMeta.textContent = `${file.name} (${file.type || "text"} • ${formatBytes(file.size)})`;
+        renderInputStatus("Loaded file.");
+      };
+      reader.onerror = () => {
+        renderInputStatus("Unable to read the selected file.");
+      };
+      reader.readAsText(file);
+    }
+
+    function renderInputStatus(message) {
+      elements.inputStatus.textContent = message;
+    }
+
+    function renderRules() {
+      elements.rulesBody.innerHTML = "";
+
+      state.rules.forEach((rule) => {
+        const row = document.createElement("tr");
+        row.dataset.ruleId = rule.id;
+
+        const enabledCell = document.createElement("td");
+        const enabled = document.createElement("input");
+        enabled.type = "checkbox";
+        enabled.checked = Boolean(rule.enabled);
+        enabled.setAttribute("aria-label", `Enable rule: ${rule.find || "new rule"} -> ${rule.replace || "replace"}`);
+        enabled.addEventListener("change", () => {
+          rule.enabled = enabled.checked;
+          onStateChange();
+        });
+        enabledCell.appendChild(enabled);
+
+        const findCell = document.createElement("td");
+        const findHelp = document.createElement("span");
+        const find = document.createElement("input");
+        find.type = "text";
+        find.value = rule.find;
+        findHelp.className = "inline-help rule-value-preview";
+        findHelp.textContent = formatRuleValuePreview(rule.find);
+        find.addEventListener("input", () => {
+          rule.find = find.value;
+          findHelp.textContent = formatRuleValuePreview(rule.find);
+          onStateChange();
+        });
+        findCell.appendChild(find);
+        findCell.appendChild(findHelp);
+
+        const replaceCell = document.createElement("td");
+        const replaceHelp = document.createElement("span");
+        const replace = document.createElement("input");
+        replace.type = "text";
+        replace.value = rule.replace;
+        replaceHelp.className = "inline-help rule-value-preview";
+        replaceHelp.textContent = formatRuleValuePreview(rule.replace);
+        replace.addEventListener("input", () => {
+          rule.replace = replace.value;
+          replaceHelp.textContent = formatRuleValuePreview(rule.replace);
+          onStateChange();
+        });
+        replaceCell.appendChild(replace);
+        replaceCell.appendChild(replaceHelp);
+
+        const actionsCell = document.createElement("td");
+        const actions = document.createElement("div");
+        actions.className = "rule-actions";
+
+        const swap = document.createElement("button");
+        swap.type = "button";
+        swap.className = "small ghost";
+        swap.textContent = "Reverse";
+        swap.addEventListener("click", () => {
+          const nextFind = rule.replace;
+          rule.replace = rule.find;
+          rule.find = nextFind;
+          renderRules();
+          onStateChange();
+        });
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "small secondary";
+        remove.textContent = "Delete";
+        remove.addEventListener("click", () => {
+          state.rules = state.rules.filter((existing) => existing.id !== rule.id);
+          if (!state.rules.length) {
+            state.rules = DEFAULT_STATE.rules.map((item) => ({ ...item }));
+          }
+          renderRules();
+          onStateChange();
+        });
+
+        actions.appendChild(swap);
+        actions.appendChild(remove);
+        actionsCell.appendChild(actions);
+
+        row.append(enabledCell, findCell, replaceCell, actionsCell);
+        elements.rulesBody.appendChild(row);
+      });
+
+      updateActionState();
+      updateRuleActionAvailability();
+    }
+
+    function addRule({ id, enabled, find, replace }) {
+      state.rules.push({
+        id: id || nextRuleId(),
+        enabled: Boolean(enabled),
+        find: String(find || ""),
+        replace: String(replace || ""),
+      });
+    }
+
+    function onAddRule() {
+      const find = elements.newFind.value;
+      const replace = elements.newReplace.value;
+      if (!find.trim() && !replace.trim()) {
+        updateRuleStatus("Add at least one non-empty find/replace value.");
+        return;
+      }
+      addRule({ find, replace, enabled: true });
+      elements.newFind.value = "";
+      elements.newReplace.value = "";
+      updateNewRuleInputPreview(elements.newFind, elements.newFindPreview);
+      updateNewRuleInputPreview(elements.newReplace, elements.newReplacePreview);
+      renderRules();
+      onStateChange();
+      updateRuleStatus("Rule added.");
+    }
+
+    function updateRuleActionAvailability() {
+      const hasOutput = Boolean(elements.cleanedOutput.value);
+      elements.reverseReplacements.disabled = replacementHistory.length === 0 || !hasOutput;
+      elements.useOutputAsInput.disabled = !hasOutput;
+      elements.copyOutput.disabled = !hasOutput;
+      elements.downloadOutput.disabled = !hasOutput;
+      elements.clearOutput.disabled = !hasOutput;
+      elements.reverseReplacements.textContent = hasOutput
+        ? `Reverse last replacements (${replacementHistory.length})`
+        : "Reverse last replacements";
+    }
+
+    function applyReplacements() {
+      const text = elements.textInput.value;
+      const activeRules = getEnabledRules();
+      if (!activeRules.length) {
+        updateRuleStatus("Enable at least one replacement rule before applying.");
+        return;
+      }
+      let processed = text;
+      const summary = [];
+      activeRules.forEach((rule) => {
+        if (!rule.find) {
+          return;
+        }
+        const before = processed;
+        processed = replaceAll(processed, rule.find, rule.replace);
+        if (before !== processed) {
+          summary.push(`${rule.find} → ${rule.replace || "∅"}`);
+        }
+      });
+
+      replacementHistory.push({
+        outputBefore: elements.cleanedOutput.value,
+      });
+      elements.cleanedOutput.value = processed;
+      updateOutputDownload();
+      renderRuleStatus(`Applied ${summary.length} rule${summary.length === 1 ? "" : "s"}.`);
+      elements.replacementCount.textContent = `Output length: ${processed.length} (rules used: ${summary.length})`;
+      if (summary.length === 0) {
+        renderRuleStatus("No changes from active replacement rules.");
+      }
+      updateRuleActionAvailability();
+    }
+
+    function reverseReplacements() {
+      if (!replacementHistory.length) {
+        updateRuleStatus("Nothing to reverse.");
+        updateRuleActionAvailability();
+        return;
+      }
+      const last = replacementHistory.pop();
+      elements.cleanedOutput.value = last.outputBefore || "";
+      updateOutputDownload();
+      updateRuleActionAvailability();
+      updateRuleStatus("Reversed last replacement run.");
+    }
+
+    function getEnabledRules() {
+      return state.rules.filter((rule) => rule.enabled).map((rule) => ({ ...rule }));
+    }
+
+    function replaceAll(text, find, replace) {
+      if (!find) {
+        return text;
+      }
+      return text.split(find).join(replace);
+    }
+
+    function renderRenderedText() {
+      const text = elements.textInput.value;
+      elements.renderedText.innerHTML = buildHighlightedMarkup(text);
+    }
+
+    function renderOutputIfAny() {
+      if (!elements.cleanedOutput.value) {
+        return;
+      }
+      updateOutputDownload();
+    }
+
+    function updateRendered() {
+      renderRenderedText();
+      renderOutputIfAny();
+      updateStats();
+    }
+
+    function updateStats() {
+      const text = elements.textInput.value;
+      const stats = computeStats(text);
+
+      elements.statChars.textContent = stats.chars;
+      elements.statCodepoints.textContent = stats.codePoints;
+      elements.statWords.textContent = stats.words;
+      elements.statLines.textContent = stats.lines;
+      elements.statUnique.textContent = stats.unique;
+      elements.statWhitespace.textContent = stats.whitespace;
+
+      const details = [
+        ["Zero-width", stats.zeroWidth],
+        ["NBSP / non-joiners", stats.nonBreaking],
+        ["Special Unicode", stats.specialUnicode],
+        ["Control chars", stats.control],
+        ["Curly quotes", stats.quotes],
+        ["Punctuation", stats.punctuation],
+        ["Custom chars", stats.custom],
+      ];
+      elements.problemStats.innerHTML = details
+        .map(
+          ([name, value]) => `
+            <li>
+              <span>${name}</span>
+              <strong>${value}</strong>
+            </li>
+          `,
+        )
+        .join("");
+
+      elements.charFrequency.innerHTML = renderFrequencyList(stats.frequencies);
+    }
+
+    function computeStats(text) {
+      const chars = text.length;
+      const codePoints = Array.from(text).length;
+      const words = countWords(text);
+      const lines = text.length === 0 ? 0 : text.split(/\r\n|\r|\n/).length;
+      const unique = new Set(text).size;
+      const whitespace = (text.match(/\s/g) || []).length;
+      const frequency = new Map();
+
+      let zeroWidth = 0;
+      let nonBreaking = 0;
+      let specialUnicode = 0;
+      let control = 0;
+      let quotes = 0;
+      let punctuation = 0;
+      let custom = 0;
+
+      for (const char of text) {
+        if (isZeroWidthChar(char)) {
+          zeroWidth += 1;
+        }
+        if (isNonBreakingOrJoinerChar(char)) {
+          nonBreaking += 1;
+        }
+        if (isSpecialUnicodeChar(char)) {
+          specialUnicode += 1;
+        }
+        if (isControlChar(char)) {
+          control += 1;
+        }
+        if (isFancyQuote(char)) {
+          quotes += 1;
+        }
+        if (isPunctuation(char)) {
+          punctuation += 1;
+        }
+        if (hasCustomChar(char)) {
+          custom += 1;
+        }
+        const current = frequency.get(char) || 0;
+        frequency.set(char, current + 1);
+      }
+
+      return {
+        chars,
+        codePoints,
+        words,
+        lines,
+        unique,
+        whitespace,
+        zeroWidth,
+        nonBreaking,
+        specialUnicode,
+        control,
+        quotes,
+        punctuation,
+        custom,
+        frequencies: topFrequencies(frequency, 10),
+      };
+    }
+
+    function topFrequencies(frequency, limit) {
+      return [...frequency.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .slice(0, limit)
+        .map(([char, count]) => ({ char, count }));
+    }
+
+    function renderFrequencyList(frequencies) {
+      if (!frequencies.length) {
+        return "<li>No characters to summarize.</li>";
+      }
+      return `<ul>${frequencies.map(({ char, count }) => `<li><span>${formatDisplayChar(char)}</span><strong>${count}</strong></li>`).join("")}</ul>`;
+    }
+
+    function updateNewRuleInputPreview(input, output) {
+      if (!input || !output) {
+        return;
+      }
+      output.textContent = formatRuleValuePreview(input.value);
+    }
+
+    function countWords(text) {
+      if (!text.trim()) {
+        return 0;
+      }
+      try {
+        const words = text.match(/[\p{Letter}\p{Number}]+/gu);
+        return words ? words.length : 0;
+      } catch (error) {
+        return text.trim().split(/\s+/).filter(Boolean).length;
+      }
+    }
+
+    function formatDisplayChar(char) {
+      if (char === " ") {
+        return "<code>space</code>";
+      }
+      if (char === "\n") {
+        return "<code>\\n</code>";
+      }
+      if (char === "\t") {
+        return "<code>\\t</code>";
+      }
+      if (char === "\r") {
+        return "<code>\\r</code>";
+      }
+      if (char === "\u00A0") {
+        return "<code>NBSP</code>";
+      }
+      if (char === "\u200B") {
+        return "<code>ZWSP</code>";
+      }
+      return escapeHtml(char);
+    }
+
+    function formatRuleValuePreview(value) {
+      const text = String(value || "");
+      if (!text) {
+        return "Current value: empty";
+      }
+      const rendered = [...text].map((char) => `${formatRuleValueChar(char)} (${formatRuleValueCodePoint(char)})`).join(" • ");
+      return `Current value: ${rendered}`;
+    }
+
+    function formatRuleValueChar(char) {
+      const rendered = visibleLabelForChar(char);
+      return rendered === char ? escapeForPreview(char) : rendered;
+    }
+
+    function formatRuleValueCodePoint(char) {
+      const cp = char.codePointAt(0);
+      const hex = cp.toString(16).toUpperCase().padStart(4, "0");
+      return `U+${hex}`;
+    }
+
+    function escapeForPreview(char) {
+      if (char === "\n") {
+        return "\\n";
+      }
+      if (char === "\r") {
+        return "\\r";
+      }
+      if (char === "\t") {
+        return "\\t";
+      }
+      if (char === " ") {
+        return "[space]";
+      }
+      return char;
+    }
+
+    function buildHighlightedMarkup(text) {
+      if (!text) {
+        return "<span class=\"muted\">No input text yet.</span>";
+      }
+
+      const customSet = getCustomCharSet();
+      let html = "";
+      for (const char of text) {
+        let match = getHighlightMatch(char, customSet);
+        if (!match) {
+          if (char === "\n") {
+            html += "\n";
+          } else {
+            html += escapeHtml(char);
+          }
+          continue;
+        }
+        if (char === "\n") {
+          html += `<span class="hl-token hl-control" title="${match.title}">${match.label}</span>\n`;
+          continue;
+        }
+        html += `<span class="hl-token ${match.className}" title="${match.title}">${match.label}</span>`;
+      }
+      return html;
+    }
+
+    function getHighlightMatch(char, customSet) {
+      if (state.highlights.zeroWidth && isZeroWidthChar(char)) {
+        return {
+          className: "hl-zero-width",
+          label: escapeHtml(visibleLabelForChar(char)),
+          title: "zero-width / control marker",
+        };
+      }
+      if (state.highlights.nonBreaking && isNonBreakingOrJoinerChar(char)) {
+        return {
+          className: "hl-non-break",
+          label: escapeHtml(visibleLabelForChar(char)),
+          title: "non-breaking / non-joiner",
+        };
+      }
+      if (state.highlights.specialUnicode && isSpecialUnicodeChar(char)) {
+        return {
+          className: "hl-special-unicode",
+          label: escapeHtml(char),
+          title: "special unicode",
+        };
+      }
+      if (state.highlights.control && isControlChar(char)) {
+        return {
+          className: "hl-control",
+          label: escapeHtml(visibleLabelForChar(char)),
+          title: "control character",
+        };
+      }
+      if (state.highlights.quotes && isFancyQuote(char)) {
+        return {
+          className: "hl-quote",
+          label: escapeHtml(char),
+          title: "curly quotation mark",
+        };
+      }
+      if (state.highlights.punctuation && isPunctuation(char)) {
+        return {
+          className: "hl-punc",
+          label: escapeHtml(char),
+          title: "punctuation",
+        };
+        }
+      if (state.highlights.custom && customSet.has(char)) {
+        return {
+          className: "hl-custom",
+          label: escapeHtml(char),
+          title: "custom character",
+        };
+      }
+      return null;
+    }
+
+    function visibleLabelForChar(char) {
+      if (char === "\u200B") {
+        return "[ZWSP]";
+      }
+      if (char === "\u00A0") {
+        return "[NBSP]";
+      }
+      if (char === "\u200C") {
+        return "[ZWNJ]";
+      }
+      if (char === "\u200D") {
+        return "[ZWJ]";
+      }
+      if (char === "\uFEFF") {
+        return "[BOM]";
+      }
+      if (char === "\t") {
+        return "[TAB]";
+      }
+      if (char === "\n") {
+        return "[LF]";
+      }
+      if (char === "\r") {
+        return "[CR]";
+      }
+      return char;
+    }
+
+    function hasCustomChar(char) {
+      return getCustomCharSet().has(char);
+    }
+
+    function getCustomCharSet() {
+      const tokens = state.customChars
+        .trim()
+        .split(/\s+/u)
+        .filter(Boolean);
+      const set = new Set();
+      for (const token of tokens) {
+        for (const ch of token) {
+          set.add(ch);
+        }
+      }
+      return set;
+    }
+
+    function isZeroWidthChar(char) {
+      const cp = char.codePointAt(0);
+      return cp === 0x200B || cp === 0xFEFF;
+    }
+
+    function isNonBreakingOrJoinerChar(char) {
+      const cp = char.codePointAt(0);
+      return cp === 0x00A0 || cp === 0x200C || cp === 0x2060;
+    }
+
+    function isSpecialUnicodeChar(char) {
+      const cp = char.codePointAt(0);
+      if (cp <= 0x7f) {
+        return false;
+      }
+      if (unicodeProps.pictographic && unicodeProps.pictographic.test(char)) {
+        return true;
+      }
+      if (unicodeProps.symbol && unicodeProps.symbol.test(char)) {
+        return true;
+      }
+      return isWithinRanges(cp, [
+        [0x00A9, 0x00AE],
+        [0x2000, 0x206F],
+        [0x2190, 0x27BF],
+        [0x2900, 0x2BFF],
+        [0x2E00, 0x2E7F],
+        [0x2600, 0x26FF],
+        [0x2700, 0x27BF],
+        [0x1F300, 0x1FAFF],
+      ]);
+    }
+
+    function isControlChar(char) {
+      const cp = char.codePointAt(0);
+      return cp < 0x20 || cp === 0x7f || (cp >= 0x80 && cp <= 0x9f);
+    }
+
+    function isFancyQuote(char) {
+      return char === "\u201C" || char === "\u201D" || char === "\u2018" || char === "\u2019";
+    }
+
+    function isPunctuation(char) {
+      if (unicodeProps.punctuation) {
+        return unicodeProps.punctuation.test(char);
+      }
+      return /[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/.test(char);
+    }
+
+    function isWithinRanges(value, ranges) {
+      return ranges.some(([min, max]) => value >= min && value <= max);
+    }
+
+    function escapeHtml(value) {
+      return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function clearInput() {
+      elements.textInput.value = "";
+      localStorage.removeItem(STORAGE_TEXT_KEY);
+      renderRenderedText();
+      updateStats();
+      elements.fileMeta.textContent = "No file loaded.";
+      renderInputStatus("Input cleared.");
+    }
+
+    function clearOutput() {
+      elements.cleanedOutput.value = "";
+      elements.replacementCount.textContent = "";
+      elements.downloadOutput.setAttribute("href", "#");
+      replacementHistory.length = 0;
+      updateOutputDownload();
+      updateRuleActionAvailability();
+      updateRuleStatus("Output cleared.");
+    }
+
+    function copyOutput() {
+      if (!elements.cleanedOutput.value) {
+        updateRuleStatus("No output to copy.");
+        return;
+      }
+      navigator.clipboard
+        .writeText(elements.cleanedOutput.value)
+        .then(() => {
+          updateRuleStatus("Output copied to clipboard.");
+        })
+        .catch(() => {
+          updateRuleStatus("Could not copy output.", "error");
+        });
+    }
+
+    function updateOutputDownload() {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+      const content = elements.cleanedOutput.value || "";
+      objectUrl = URL.createObjectURL(new Blob([content], { type: "text/plain;charset=utf-8" }));
+      elements.downloadOutput.href = objectUrl;
+      elements.downloadOutput.setAttribute("download", "cleaned-text.txt");
+      elements.downloadOutput.textContent = "Download output";
+      updateRuleActionAvailability();
+    }
+
+    function renderRuleStatus(message, level = "status") {
+      elements.ruleStatus.textContent = message;
+      elements.ruleStatus.classList.remove("success", "error");
+      if (level === "error") {
+        elements.ruleStatus.classList.add("error");
+      } else {
+        elements.ruleStatus.classList.add("success");
+      }
+    }
+
+    function renderInputStatus(message) {
+      elements.inputStatus.textContent = message;
+      elements.inputStatus.classList.remove("success", "error");
+      if (/error/i.test(message)) {
+        elements.inputStatus.classList.add("error");
+      } else {
+        elements.inputStatus.classList.add("success");
+      }
+    }
+
+    function renderActionState() {
+      const hasText = Boolean(elements.textInput.value);
+      elements.applyReplacements.disabled = !hasText;
+      elements.useOutputAsInput.disabled = !elements.cleanedOutput.value;
+    }
+
+    function updateActionState() {
+      renderActionState();
+      updateRuleActionAvailability();
+    }
+
+    function isDefaultState(checkState) {
+      const defaultRules = getDefaultRulesForState();
+      return (
+        checkState.rules.length === defaultRules.length &&
+        checkState.customChars === DEFAULT_STATE.customChars &&
+        equalRules(checkState.rules, defaultRules) &&
+        checkState.highlights.zeroWidth === DEFAULT_STATE.highlights.zeroWidth &&
+        checkState.highlights.nonBreaking === DEFAULT_STATE.highlights.nonBreaking &&
+        checkState.highlights.specialUnicode === DEFAULT_STATE.highlights.specialUnicode &&
+        checkState.highlights.control === DEFAULT_STATE.highlights.control &&
+        checkState.highlights.quotes === DEFAULT_STATE.highlights.quotes &&
+        checkState.highlights.punctuation === DEFAULT_STATE.highlights.punctuation &&
+        checkState.highlights.custom === DEFAULT_STATE.highlights.custom &&
+        checkState.unicodeTroublemakerPreset === DEFAULT_STATE.unicodeTroublemakerPreset
+      );
+    }
+
+    function getDefaultRulesForState() {
+      const baseRules = DEFAULT_STATE.rules.map((rule) => ({ ...rule }));
+      if (!DEFAULT_STATE.unicodeTroublemakerPreset) {
+        return baseRules;
+      }
+      const normalized = TROUBLEMAKER_PRESET_RULES.map((rule) => normalizeRule(rule));
+      return [...baseRules, ...normalized];
+    }
+
+    function equalRules(currentRules, compareRules) {
+      if (currentRules.length !== compareRules.length) {
+        return false;
+      }
+      return currentRules.every((rule, idx) => {
+        const compare = compareRules[idx];
+        return (
+          rule.find === compare.find &&
+          rule.replace === compare.replace &&
+          Boolean(rule.enabled) === Boolean(compare.enabled)
+        );
+      });
+    }
+
+    function updateRenderedText() {
+      renderRenderedText();
+      updateStats();
+      updateActionState();
+    }
+
+    function formatBytes(size) {
+      if (!size && size !== 0) {
+        return "unknown size";
+      }
+      const units = ["B", "KB", "MB", "GB"];
+      let index = 0;
+      let value = size;
+      while (value >= 1024 && index < units.length - 1) {
+        value = value / 1024;
+        index += 1;
+      }
+      return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
+    }
+
+    function updateInputStatusMessage(message) {
+      renderInputStatus(message);
+    }
+
+  </script>
+  <script src="/analytics.js"></script>
+</body>
+
+</html>

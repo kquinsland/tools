@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none" role="img" aria-label="Text Character Cleaner icon">
+  <rect width="640" height="640" rx="128" fill="#0f172a"/>
+  <rect x="96" y="96" width="448" height="448" rx="72" fill="#f8fafc"/>
+  <rect x="152" y="168" width="336" height="32" rx="16" fill="#1d4ed8"/>
+  <rect x="152" y="224" width="336" height="32" rx="16" fill="#1d4ed8"/>
+  <rect x="152" y="280" width="248" height="32" rx="16" fill="#1d4ed8"/>
+  <rect x="152" y="336" width="300" height="32" rx="16" fill="#334155"/>
+  <rect x="152" y="392" width="220" height="32" rx="16" fill="#334155"/>
+  <path d="M352 448c0 44.183-35.817 80-80 80" stroke="#0ea5e9" stroke-width="28" stroke-linecap="round"/>
+  <path d="M356 448h108" stroke="#0284c7" stroke-width="24" stroke-linecap="round"/>
+  <path d="M416 388l56 56-56 56" stroke="#0f172a" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
