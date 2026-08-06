@@ -287,6 +287,11 @@
             gap: 10px;
         }
 
+        button[data-calendar-link-toggle][aria-pressed="true"] {
+            color: #fff;
+            background: var(--accent);
+        }
+
         .cols-2 {
             display: grid;
             gap: 10px;
@@ -606,6 +611,7 @@
                 size: 320,
                 lastMode: "text",
                 modes: {},
+                linkEventDates: true,
             };
         }
 
@@ -642,6 +648,7 @@
             currentFormatKey: "text",
             currentPayload: "",
             hasRendered: false,
+            linkedEventStartDate: "",
             storedState: loadStoredState(),
         };
 
@@ -717,6 +724,14 @@
 
         function formatLocalDateTime(date) {
             return `${formatLocalDate(date)}T${formatLocalTime(date)}`;
+        }
+
+        function extractDatePart(dateTimeValue) {
+            return String(dateTimeValue || "").split("T")[0] || "";
+        }
+
+        function extractTimePart(dateTimeValue) {
+            return (String(dateTimeValue || "").split("T")[1] || "").slice(0, 5);
         }
 
         function roundToClosestFiveMinutes(date) {
@@ -806,6 +821,7 @@
             state.storedState.size = parsedSize;
             state.storedState.autoGenerate = elements.autoGenerateToggle.checked;
             state.storedState.lastMode = state.currentFormatKey;
+            state.storedState.linkEventDates = isEventDateLinkEnabled();
             saveStoredState(state.storedState);
         }
 
@@ -896,6 +912,7 @@
             <div class="date-shortcuts" id="calendar-date-shortcuts" aria-label="Calendar date shortcuts">
               <button class="secondary" type="button" data-date-shortcut="today">Today</button>
               <button class="secondary" type="button" data-date-shortcut="now">Now</button>
+              ${format.key === "event" ? `<button class="secondary" type="button" data-calendar-link-toggle aria-pressed="${isEventDateLinkEnabled() ? "true" : "false"}">Link start/end: ${isEventDateLinkEnabled() ? "On" : "Off"}</button>` : ""}
             </div>
           `;
             const fieldsMarkup = format.fields
@@ -909,6 +926,8 @@
             elements.dynamicFields.className = `field-group${useTwoCols}`;
             elements.dynamicFields.innerHTML = fieldsMarkup;
             loadModeValuesIntoFields();
+            refreshEventDateLinkButton();
+            rememberEventStartDateForLinking();
         }
 
         function eventDateTimeInputs() {
@@ -927,6 +946,7 @@
             const endTime = timeFromDateTimeLocal(end.value) || addMinutesToTime(startTime, 45);
             start.value = `${today}T${startTime}`;
             end.value = `${today}T${endTime}`;
+            state.linkedEventStartDate = today;
             handleDynamicFieldUpdate();
             setStatus("Event date set to today.");
         }
@@ -938,8 +958,10 @@
             const roundedStart = roundToClosestFiveMinutes(new Date());
             const roundedEnd = new Date(roundedStart);
             roundedEnd.setMinutes(roundedEnd.getMinutes() + 45);
-            start.value = formatLocalDateTime(roundedStart);
+            const nowRounded = formatLocalDateTime(roundedStart);
+            start.value = nowRounded;
             end.value = formatLocalDateTime(roundedEnd);
+            state.linkedEventStartDate = extractDatePart(nowRounded);
             handleDynamicFieldUpdate();
             setStatus("Event time set to now.");
         }
@@ -955,6 +977,50 @@
             dueDate.value = formatLocalDate(new Date());
             handleDynamicFieldUpdate();
             setStatus("Task due date set to today.");
+        }
+
+        function isEventDateLinkEnabled() {
+            return state.storedState.linkEventDates !== false;
+        }
+
+        function refreshEventDateLinkButton() {
+            const button = elements.dynamicFields.querySelector('[data-calendar-link-toggle]');
+            if (!button) return;
+
+            const linked = isEventDateLinkEnabled();
+            button.setAttribute("aria-pressed", linked ? "true" : "false");
+            button.textContent = `Link start/end: ${linked ? "On" : "Off"}`;
+        }
+
+        function setEventDateLink(enabled) {
+            state.storedState.linkEventDates = !!enabled;
+            refreshEventDateLinkButton();
+            saveGlobalSettings();
+        }
+
+        function syncEndDateToStartDateIfLinked() {
+            if (!isEventDateLinkEnabled()) {
+                return;
+            }
+
+            const { start, end } = eventDateTimeInputs();
+            if (!start || !end) {
+                return;
+            }
+
+            const startDate = extractDatePart(start.value);
+            if (!startDate || state.linkedEventStartDate === startDate) {
+                return;
+            }
+
+            const endTime = extractTimePart(end.value) || extractTimePart(start.value) || "00:00";
+            end.value = `${startDate}T${endTime}`;
+            state.linkedEventStartDate = startDate;
+        }
+
+        function rememberEventStartDateForLinking() {
+            const { start } = eventDateTimeInputs();
+            state.linkedEventStartDate = extractDatePart(start ? start.value : "");
         }
 
         function setCalendarShortcutToday() {
@@ -1118,16 +1184,35 @@
                 }
             });
 
-            elements.dynamicFields.addEventListener("input", () => {
+            elements.dynamicFields.addEventListener("input", (event) => {
+                const target = event.target instanceof Element ? event.target : null;
+                if (currentFormat().key === "event" && target?.dataset?.fieldKey === "startDateTime") {
+                    syncEndDateToStartDateIfLinked();
+                }
                 handleDynamicFieldUpdate();
             });
 
-            elements.dynamicFields.addEventListener("change", () => {
+            elements.dynamicFields.addEventListener("change", (event) => {
+                const target = event.target instanceof Element ? event.target : null;
+                if (currentFormat().key === "event" && target?.dataset?.fieldKey === "startDateTime") {
+                    syncEndDateToStartDateIfLinked();
+                }
                 handleDynamicFieldUpdate();
             });
 
             elements.dynamicFields.addEventListener("click", (event) => {
                 const target = event.target instanceof Element ? event.target : null;
+                const linkToggle = target ? target.closest("[data-calendar-link-toggle]") : null;
+                if (linkToggle) {
+                    setEventDateLink(!isEventDateLinkEnabled());
+                    syncEndDateToStartDateIfLinked();
+                    setStatus(`Start/end date link ${isEventDateLinkEnabled() ? "enabled" : "disabled"}.`);
+                    if (elements.autoGenerateToggle.checked) {
+                        void renderQr({ quiet: true });
+                    }
+                    return;
+                }
+
                 const button = target ? target.closest("[data-date-shortcut]") : null;
                 if (!button) {
                     return;
