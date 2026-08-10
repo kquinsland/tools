@@ -267,7 +267,7 @@ version = "0.22.1"
 backend = "npm:markdownlint-cli2"
 
 [[tools."npm:markdownlint-cli2"]]
-version = "0.23.1"
+version = "0.23.2"
 backend = "npm:markdownlint-cli2"
 
 [[tools.pinact]]
