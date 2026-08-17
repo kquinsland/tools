@@ -487,7 +487,7 @@ tools:
       toolbox:
         file: "tool.py"
         introduced_commit: "3b09a940e1835d0f0b7be11c080224bb46b57227"
-        updated_commit: "f24d92345f03cc31b8432014367618c443710ab3"
+        updated_commit: "e99c9d26161445d8686298fd79f4cd38eb6afb82"
       dependencies:
         - package: "click"
           version: ">=8.1"
@@ -511,7 +511,7 @@ tools:
       toolbox:
         file: "tool.py"
         introduced_commit: "dc47d301b4ad8c2b59a7d607af6b239499a3b646"
-        updated_commit: "138614d7170f9bc2b37262fd77a158bda904a37e"
+        updated_commit: "e99c9d26161445d8686298fd79f4cd38eb6afb82"
   - python/obsidian-icon-folder-migrator:
       title: "Obsidian Icon Folder Migrator"
       language: "python"
@@ -519,7 +519,7 @@ tools:
       toolbox:
         file: "tool.py"
         introduced_commit: "dbdf1e2fdb2fcf31dcc5dc583e73d0b4c8b30499"
-        updated_commit: null
+        updated_commit: "e99c9d26161445d8686298fd79f4cd38eb6afb82"
       dependencies:
         - package: "click"
           version: ">=8.1"

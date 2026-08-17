@@ -2,6 +2,10 @@
 title: Changelog - GHA Tree Builder
 bookHidden: true
 ---
+## `e99c9d2` - August 16, 2026 18:51
+
+- fix: resolve repository-wide ruff violations
+
 ## `f24d923` - January 29, 2026 20:14
 
 - Add include/exclude globs to gha tree builder
