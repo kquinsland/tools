@@ -156,52 +156,63 @@ checksum = "sha256:3ae3a5549e85c7ad5b20192ebcfee4371269deca51255f6f2f2e051c6541f
 url = "https://github.com/orhun/git-cliff/releases/download/v2.13.1/git-cliff-2.13.1-x86_64-pc-windows-msvc.zip"
 
 [[tools.hugo-extended]]
-version = "0.163.3"
+version = "0.165.0"
 backend = "aqua:gohugoio/hugo/hugo-extended"
 
 [tools.hugo-extended."platforms.linux-arm64"]
-checksum = "sha256:aa1c95375016b0cfd040f25689da980246ca77a2205f5df9de7e362c93b3d4d4"
-url = "https://github.com/gohugoio/hugo/releases/download/v0.163.3/hugo_extended_0.163.3_linux-arm64.tar.gz"
+checksum = "sha256:f40ebc44dfda3896cecd3ae7ed44f5c44c4b4a30a2b7d976ece6da62da699a58"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.165.0/hugo_extended_0.165.0_linux-arm64.tar.gz"
+url_api = "https://api.github.com/repos/gohugoio/hugo/releases/assets/511697465"
 
 [tools.hugo-extended."platforms.linux-arm64-musl"]
-checksum = "sha256:aa1c95375016b0cfd040f25689da980246ca77a2205f5df9de7e362c93b3d4d4"
-url = "https://github.com/gohugoio/hugo/releases/download/v0.163.3/hugo_extended_0.163.3_linux-arm64.tar.gz"
+checksum = "sha256:f40ebc44dfda3896cecd3ae7ed44f5c44c4b4a30a2b7d976ece6da62da699a58"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.165.0/hugo_extended_0.165.0_linux-arm64.tar.gz"
+url_api = "https://api.github.com/repos/gohugoio/hugo/releases/assets/511697465"
 
 [tools.hugo-extended."platforms.linux-x64"]
-checksum = "sha256:1234302ece1167cef2c252aaa69c89b4f0afc5851f1a30536d693e8e7fc4d1bf"
-url = "https://github.com/gohugoio/hugo/releases/download/v0.163.3/hugo_extended_0.163.3_linux-amd64.tar.gz"
+checksum = "sha256:f43494894cdf4a8630a201d5c828051c77f523cc66bb3938b30806835470ac20"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.165.0/hugo_extended_0.165.0_linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/gohugoio/hugo/releases/assets/511697439"
 
 [tools.hugo-extended."platforms.linux-x64-baseline"]
-checksum = "sha256:1234302ece1167cef2c252aaa69c89b4f0afc5851f1a30536d693e8e7fc4d1bf"
-url = "https://github.com/gohugoio/hugo/releases/download/v0.163.3/hugo_extended_0.163.3_linux-amd64.tar.gz"
+checksum = "sha256:f43494894cdf4a8630a201d5c828051c77f523cc66bb3938b30806835470ac20"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.165.0/hugo_extended_0.165.0_linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/gohugoio/hugo/releases/assets/511697439"
 
 [tools.hugo-extended."platforms.linux-x64-musl"]
-checksum = "sha256:1234302ece1167cef2c252aaa69c89b4f0afc5851f1a30536d693e8e7fc4d1bf"
-url = "https://github.com/gohugoio/hugo/releases/download/v0.163.3/hugo_extended_0.163.3_linux-amd64.tar.gz"
+checksum = "sha256:f43494894cdf4a8630a201d5c828051c77f523cc66bb3938b30806835470ac20"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.165.0/hugo_extended_0.165.0_linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/gohugoio/hugo/releases/assets/511697439"
 
 [tools.hugo-extended."platforms.linux-x64-musl-baseline"]
-checksum = "sha256:1234302ece1167cef2c252aaa69c89b4f0afc5851f1a30536d693e8e7fc4d1bf"
-url = "https://github.com/gohugoio/hugo/releases/download/v0.163.3/hugo_extended_0.163.3_linux-amd64.tar.gz"
+checksum = "sha256:f43494894cdf4a8630a201d5c828051c77f523cc66bb3938b30806835470ac20"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.165.0/hugo_extended_0.165.0_linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/gohugoio/hugo/releases/assets/511697439"
 
 [tools.hugo-extended."platforms.macos-arm64"]
-checksum = "sha256:1a50eba794dcfd5429c1f002cf44653cc4de90507d85e33d83b9fbbab55e9aa2"
-url = "https://github.com/gohugoio/hugo/releases/download/v0.163.3/hugo_extended_0.163.3_darwin-universal.pkg"
+checksum = "sha256:538be8435ded71e561cdc0bc42b9c9822c855b768e7028bc3f7f624b6e2c5185"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.165.0/hugo_extended_0.165.0_darwin-universal.pkg"
+url_api = "https://api.github.com/repos/gohugoio/hugo/releases/assets/511697489"
 
 [tools.hugo-extended."platforms.macos-x64"]
-checksum = "sha256:1a50eba794dcfd5429c1f002cf44653cc4de90507d85e33d83b9fbbab55e9aa2"
-url = "https://github.com/gohugoio/hugo/releases/download/v0.163.3/hugo_extended_0.163.3_darwin-universal.pkg"
+checksum = "sha256:538be8435ded71e561cdc0bc42b9c9822c855b768e7028bc3f7f624b6e2c5185"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.165.0/hugo_extended_0.165.0_darwin-universal.pkg"
+url_api = "https://api.github.com/repos/gohugoio/hugo/releases/assets/511697489"
 
 [tools.hugo-extended."platforms.macos-x64-baseline"]
-checksum = "sha256:1a50eba794dcfd5429c1f002cf44653cc4de90507d85e33d83b9fbbab55e9aa2"
-url = "https://github.com/gohugoio/hugo/releases/download/v0.163.3/hugo_extended_0.163.3_darwin-universal.pkg"
+checksum = "sha256:538be8435ded71e561cdc0bc42b9c9822c855b768e7028bc3f7f624b6e2c5185"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.165.0/hugo_extended_0.165.0_darwin-universal.pkg"
+url_api = "https://api.github.com/repos/gohugoio/hugo/releases/assets/511697489"
 
 [tools.hugo-extended."platforms.windows-x64"]
-checksum = "sha256:10ce84261773a52aa2dabb4f51b9fe86309592248dbeeef093c6b36b1dacf252"
-url = "https://github.com/gohugoio/hugo/releases/download/v0.163.3/hugo_extended_0.163.3_windows-amd64.zip"
+checksum = "sha256:c0259eb25d11b7d1ee7cd2f86da84f17323a36a90dee0ac0f7a93b635ec837f9"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.165.0/hugo_extended_0.165.0_windows-amd64.zip"
+url_api = "https://api.github.com/repos/gohugoio/hugo/releases/assets/511697521"
 
 [tools.hugo-extended."platforms.windows-x64-baseline"]
-checksum = "sha256:10ce84261773a52aa2dabb4f51b9fe86309592248dbeeef093c6b36b1dacf252"
-url = "https://github.com/gohugoio/hugo/releases/download/v0.163.3/hugo_extended_0.163.3_windows-amd64.zip"
+checksum = "sha256:c0259eb25d11b7d1ee7cd2f86da84f17323a36a90dee0ac0f7a93b635ec837f9"
+url = "https://github.com/gohugoio/hugo/releases/download/v0.165.0/hugo_extended_0.165.0_windows-amd64.zip"
+url_api = "https://api.github.com/repos/gohugoio/hugo/releases/assets/511697521"
 
 [[tools.kind]]
 version = "0.32.0"
