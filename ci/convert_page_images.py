@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import argparse
 import logging
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any
 
 try:
     import structlog
@@ -174,9 +175,7 @@ def _is_local_image_path(value: str) -> bool:
     if "://" in lowered or lowered.startswith("data:"):
         return False
     suffix = Path(lowered).suffix
-    if suffix not in IMAGE_EXTENSIONS:
-        return False
-    return True
+    return suffix in IMAGE_EXTENSIONS
 
 
 def _resolve_image_path(value: str, *, index_md: Path, repo_root: Path) -> Path:
@@ -301,7 +300,7 @@ def _process_index_file(
             originals_to_delete.append(source_path)
             if converted:
                 stats.images_converted += 1
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate failures per image
             stats.errors.append(f"{index_md}: failed to convert '{image_path}' ({exc})")
             log.error(
                 "image conversion failed",
@@ -384,7 +383,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         args = _parse_args(argv)
         quality = _validate_quality(args.quality)
-    except Exception as exc:
+    except ValueError as exc:
         log.error("invalid arguments", error=str(exc))
         return 2
 

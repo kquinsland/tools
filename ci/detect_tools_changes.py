@@ -12,7 +12,7 @@ from __future__ import annotations
 import argparse
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import yaml
 
@@ -38,12 +38,12 @@ def read_head_version(path: Path) -> str:
         return ""
 
 
-def load_yaml_entries(content: str) -> Dict[str, Any]:
+def load_yaml_entries(content: str) -> dict[str, Any]:
     if not content.strip():
         return {}
     loaded = yaml.safe_load(content) or {}
     tools = loaded.get("tools", []) if isinstance(loaded, dict) else []
-    entries: Dict[str, Any] = {}
+    entries: dict[str, Any] = {}
     for entry in tools:
         if not isinstance(entry, dict):
             continue
@@ -53,19 +53,19 @@ def load_yaml_entries(content: str) -> Dict[str, Any]:
 
 
 def summarize_changes(
-    head_entries: Dict[str, Any], worktree_entries: Dict[str, Any]
+    head_entries: dict[str, Any], worktree_entries: dict[str, Any]
 ) -> str:
     head_slugs = set(head_entries)
     worktree_slugs = set(worktree_entries)
 
     added = sorted(worktree_slugs - head_slugs)
     removed = sorted(head_slugs - worktree_slugs)
-    updated: List[str] = []
+    updated: list[str] = []
     for slug in sorted(head_slugs & worktree_slugs):
         if head_entries[slug] != worktree_entries[slug]:
             updated.append(slug)
 
-    parts: List[str] = []
+    parts: list[str] = []
     if added:
         parts.append("added " + ", ".join(added))
     if updated:

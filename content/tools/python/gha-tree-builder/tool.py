@@ -13,12 +13,13 @@
 from __future__ import annotations
 
 import glob
-import logging
-from dataclasses import dataclass
 import hashlib
+import logging
 import re
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 import click
 import pydot
@@ -232,7 +233,7 @@ def build_graph(
 
     def stable_node_id(kind: str, name: str) -> str:
         slug = re.sub(r"[^A-Za-z0-9_]", "_", name).strip("_") or "node"
-        digest = hashlib.sha1(f"{kind}:{name}".encode("utf-8")).hexdigest()[:8]
+        digest = hashlib.sha1(f"{kind}:{name}".encode()).hexdigest()[:8]
         return f"{kind}_{slug}_{digest}"
 
     def add_node(node_id: str, label: str, **attrs: str) -> None:
@@ -506,9 +507,7 @@ def main(
             logger.info("rendering_graph", output=str(render))
             render_graph(graph, render)
             logger.info("render_written", output=str(render))
-        except (
-            Exception
-        ) as exc:  # pydot raises generic exceptions when Graphviz is missing
+        except Exception as exc:  # noqa: BLE001 - pydot raises generic exceptions
             logger.warning("render_failed", output=str(render), error=str(exc))
 
 

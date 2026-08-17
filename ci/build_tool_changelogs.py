@@ -20,9 +20,9 @@ import logging
 import re
 import subprocess
 import tempfile
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 try:
     import structlog
@@ -115,6 +115,19 @@ def _extract_top_hash(changelog_text: str) -> str | None:
     if not match:
         return None
     return match.group("hash")
+
+
+def _validate_commit_hash(
+    *, repo_root: Path, changelog_path: Path, commit_hash: str
+) -> None:
+    try:
+        _run_git(["rev-parse", "--verify", f"{commit_hash}^{{commit}}"], cwd=repo_root)
+    except RuntimeError as exc:
+        relative_path = changelog_path.relative_to(repo_root)
+        raise RuntimeError(
+            f"{relative_path} references unknown commit {commit_hash!r}; "
+            "replace the changelog heading with a valid commit hash"
+        ) from exc
 
 
 def _parse_commit_lines(raw: str) -> list[CommitInfo]:
@@ -330,6 +343,13 @@ def _update_changelog(
         )
         return False
 
+    if top_hash is not None:
+        _validate_commit_hash(
+            repo_root=repo_root,
+            changelog_path=changelog_path,
+            commit_hash=top_hash,
+        )
+
     commits = _git_commits_for_tool(
         repo_root=repo_root,
         tool_dir=tool_dir,
@@ -419,6 +439,27 @@ def test_extract_top_hash() -> None:
     assert _extract_top_hash(content) == "abc123"
 
 
+def test_validate_commit_hash_reports_changelog_path() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp)
+        _git(["init"], cwd=repo)
+        changelog = repo / "content" / "tools" / "html" / "demo" / "changelog.md"
+
+        try:
+            _validate_commit_hash(
+                repo_root=repo,
+                changelog_path=changelog,
+                commit_hash="0000000",
+            )
+        except RuntimeError as exc:
+            assert str(exc) == (
+                "content/tools/html/demo/changelog.md references unknown commit "
+                "'0000000'; replace the changelog heading with a valid commit hash"
+            )
+        else:
+            raise AssertionError("expected an invalid commit hash to fail validation")
+
+
 def test_render_entries() -> None:
     commits = [
         CommitInfo(short_hash="abc123", date="January 1, 2025 10:00", subject="Fix A"),
@@ -435,14 +476,7 @@ def test_render_front_matter_uses_tool_title() -> None:
         tool_dir = Path(tmp) / "html" / "yaml-json-convert-compare"
         tool_dir.mkdir(parents=True)
         (tool_dir / "_index.md").write_text(
-            "\n".join(
-                [
-                    "---",
-                    'title: "YAML ↔ JSON Convert & Compare"',
-                    "---",
-                    "",
-                ]
-            ),
+            '---\ntitle: "YAML ↔ JSON Convert & Compare"\n---\n',
             encoding="utf-8",
         )
         front_matter = _render_front_matter(tool_dir=tool_dir)
@@ -455,16 +489,7 @@ def test_render_history_link_uses_tool_file() -> None:
         tool_dir = repo_root / "content" / "tools" / "html" / "demo"
         tool_dir.mkdir(parents=True)
         (tool_dir / "_index.md").write_text(
-            "\n".join(
-                [
-                    "---",
-                    "resources:",
-                    "  - name: tool-file",
-                    "    src: custom.html",
-                    "---",
-                    "",
-                ]
-            ),
+            "---\nresources:\n  - name: tool-file\n    src: custom.html\n---\n",
             encoding="utf-8",
         )
         link = _render_history_link(repo_root=repo_root, tool_dir=tool_dir)
@@ -475,17 +500,7 @@ def test_has_unrecognized_changelog_body_ignores_front_matter_and_history_link()
     None
 ):
     history_link = "[view history on github](https://example.com/history)"
-    text = "\n".join(
-        [
-            "---",
-            "title: Changelog - Demo",
-            "bookHidden: true",
-            "---",
-            "",
-            history_link,
-            "",
-        ]
-    )
+    text = f"---\ntitle: Changelog - Demo\nbookHidden: true\n---\n\n{history_link}\n"
     assert (
         _has_unrecognized_changelog_body(text=text, history_link=history_link) is False
     )
@@ -522,16 +537,7 @@ def test_update_changelog_from_last_hash() -> None:
         second_hash = _run_git(["rev-parse", "--short", "HEAD"], cwd=repo)
 
         (tool_dir / "_index.md").write_text(
-            "\n".join(
-                [
-                    "---",
-                    "resources:",
-                    "  - name: tool-file",
-                    "    src: tool.html",
-                    "---",
-                    "",
-                ]
-            ),
+            "---\nresources:\n  - name: tool-file\n    src: tool.html\n---\n",
             encoding="utf-8",
         )
         _git(["add", "."], cwd=repo)
