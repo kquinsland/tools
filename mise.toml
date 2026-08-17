@@ -23,7 +23,7 @@ uvx = true
 
 
 [tools]
-pinact = "4.1.0"
+pinact = "4.1.1"
 python = "3.14.7"
 hugo-extended = "0.163.3"
 
