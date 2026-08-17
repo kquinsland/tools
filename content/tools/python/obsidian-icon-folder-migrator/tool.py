@@ -20,7 +20,6 @@ import structlog
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
-
 ICON_FRONTMATTER_KEY = "icon"
 DEFAULT_DATA_JSON = ".obsidian/plugins/obsidian-icon-folder/data.json"
 MissingBehavior = Literal["silent", "warn", "remove"]
@@ -133,7 +132,7 @@ def load_frontmatter(frontmatter_text: str | None) -> CommentedMap:
         return CommentedMap()
     if not isinstance(loaded, CommentedMap):
         msg = "Frontmatter is not a YAML mapping"
-        raise ValueError(msg)
+        raise TypeError(msg)
     return loaded
 
 

@@ -21,10 +21,11 @@ import re
 import subprocess
 import tempfile
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 from urllib.parse import urlparse, urlunparse
 
 try:
@@ -360,8 +361,7 @@ def _extract_pep723_block(script_text: str) -> list[str]:
         if not line.lstrip().startswith("#"):
             continue
         content = line.lstrip()[1:]
-        if content.startswith(" "):
-            content = content[1:]
+        content = content.removeprefix(" ")
         block_lines.append(content.rstrip())
     return block_lines
 
