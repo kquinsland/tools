@@ -2,6 +2,10 @@
 title: Changelog - QR Code Generator
 bookHidden: true
 ---
+## `c3abd94` - August 6, 2026 16:04
+
+- feat: add calendar event start/end date linking
+
 ## `2f1d3fc` - May 8, 2026 18:59
 
 - feat: update QR calendar shortcuts
