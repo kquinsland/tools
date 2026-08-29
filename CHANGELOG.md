@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.9.0](https://github.com/kquinsland/tools/compare/tools-site-v0.8.0...tools-site-v0.9.0) (2026-08-29)
+
+
+### Features
+
+* add calendar event start/end date linking ([c298be3](https://github.com/kquinsland/tools/commit/c298be363c2f13ad1c02c0d65a924dcb35b3a108))
+* add calendar event start/end date linking ([c3abd94](https://github.com/kquinsland/tools/commit/c3abd94a154fbf85325eca705bf6dae5c20f8a9b))
+* add configurable unicode troublemaker replacement preset ([26c28d7](https://github.com/kquinsland/tools/commit/26c28d7f7a39d43c5e4be9ab61d426cb958e1a67))
+* add text cleaner tool ([9133dcf](https://github.com/kquinsland/tools/commit/9133dcf9be0f9e1a01b6c7b2d795f64be19dae7d))
+* show rule input value previews in cleaner UI ([395febd](https://github.com/kquinsland/tools/commit/395febd29367775ddd70314ff45370698dc57f97))
+
+
+### Bug Fixes
+
+* clarify custom char input and icon ([070a698](https://github.com/kquinsland/tools/commit/070a698c13053c6f79d0f156a44fe68e0c1005a6))
+* resolve repository-wide ruff violations ([e99c9d2](https://github.com/kquinsland/tools/commit/e99c9d26161445d8686298fd79f4cd38eb6afb82))
+* validate changelog commit references ([ce69509](https://github.com/kquinsland/tools/commit/ce69509dde361b06e58ae1de6bc8eb4aac049c22))
+* validate changelog commit references ([0107841](https://github.com/kquinsland/tools/commit/0107841411169cbe055e91b5dd96be4b51f2b51e))
+
 ## [0.8.0](https://github.com/kquinsland/tools/compare/tools-site-v0.7.0...tools-site-v0.8.0) (2026-07-21)
 
 
